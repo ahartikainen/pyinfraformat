@@ -70,9 +70,7 @@ class Infraformat:
                 robust_read=kwargs.get("robust_read", False),
             )
 
-    def read(
-        self, path, encoding="utf-8", use_glob=False, extension=None, robust_read=False
-    ):
+    def read(self, path, encoding="utf-8", use_glob=False, extension=None, robust_read=False):
         """
         Paramaters
         ----------
@@ -87,11 +85,7 @@ class Infraformat:
             Enable reading ill-defined holes
         """
         holes = _read(
-            path,
-            encoding=encoding,
-            use_glob=use_glob,
-            extension=extension,
-            robust_read=robust_read,
+            path, encoding=encoding, use_glob=use_glob, extension=extension, robust_read=robust_read
         )
         if hasattr(self, "holes"):
             self.holes.extend(holes)
@@ -124,11 +118,7 @@ class Infraformat:
                 pass
                 # return ._dataframe end of this if
             elif hasattr(self, "_dataframe") and update is None:
-                new_dfs = [
-                    hole.dataframe
-                    for hole in self.holes
-                    if not hasattr(hole, "_dataframe")
-                ]
+                new_dfs = [hole.dataframe for hole in self.holes if not hasattr(hole, "_dataframe")]
                 if new_dfs:
                     df_list = [self._dataframe]
                     df_list.extend(new_dfs)
@@ -187,7 +177,7 @@ class Infraformat:
         if split:
             use_format = False
             if namelist is None:
-                if not '{}' in path:
+                if not "{}" in path:
                     raise ValueError("Use either a \{\} or a namelist for filenames")
                 use_format = True
             else:

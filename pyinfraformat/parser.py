@@ -24,7 +24,7 @@ def _is_number(number_str):
     try:
         complex(number_str)
     except ValueError:
-        if number_str == '-':
+        if number_str == "-":
             return True
         return False
     return True
@@ -34,7 +34,7 @@ def custom_int(number):
     try:
         return int(number)
     except ValueError:
-        if number == '-':
+        if number == "-":
             return np.nan
             msg = (
                 "Non-integer value detected, a floating point number is returned"
@@ -50,14 +50,16 @@ def custom_int(number):
             warnings.warn(msg)
             return float(number)
 
+
 def custom_float(number):
-    if number.strip() == '-':
+    if number.strip() == "-":
         return np.nan
     else:
         try:
             return float(number)
         except ValueError:
             return np.nan
+
 
 def identifiers():
     """ helper function to return header identifiers
@@ -80,27 +82,23 @@ def identifiers():
         "ML": (["Soil or rock classification"], [str]),
         "OR": (["Research organization"], [str]),
         "TY": (["Work number", "Work name"], [str, str]),
-        "PK": (
-            ["Record number", "Driller", "Inspector", "Handler"],
-            [custom_int, str, str, str],
-        ),
+        "PK": (["Record number", "Driller", "Inspector", "Handler"], [custom_int, str, str, str]),
         "TT": (
             ["Survey abbreviation", "Class", "ID1", "Used standard", "Sampler"],
             [str, custom_int, str, str, str],
         ),
         "LA": (["Device number", "Device description text"], [custom_int, str]),
-        "XY": (["X", "Y", "Z-start", "Date", "ID2"], [custom_float, custom_float, custom_float, str, str]),
+        "XY": (
+            ["X", "Y", "Z-start", "Date", "ID2"],
+            [custom_float, custom_float, custom_float, str, str],
+        ),
         "LN": (["Line name or number", "Pole", "Distance"], [str, custom_float, custom_float]),
         "-1": (["Ending"], [str]),
         "GR": (["Software name", "Date", "Programmer"], [str, str, str]),
         "GL": (["Survey info"], [str]),
         "AT": (["Rock sample attribute", "Possible value"], [str, str]),
         "AL": (
-            [
-                "Initial boring depth",
-                "Initial boring method",
-                "Initial boring soil type",
-            ],
+            ["Initial boring depth", "Initial boring method", "Initial boring soil type"],
             [custom_float, str, str],
         ),
         "ZP": (
@@ -175,8 +173,8 @@ def identifiers():
             ],
             [custom_float, custom_float, custom_float, custom_float, custom_float],
         ),
-        "HE/DP": (["Depth (m)", "Blows", "Soil type"],  [custom_float, custom_int, str]),
-        "HE": (["Depth (m)", "Blows", "Soil type"],  [custom_float, custom_int, str]),
+        "HE/DP": (["Depth (m)", "Blows", "Soil type"], [custom_float, custom_int, str]),
+        "HE": (["Depth (m)", "Blows", "Soil type"], [custom_float, custom_int, str]),
         # 'DP' : (),
         "HK/DP": (
             ["Depth (m)", "Blows", "Torque (Nm)", "Soil type"],
@@ -190,12 +188,7 @@ def identifiers():
         "PT": (["Depth (m)", "Soil type"], [custom_float, str]),
         "TR": (["Depth (m)", "Soil type"], [custom_float, str]),
         "PR": (
-            [
-                "Depth (m)",
-                "Total resistance (MN/m^2)",
-                "Sleeve friction (kN/m^2)",
-                "Soil type",
-            ],
+            ["Depth (m)", "Total resistance (MN/m^2)", "Sleeve friction (kN/m^2)", "Soil type"],
             [custom_float, custom_float, custom_float, str],
         ),
         "CP/CPT": (
@@ -216,7 +209,7 @@ def identifiers():
                 "Cone resistance (MN/m^2)",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, str],
         ),
         "CPT": (
             [
@@ -226,7 +219,7 @@ def identifiers():
                 "Cone resistance (MN/m^2)",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, str],
         ),
         "CU/CPTU": (
             [
@@ -237,7 +230,7 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
         ),
         "CU": (
             [
@@ -248,7 +241,7 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
         ),
         "CPTU": (
             [
@@ -259,25 +252,19 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
         ),
         "HP": {
             "H": (
                 ["Depth (m)", "Blows", "Torque (Nm)", "Survey type", "Soil type"],
-                 [custom_float, custom_int, custom_float, str, str],
+                [custom_float, custom_int, custom_float, str, str],
             ),
             "P": (
-                [
-                    "Depth (m)",
-                    "Pressure (MN/m^2)",
-                    "Torque (Nm)",
-                    "Survey type",
-                    "Soil type",
-                ],
-                 [custom_float, custom_float, custom_float, str, str],
+                ["Depth (m)", "Pressure (MN/m^2)", "Torque (Nm)", "Survey type", "Soil type"],
+                [custom_float, custom_float, custom_float, str, str],
             ),
         },
-        "PO": (["Depth (m)", "Time (s)", "Soil type"],  [custom_float, custom_int, str]),
+        "PO": (["Depth (m)", "Time (s)", "Soil type"], [custom_float, custom_int, str]),
         "MW": (
             [
                 "Depth (m)",
@@ -290,7 +277,17 @@ def identifiers():
                 "Blow",
                 "Soil type",
             ],
-             [custom_float, custom_float, custom_float, custom_float, custom_float, custom_float, custom_float, str, str],
+            [
+                custom_float,
+                custom_float,
+                custom_float,
+                custom_float,
+                custom_float,
+                custom_float,
+                custom_float,
+                str,
+                str,
+            ],
         ),
         "VP": (
             [
@@ -301,7 +298,7 @@ def identifiers():
                 "Lenght of the sieve(m)",
                 "Inspector",
             ],
-             [custom_float, str, custom_float, custom_float, custom_float, str],
+            [custom_float, str, custom_float, custom_float, custom_float, str],
         ),
         "VO": (
             [
@@ -312,50 +309,43 @@ def identifiers():
                 "Lenght of the sieve(m)",
                 "Inspector",
             ],
-             [custom_float, str, custom_float, custom_float, custom_float, str],
+            [custom_float, str, custom_float, custom_float, custom_float, str],
         ),
-        "VK": (["Water level", "Date", "Type"],  [custom_float, str, str]),
-        "VPK": (["Water level", "Date"],  [custom_float, str]),
+        "VK": (["Water level", "Date", "Type"], [custom_float, str, str]),
+        "VPK": (["Water level", "Date"], [custom_float, str]),
         "HV": (
             ["Depth (m)", "Pressure (kN/m^2)", "Date", "Measurer"],
-             [custom_float, custom_float, str, str],
+            [custom_float, custom_float, str, str],
         ),
         "PS/PMT": (
             ["Depth (m)", "Pressometer modulus (MN/m^2)", "Burst pressure (MN/m^2)"],
-             [custom_float, custom_float, custom_float],
+            [custom_float, custom_float, custom_float],
         ),
         "PS": (
             ["Depth (m)", "Pressometer modulus (MN/m^2)", "Burst pressure (MN/m^2)"],
-             [custom_float, custom_float, custom_float],
+            [custom_float, custom_float, custom_float],
         ),
         "PMT": (
             ["Depth (m)", "Pressometer modulus (MN/m^2)", "Burst pressure (MN/m^2)"],
-             [custom_float, custom_float, custom_float],
+            [custom_float, custom_float, custom_float],
         ),
-        "PM": (["Height", "Date", "Measurer"],  [custom_float, str, str]),
+        "PM": (["Height", "Date", "Measurer"], [custom_float, str, str]),
         "KO": (
-            [
-                "Depth (m)",
-                "Soil type",
-                "rock",
-                "rock",
-                "Maximum width",
-                "Minimum width",
-            ],
-             [custom_float, str, custom_float, custom_int, custom_float, custom_float],
+            ["Depth (m)", "Soil type", "rock", "rock", "Maximum width", "Minimum width"],
+            [custom_float, str, custom_float, custom_int, custom_float, custom_float],
         ),
-        "KE": (["Initial depth (m)", "Final depth (m)"],  [custom_float, custom_float]),
-        "KR": (["Initial depth (m)", "Final depth (m)"],  [custom_float, custom_float]),
+        "KE": (["Initial depth (m)", "Final depth (m)"], [custom_float, custom_float]),
+        "KR": (["Initial depth (m)", "Final depth (m)"], [custom_float, custom_float]),
         "NO": (
             ["Depth  info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
-             [custom_float, str, custom_float, str],
+            [custom_float, str, custom_float, str],
         ),
         "NE": (
             ["Depth info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
-             [custom_float, str, custom_float, str],
+            [custom_float, str, custom_float, str],
         ),
         "LB": (["Laboratory", "Result", "Unit"], [str, str, str]),
-        "RK": (["Sieve size", "Passing percentage"],  [custom_float, custom_float]),
+        "RK": (["Sieve size", "Passing percentage"], [custom_float, custom_float]),
     }
     # common_survey_mistakes = {'KK' : ['KE', 'KR'],
     #                          'DP' : ['HE', 'HK']}
@@ -370,14 +360,7 @@ def identifiers():
     return result_tuple
 
 
-def read(
-    path,
-    encoding="utf-8",
-    use_glob=False,
-    verbose=False,
-    extension=None,
-    robust_read=False,
-):
+def read(path, encoding="utf-8", use_glob=False, verbose=False, extension=None, robust_read=False):
     """Read inframodel file(s)
 
     Paramaters
@@ -468,10 +451,7 @@ def _read(path, encoding="utf-8", verbose=False):
             if head.upper() in file_header_identifiers:
                 tail = tail[0].strip().split() if tail else []
                 names, dtypes = file_header_identifiers[head.upper()]
-                fileheader = {
-                    key: format(value)
-                    for key, format, value in zip(names, dtypes, tail)
-                }
+                fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
                 fileheaders[head.upper()] = fileheader
             # TODO: make this robust check with peek
             elif head == "-1":
@@ -528,10 +508,7 @@ def parse_hole(str_list):
                     tail = [tail[0].strip()] if tail else []
                 else:
                     tail = tail[0].strip().split() if tail else []
-                header = {
-                    key: format(value)
-                    for key, format, value in zip(names, dtypes, tail)
-                }
+                header = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
                 header["linenumber"] = linenum
                 hole.add_header(head, header)
             elif head in inline_identifiers:
@@ -541,8 +518,7 @@ def parse_hole(str_list):
                 else:
                     tail = tail[0].strip().split() if tail else []
                 inline_comment = {
-                    key: format(value)
-                    for key, format, value in zip(names, dtypes, tail)
+                    key: format(value) for key, format, value in zip(names, dtypes, tail)
                 }
                 inline_comment["linenumber"] = linenum
                 hole.add_inline_comment(head, inline_comment)
@@ -559,10 +535,7 @@ def parse_hole(str_list):
                         names, dtypes = survey_dict["P"]
 
                     line = line.split(maxsplit=len(dtypes))
-                survey = {
-                    key: format(value)
-                    for key, format, value in zip(names, dtypes, line)
-                }
+                survey = {key: format(value) for key, format, value in zip(names, dtypes, line)}
                 survey["linenumber"] = linenum
                 hole.add_survey(survey)
             else:
@@ -623,9 +596,7 @@ class Hole:
 
         dict_list = self.survey.data
         self._dataframe = DataFrame(dict_list)
-        self._dataframe.columns = [
-            "data_{}".format(col) for col in self._dataframe.columns
-        ]
+        self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
         if not len(self._dataframe):
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:

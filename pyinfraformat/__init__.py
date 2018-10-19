@@ -8,5 +8,6 @@ def print_info(language="fi"):
         raise NotImplementedError("Only 'fi' info is implemented")
     print(_info_fi())
 
+
 __version__ = "0.1.0a"
 __all__ = {"Infraformat", "read", "print_info"}
