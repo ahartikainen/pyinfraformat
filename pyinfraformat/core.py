@@ -21,6 +21,41 @@ class FileExtensionMissing(Exception):
         return repr(self.msg)
 
 
+class Holes:
+    """
+    Container for multiple infraformat hole information.
+    """
+
+    def __init__(self, holes=None):
+        if holes is None:
+            holes = []
+        self.holes = holes
+
+    def add_holes(self, holes):
+        self.holes.extend(holes)
+
+    def __str__(self):
+        return f"Infraformat Holes object:\n  Total of {len(self.holes)} holes"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __getitem__(self, index):
+        return self.holes[index]
+
+    def __iter__(self):
+        self.n = 0
+        return self
+
+    def __next__(self):
+        if self.n < len(self.holes):
+            result = self.holes[self.n]
+            self.n += 1
+            return result
+        else:
+            raise StopIteration
+
+
 class Infraformat:
     """
     Python Class to process infraformat files
@@ -60,6 +95,7 @@ class Infraformat:
         """
         self._verbose = verbose
         self._lowmemory = kwargs.get("lowmemory", False)
+        self.holes = Holes()
 
         if path is not None:
             self.read(
@@ -87,10 +123,7 @@ class Infraformat:
         holes = _read(
             path, encoding=encoding, use_glob=use_glob, extension=extension, robust_read=robust_read
         )
-        if hasattr(self, "holes"):
-            self.holes.extend(holes)
-        else:
-            self.holes = holes
+        self.holes.add_holes(holes)
 
     @property
     def dataframe(self):
