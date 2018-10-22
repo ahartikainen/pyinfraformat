@@ -9,5 +9,5 @@ def print_info(language="fi"):
     print(_info_fi())
 
 
-__version__ = "0.1.0a"
+__version__ = "0.1.0a-dev"
 __all__ = {"Infraformat", "read", "print_info"}
