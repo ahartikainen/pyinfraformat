@@ -1,7 +1,103 @@
+import logging
 from collections import Counter
-from .parser import identifiers
+from .parser import read, identifiers
+from .core import Holes
 
-# import pyproj
+logger = logging.getLogger("pyinfraformat")
+
+__all__ = ["from_infraformat"]
+
+
+class PathNotFound(Exception):
+    def __init__(self):
+        self.msg = "Path not found"
+
+    def __str__(self):
+        logger.critical(self.msg)
+        return repr(self.msg)
+
+
+def from_infraformat(path, encoding="utf-8", verbose=False, extension=None, robust_read=False):
+    """Read inframodel file(s)
+
+    Paramaters
+    ----------
+    path : str, optional, default None
+        path to read data (file / folder / glob statement)
+    encoding : str, optional, default 'utf-8'
+        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
+    use_glob : bool, optional, default False
+        path is a glob string
+    extension : bool, optional, default None
+    robust_read : bool, optional, default False
+        Enable reading ill-defined holes
+    """
+    holes = read(path, encoding, verbose, extension, robust_read)
+    return Holes(holes)
+
+
+def read(path, encoding="utf-8", verbose=False, extension=None, robust_read=False):
+    """Read inframodel file(s)
+
+    Paramaters
+    ----------
+    path : str, optional, default None
+        path to read data (file / folder / glob statement)
+    encoding : str, optional, default 'utf-8'
+        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
+    use_glob : bool, optional, default False
+        path is a glob string
+    extension : bool, optional, default None
+    robust_read : bool, optional, default False
+        Enable reading ill-defined holes
+    """
+    if os.path.isdir(path):
+        if extension is None:
+            filelist = glob(os.path.join(path, "*"))
+        else:
+            if not extension.startswith("."):
+                extension = ".{}".format(extension)
+            filelist = glob(os.path.join(path, "*{}".format(extension)))
+    else:
+        filelist = glob(path)
+        if not len(filelist):
+            raise PathNotFound("{}".format(path))
+
+    hole_list = []
+    if robust_read:
+        if not hasattr(robust_read, "__iter__"):
+            # Common encoding types
+            robust_read = [
+                "utf-8",
+                "latin-1",
+                "cp1252",
+                "latin-6",
+                "latin-2",
+                "latin-3",
+                "latin-5",
+                "utf-16",
+            ]
+        for filepath in filelist:
+            try:
+                holes = read(filepath, encoding=encoding, verbose=verbose)
+            except UnicodeDecodeError:
+                holes = []
+                for encoding_ in robust_read:
+                    if encoding_ == encoding:
+                        continue
+                    try:
+                        holes = read(filepath, encoding=encoding_, verbose=verbose)
+                        break
+                    except (UnicodeDecodeError, UnicodeEncodeError):
+                        continue
+            if holes:
+                hole_list.extend(holes)
+    else:
+        for filepath in filelist:
+            holes = read(filepath, encoding=encoding, verbose=verbose)
+            hole_list.extend(holes)
+
+    return hole_list
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None):

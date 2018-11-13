@@ -12,7 +12,7 @@ setup(
     version="0.1.0a-dev",
     description="Pure Python library for Finnish Infraformat",
     long_description=long_description,
-    author="Ari Hartikainen & Taavi Dettenborn",
+    author="Ari Hartikainen & Taavi Dettenborn & Martti Hallipelto",
     license="Apache-2.0",
     classifiers=[
         "Development Statut :: 3 - Alpha",

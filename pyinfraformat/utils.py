@@ -1,7 +1,10 @@
+__all__ = []
+
+
 def info_fi():
     """
     Print class info in Finnish, infraformaatti 2.3
-    
+
     Main site: http://www.citygeomodel.fi/
     Link to file: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
     """
@@ -9,7 +12,7 @@ def info_fi():
     helper_str = """    tiedot kerätty infraformaatti 2.3
         Pääsivu: http://www.citygeomodel.fi/
         Linkki tiedostoon: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
-        
+
     LYHENTEET:
         i    kokonaisluku
         t    tekstikenttä, pituutta ei ole rajoitettu.
@@ -22,11 +25,11 @@ def info_fi():
                  kun jonkun kentän arvoa ei anneta, tilalla esitetään '-' merkki.
         v    vakio attribuutti (K/E, H/P)
             ei alkuperäinen tunnus infraformaatissa
-            
+
         isolla kirjaimella merkitty havaintoarvon oltava olemassa ilman '-' –merkkiä
-        
+
     TUNNUKSET (LYHYT)
-    
+
         TIEDOSTOKOHTAISET
             FO, 3 (t, t ,t)
             KJ, 2 (T, t)
@@ -55,7 +58,7 @@ def info_fi():
             EM, 1 (t)
             VH, 0 ()
             KK, 3 (F, F, i)
-        
+
         TUTKIMUSTAPATUNNUKSET
             PA/WST,  4 (F, f, i, t)
             PI,      2 (F, t)
@@ -73,7 +76,7 @@ def info_fi():
                 P,   5 (F, f, f, V, t)
             PO,      3 (F, i, t)
             MW,      9 (F, F, F, f, f, f, f, V, t)
-            
+
             VP       6 (F, T, f, f, f, t)
             VO       6 (F, T, f, f, f, t)
             VK       3 (F, T, v)
@@ -88,9 +91,9 @@ def info_fi():
             NE       4 (F, T, F, t)
             LB       3 (T, T, t)
             RK       2 (F, F)
-            
+
     TIEDOSTOTUNNUKSET
-    
+
         TIEDOSTOKOHTAISET
         FO: Formaattitiedot
             t   Formaatin versio nro
@@ -99,7 +102,7 @@ def info_fi():
         KJ: Mittausjärjestelmä
             T   Koordinaatisto
             t   Korkeusjärj.
-            
+
         PISTEKOHTAISET
         OM: Tiedon omistaja
             t   Nimi
@@ -167,7 +170,7 @@ def info_fi():
             v   Lukittu Kyllä / Ei (vakiot = K/E)
             t   Lukon omistaja
             t   Asentaja
-            
+
         RIVIKOHTAISET
         HM: Huomautustekstit
             t   Huomautusteksti (välilyönnit sallitaan)
@@ -183,7 +186,7 @@ def info_fi():
             F   Suuntakulma (aste)
             F   Pystykulma (aste)
             i   Halkaisija (mm)
-            
+
         TUTKIMUSTAPATUNNUKSET
         PA/WST: Painokairaus
             F    Syvyys (m)

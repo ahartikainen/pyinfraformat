@@ -1,16 +1,12 @@
-from .parser import read as _read, identifiers
-from .io import to_infraformat
-
-from pandas import DataFrame, concat, ExcelWriter
 from gc import collect
+import logging
 
+from .parser import identifiers
+from .io import from_infraformat, to_infraformat
 
-class HolesNotFound(Exception):
-    def __init__(self):
-        self.msg = "No holes added to class"
+logger = logging.getLogger("pyinfraformat")
 
-    def __str__(self):
-        return repr(self.msg)
+__all__ = ["Holes"]
 
 
 class FileExtensionMissing(Exception):
@@ -26,16 +22,31 @@ class Holes:
     Container for multiple infraformat hole information.
     """
 
-    def __init__(self, holes=None):
+    def __init__(self, holes, lowmemory=False):
+        """Container for multiple infraformat hole information.
+
+        Parameters
+        ----------
+        holes : list
+            list of infraformat hole information
+        lowmemory : bool, optional
+        """
         if holes is None:
             holes = []
         self.holes = holes
+        self._lowmemory = lowmemory
 
     def add_holes(self, holes):
+        """Add list of holes to class"""
         self.holes.extend(holes)
 
     def __str__(self):
-        return f"Infraformat Holes object:\n  Total of {len(self.holes)} holes"
+        msg = f"Infraformat Holes object:\n  Total of {len(self.holes)} holes"
+        counts = "\n".join(
+            f"    -{key}: {value}" for key, value in dict(self.value_counts()).items()
+        )
+        msg = "\n".join((msg, counts))
+        return msg
 
     def __repr__(self):
         return self.__str__()
@@ -55,123 +66,108 @@ class Holes:
         else:
             raise StopIteration
 
+    def __add__(self, other):
+        return Holes(self.holes + other.holes)
 
-class Infraformat:
-    """
-    Python Class to process infraformat files
+    def filter_holes(by="coordinates", **kwargs):
+        """filter_coordinates(bbox)
+        filter_surveys(survey_abbreviation)
+        filter_date(start=None, end=None)
 
-    Paramaters
-    ----------
-    path : str, optional, default None
-        path to read data (file / folder / glob statement, see use_glob)
-    verbose : bool, optional, default True
-    lowmemory : bool, optional, default False
-        parameter for pandas.DataFrame creation
-    encoding : str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
-    use_glob : bool, optional, default False
-        path is a glob string
-    extension : bool, optional, default None
-    robust_read : bool, optional, default False
-        Enable reading ill-defined holes
-    """
+        bbox : left, right, bottom, top
 
-    def __init__(self, path=None, verbose=False, **kwargs):
-        """
-        Paramaters
+        Parameters
         ----------
-        path : str, optional, default None
-            path to read data (file / folder / glob statement, see use_glob)
-        verbose : bool, optional, default True
-        lowmemory : bool, optional, default False
-            parameter for pandas.DataFrame creation
-        encoding : str, optional, default 'utf-8'
-            file encoding, if 'utf-8' fails, code will try to use 'latin-1'
-        use_glob : bool, optional, default False
-            path is a glob string
-        extension : bool, optional, default None
-        robust_read : bool, optional, default False
-            Enable reading ill-defined holes
+        by : str {'coordinate', 'survey', 'date'}
         """
-        self._verbose = verbose
-        self._lowmemory = kwargs.get("lowmemory", False)
-        self.holes = Holes()
+        if by == "coordinates":
+            self._filter_coordinates(**kwargs)
+        elif by == "survey":
+            self._filter_surveys(**kwargs)
+        elif by == "date":
+            self._filter_date(**kwargs)
 
-        if path is not None:
-            self.read(
-                path=path,
-                encoding=kwargs.get("encoding", "utf-8"),
-                use_glob=kwargs.get("use_glob", False),
-                extension=kwargs.get("extension", None),
-                robust_read=kwargs.get("robust_read", False),
-            )
+    def _filter_coordinates(self, bbox):
+        """Filter object by coordinates"""
+        xmin, xmax, ymin, ymax = bbox
+        xrange = range(xmin, xmax)
+        yrange = range(ymin, ymax)
+        holes = []
+        for hole in self.holes:
+            if not (("X" in hole.header) and ("Y" in hole.header)):
+                continue
+            if hole.header.XY["X"] in xrange and hole.header.XY["Y"] in yrange:
+                holes.append(hole)
+        return Holes(holes)
 
-    def read(self, path, encoding="utf-8", use_glob=False, extension=None, robust_read=False):
-        """
-        Paramaters
-        ----------
-        path : str, optional, default None
-            path to read data (file / folder / glob statement, see use_glob)
-        encoding : str, optional, default 'utf-8'
-            file encoding, if 'utf-8' fails, code will try to use 'latin-1'
-        use_glob : bool, optional, default False
-            path is a glob string
-        extension : bool, optional, default None
-        robust_read : bool, optional, default False
-            Enable reading ill-defined holes
-        """
-        holes = _read(
-            path, encoding=encoding, use_glob=use_glob, extension=extension, robust_read=robust_read
-        )
-        self.holes.add_holes(holes)
+    def _filter_surveys(self, survey_abbreviation):
+        """Slice object by survey abbreviation"""
+        holes = []
+        for hole in self.holes:
+            if (
+                ("TT" in hole.header)
+                and ("Survey abbreviation" in hole.header.TT)
+                and (hole.header.TT["Survey abbreviation"] == survey_abbreviation)
+            ):
+                holes.append(hole)
+        return Holes(holes)
+
+    def _filter_date(self, start=None, end=None):
+        """Filter object by datetime"""
+
+        if start is None and end is None:
+            return Holes(self.holes)
+
+        holes = []
+        for hole in self.holes:
+            if ("XY" in hole.header) and ("Date" in hole.header["XY"]):
+                date = hole.header["XY"]["Date"]
+                sbool = (date >= start) if start is not None else True
+                ebool = (date <= end) if end is not None else True
+                if sbool and ebool:
+                    holes.append(hole)
+        return Holes(holes)
+
+    def value_counts(self):
+        counts = {}
+        for hole in self.holes:
+            if ("TT" in hole.header) and ("Survey abbreviation" in hole.header["TT"]):
+                value = hole.header.TT["Survey abbreviation"]
+                if value not in counts:
+                    counts[value] = 0
+                counts[value] += 1
+            else:
+                if "Missing survey abbreviation" not in counts:
+                    counts["Missing survey abbreviation"] = 0
+                counts["Missing survey abbreviation"] += 1
+        return counts
+
+    def drop_duplicates(self):
+        """TODO:
+        Check if hole headers/datas are unique; drop duplicates"""
+        raise NotImplementedError
 
     @property
     def dataframe(self):
         """Create pandas.DataFrame
         """
-        return self._get_dataframe(update=None)
+        return self._get_dataframe()
 
-    def _get_dataframe(self, update=None):
-        """
-        Get pandas.DataFrame. Creates a new pandas.DataFrame if it doesn't exists of update is True
-
-        Paramaters
-        ----------
-        update : None or bool, optional, default None
-            None
-                Return earlier pandas.DataFrame if it exists and adds automatically new data
-            False
-                Return earlier pandas.DataFrame if it exists
-            True
-                Calculate a new pandas.DataFrame
-        """
-        if hasattr(self, "holes"):
-
-            if hasattr(self, "_dataframe") and update == False:
-                pass
-                # return ._dataframe end of this if
-            elif hasattr(self, "_dataframe") and update is None:
-                new_dfs = [hole.dataframe for hole in self.holes if not hasattr(hole, "_dataframe")]
-                if new_dfs:
-                    df_list = [self._dataframe]
-                    df_list.extend(new_dfs)
-                    self._dataframe = concat(df_list)
-            else:
-                # TODO: Make this smarter
-                if self._lowmemory:
-                    tmp_df = DataFrame()
-                    for hole in self.holes:
-                        hole_df = hole._get_dataframe(update=True).copy()
-                        tmp_df = concat((tmp_df, hole_df), axis=0)
-                        del hole._dataframe, hole_df
-                        collect()
-                    self._dataframe = tmp_df
-                else:
-                    df_list = [hole._get_dataframe(update=True) for hole in self.holes]
-                    self._dataframe = concat(df_list)
-            return self._dataframe
+    def _get_dataframe(self):
+        if not self.holes:
+            return pd.DataFrame()
+        elif self._lowmemory:
+            tmp_df = DataFrame()
+            for hole in self.holes:
+                hole_df = hole._get_dataframe(update=True).copy()
+                tmp_df = concat((tmp_df, hole_df), axis=0, sort=False)
+                del hole._dataframe, hole_df
+                collect()
+            self._dataframe = tmp_df
         else:
-            raise HolesNotFoundError()
+            df_list = [hole._get_dataframe(update=True) for hole in self.holes]
+            self._dataframe = concat(df_list, axis=0, sort=False)
+        return self._dataframe
 
     def to_csv(self, path, **kwargs):
         """
