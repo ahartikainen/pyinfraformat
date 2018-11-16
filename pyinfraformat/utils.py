@@ -2,13 +2,13 @@ def info_fi():
     """
     Print class info in Finnish, infraformaatti 2.3
     
-    Main site: http://www.getunderground.fi/web/page.aspx?refid=11
-    Link to file: http://www.getunderground.fi/getfile.ashx?cid=72843&cc=3&refid=19
+    Main site: http://www.citygeomodel.fi/
+    Link to file: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
     """
 
     helper_str = """    tiedot kerätty infraformaatti 2.3
-        Pääsivu: http://www.getunderground.fi/web/page.aspx?refid=11
-        Linkki tiedostoon: http://www.getunderground.fi/getfile.ashx?cid=72843&cc=3&refid=19
+        Pääsivu: http://www.citygeomodel.fi/
+        Linkki tiedostoon: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
         
     LYHENTEET:
         i    kokonaisluku
