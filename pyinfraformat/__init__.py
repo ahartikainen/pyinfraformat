@@ -1,15 +1,16 @@
-from core import *
-from parser import *
-from io import *
-from plot import *
-from utils import *
+from .core import *
+from .parser import *
+from .io import *
+from .plot import *
+from .utils import *
+import logging
 
 logger = logging.getLogger("pyinfraformat")
 
 if not logging.root.handlers:
     handler = logging.StreamHandler()
-    _log.setLevel(logging.INFO)
-    _log.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
 
 
 def print_info(language="fi"):

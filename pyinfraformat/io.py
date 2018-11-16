@@ -1,7 +1,8 @@
-import logging
 from collections import Counter
+from glob import glob
+import logging
+import os
 from .parser import read, identifiers
-from .core import Holes
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -32,25 +33,7 @@ def from_infraformat(path, encoding="utf-8", verbose=False, extension=None, robu
     robust_read : bool, optional, default False
         Enable reading ill-defined holes
     """
-    holes = read(path, encoding, verbose, extension, robust_read)
-    return Holes(holes)
-
-
-def read(path, encoding="utf-8", verbose=False, extension=None, robust_read=False):
-    """Read inframodel file(s)
-
-    Paramaters
-    ----------
-    path : str, optional, default None
-        path to read data (file / folder / glob statement)
-    encoding : str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
-    use_glob : bool, optional, default False
-        path is a glob string
-    extension : bool, optional, default None
-    robust_read : bool, optional, default False
-        Enable reading ill-defined holes
-    """
+    from .core import Holes
     if os.path.isdir(path):
         if extension is None:
             filelist = glob(os.path.join(path, "*"))
@@ -97,7 +80,7 @@ def read(path, encoding="utf-8", verbose=False, extension=None, robust_read=Fals
             holes = read(filepath, encoding=encoding, verbose=verbose)
             hole_list.extend(holes)
 
-    return hole_list
+    return Holes(hole_list)
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None):

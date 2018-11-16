@@ -1,3 +1,4 @@
+import pandas as pd
 from gc import collect
 import logging
 
@@ -22,7 +23,7 @@ class Holes:
     Container for multiple infraformat hole information.
     """
 
-    def __init__(self, holes, lowmemory=False):
+    def __init__(self, holes=None, lowmemory=False):
         """Container for multiple infraformat hole information.
 
         Parameters
@@ -41,9 +42,11 @@ class Holes:
         self.holes.extend(holes)
 
     def __str__(self):
-        msg = f"Infraformat Holes object:\n  Total of {len(self.holes)} holes"
+        msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
+        value_counts = self.value_counts()
+        max_length = max([len(str(values)) for values in value_counts.values()])+1
         counts = "\n".join(
-            f"    -{key}: {value}" for key, value in dict(self.value_counts()).items()
+            "    - {key} ...{value:.>7}".format(key=key, value=("{:>" + f"{max_length}" +"}").format(value)) for key, value in value_counts.items()
         )
         msg = "\n".join((msg, counts))
         return msg
@@ -69,50 +72,62 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
-    def filter_holes(by="coordinates", **kwargs):
-        """filter_coordinates(bbox)
-        filter_surveys(survey_abbreviation)
-        filter_date(start=None, end=None)
-
-        bbox : left, right, bottom, top
+    def filter_holes(self, by="coordinates", bbox=None, type=None, start=None, end=None, **kwargs):
+        """Filter holes
 
         Parameters
         ----------
         by : str {'coordinate', 'survey', 'date'}
+
+        Returns
+        -------
+
+        _filter_coordinates(bbox, **kwargs)
+        _filter_type(type, **kwargs)
+        _filter_date(start=None, end=None, **kwargs)
+
+        bbox : left, right, bottom, top
+
+
         """
         if by == "coordinates":
-            self._filter_coordinates(**kwargs)
-        elif by == "survey":
-            self._filter_surveys(**kwargs)
+            filtered_holes = self._filter_coordinates(bbox, **kwargs)
+        elif by == "type":
+            filtered_holes = self._filter_type(type, **kwargs)
         elif by == "date":
-            self._filter_date(**kwargs)
+            filtered_holes = self._filter_date(start, end, **kwargs)
+        return filtered_holes
 
-    def _filter_coordinates(self, bbox):
+    def _filter_coordinates(self, bbox, **kwargs):
         """Filter object by coordinates"""
         xmin, xmax, ymin, ymax = bbox
         xrange = range(xmin, xmax)
         yrange = range(ymin, ymax)
         holes = []
         for hole in self.holes:
-            if not (("X" in hole.header) and ("Y" in hole.header)):
+            if not (hasattr(hole.header, "X") and hasattr(hole.header, "Y")):
                 continue
             if hole.header.XY["X"] in xrange and hole.header.XY["Y"] in yrange:
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_surveys(self, survey_abbreviation):
-        """Slice object by survey abbreviation"""
+    def _filter_type(self, type, **kwargs):
+        """Filter object by survey abbreviation (type)"""
         holes = []
+        if type is None:
+            Holes(self.holes)
+        if isinstance(type, str):
+            type = [type]
         for hole in self.holes:
             if (
-                ("TT" in hole.header)
+                hasattr(hole.header, "TT")
                 and ("Survey abbreviation" in hole.header.TT)
-                and (hole.header.TT["Survey abbreviation"] == survey_abbreviation)
+                and any(item == hole.header.TT["Survey abbreviation"] for item in type)
             ):
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_date(self, start=None, end=None):
+    def _filter_date(self, start=None, end=None, **kwargs):
         """Filter object by datetime"""
 
         if start is None and end is None:
@@ -120,8 +135,8 @@ class Holes:
 
         holes = []
         for hole in self.holes:
-            if ("XY" in hole.header) and ("Date" in hole.header["XY"]):
-                date = hole.header["XY"]["Date"]
+            if hasattr(hole.header, "XY") and ("Date" in hole.header.XY):
+                date = hole.header.XY["Date"]
                 sbool = (date >= start) if start is not None else True
                 ebool = (date <= end) if end is not None else True
                 if sbool and ebool:
@@ -131,7 +146,7 @@ class Holes:
     def value_counts(self):
         counts = {}
         for hole in self.holes:
-            if ("TT" in hole.header) and ("Survey abbreviation" in hole.header["TT"]):
+            if hasattr(hole.header, "TT") and ("Survey abbreviation" in hole.header.TT):
                 value = hole.header.TT["Survey abbreviation"]
                 if value not in counts:
                     counts[value] = 0
@@ -160,13 +175,13 @@ class Holes:
             tmp_df = DataFrame()
             for hole in self.holes:
                 hole_df = hole._get_dataframe(update=True).copy()
-                tmp_df = concat((tmp_df, hole_df), axis=0, sort=False)
+                tmp_df = pd.concat((tmp_df, hole_df), axis=0, sort=False)
                 del hole._dataframe, hole_df
                 collect()
             self._dataframe = tmp_df
         else:
             df_list = [hole._get_dataframe(update=True) for hole in self.holes]
-            self._dataframe = concat(df_list, axis=0, sort=False)
+            self._dataframe = pd.concat(df_list, axis=0, sort=False)
         return self._dataframe
 
     def to_csv(self, path, **kwargs):
@@ -198,7 +213,7 @@ class Holes:
         path : str
             path to save data
         split : bool
-            save files in invidual files
+            save in invidual files
         namelist : list
             filenames for each file
             valid only if split is True

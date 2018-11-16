@@ -484,7 +484,7 @@ class Hole:
         from pprint import pformat
 
         d = pformat(self.header.__dict__)
-        return f"Infraformat Hole object:\n  {d}"
+        return f"Infraformat Hole -object:\n  {d}"
 
     def __repr__(self):
         return self.__str__()
@@ -557,17 +557,20 @@ class FileHeader:
     def __repr__(self):
         return self.__str__()
 
+    def __getitem__(self, attr):
+        return getattr(self.holes, attr)
+
 
 class Header:
     def __init__(self):
         self.keys = set()
 
     def add(self, key, values):
-        if key == "XY" and "Date" in values:
+        if key == "XY" and hasattr(values, "Date"):
             if len(values["Date"]) == 6:
-                date = datetime.strptime(values["Date"], "%y%m%d")
+                date = datetime.strptime(values["Date"], "%d%m%y")
             elif len(values["Date"]) == 8:
-                date = datetime.strptime(values["Date"], "%Y%m%d")
+                date = datetime.strptime(values["Date"], "%d%m%Y")
             else:
                 try:
                     date = pd.to_datetime(values["Date"])
@@ -576,6 +579,9 @@ class Header:
             values["Date"] = date
         setattr(self, key, values)
         self.keys.add(key)
+
+    def __getitem__(self, attr):
+        return getattr(self.holes, attr)
 
 
 class InlineComment:
