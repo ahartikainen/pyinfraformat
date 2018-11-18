@@ -245,7 +245,9 @@ class Holes:
             use_format = False
             if namelist is None:
                 if not "{}" in path:
-                    raise ValueError("Use either a \{\} or a namelist for filenames")
+                    msg = "Use either a {} or a namelist for filenames"
+                    logger.critical(msg)
+                    raise ValueError(msg)
                 use_format = True
             else:
                 assert len(namelist) == len(self.holes)
