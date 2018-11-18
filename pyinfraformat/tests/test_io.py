@@ -44,4 +44,10 @@ def test_output():
             if len(holes.holes) > 0:
                 here = os.path.dirname(os.path.abspath(__file__))
                 output_path = os.path.join(here, "data", "test_output.csv")
+                if os.path.exists(output_path):
+                    os.remove(output_path)
+                assert not os.path.exists(output_path)
                 holes.to_csv(output_path)
+                assert os.path.exists(output_path)
+                os.remove(output_path)
+                assert not os.path.exists(output_path)
