@@ -18,7 +18,7 @@ class PathNotFound(Exception):
         return repr(self.msg)
 
 
-def from_infraformat(path, encoding="utf-8", verbose=False, extension=None, robust_read=False):
+def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None, robust_read=False):
     """Read inframodel file(s)
 
     Paramaters
@@ -32,8 +32,14 @@ def from_infraformat(path, encoding="utf-8", verbose=False, extension=None, robu
     extension : bool, optional, default None
     robust_read : bool, optional, default False
         Enable reading ill-defined holes
+
+    Returns
+    -------
+    Holes -object
     """
     from .core import Holes
+    if path is None or not len(path):
+        return Holes()
     if os.path.isdir(path):
         if extension is None:
             filelist = glob(os.path.join(path, "*"))

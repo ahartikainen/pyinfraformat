@@ -1,6 +1,8 @@
 import pandas as pd
+from datetime import datetime
 from gc import collect
 import logging
+import os
 
 from .parser import identifiers
 from .io import from_infraformat, to_infraformat
@@ -44,11 +46,12 @@ class Holes:
     def __str__(self):
         msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
         value_counts = self.value_counts()
-        max_length = max([len(str(values)) for values in value_counts.values()])+1
-        counts = "\n".join(
-            "    - {key} ...{value:.>7}".format(key=key, value=("{:>" + f"{max_length}" +"}").format(value)) for key, value in value_counts.items()
-        )
-        msg = "\n".join((msg, counts))
+        if len(self.holes):
+            max_length = max([len(str(values)) for values in value_counts.values()])+1
+            counts = "\n".join(
+                "    - {key} ...{value:.>7}".format(key=key, value=("{:>" + f"{max_length}" +"}").format(value)) for key, value in value_counts.items()
+            )
+            msg = "\n".join((msg, counts))
         return msg
 
     def __repr__(self):
@@ -72,7 +75,7 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
-    def filter_holes(self, by="coordinates", bbox=None, type=None, start=None, end=None, **kwargs):
+    def filter_holes(self, by="coordinates", *, bbox=None, type=None, start=None, end=None, fmt=None, **kwargs):
         """Filter holes
 
         Parameters
@@ -84,10 +87,11 @@ class Holes:
 
         _filter_coordinates(bbox, **kwargs)
         _filter_type(type, **kwargs)
-        _filter_date(start=None, end=None, **kwargs)
+        _filter_date(start=None, end=None, fmt=None, **kwargs)
 
         bbox : left, right, bottom, top
 
+        start, end -fmt: yyyy-mm-dd
 
         """
         if by == "coordinates":
@@ -100,6 +104,8 @@ class Holes:
 
     def _filter_coordinates(self, bbox, **kwargs):
         """Filter object by coordinates"""
+        if bbox is None:
+            return Holes(self.holes)
         xmin, xmax, ymin, ymax = bbox
         xrange = range(xmin, xmax)
         yrange = range(ymin, ymax)
@@ -113,9 +119,9 @@ class Holes:
 
     def _filter_type(self, type, **kwargs):
         """Filter object by survey abbreviation (type)"""
-        holes = []
         if type is None:
             Holes(self.holes)
+        holes = []
         if isinstance(type, str):
             type = [type]
         for hole in self.holes:
@@ -127,20 +133,33 @@ class Holes:
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_date(self, start=None, end=None, **kwargs):
+    def _filter_date(self, start=None, end=None, fmt=None, **kwargs):
         """Filter object by datetime"""
 
         if start is None and end is None:
             return Holes(self.holes)
 
+        if isinstance(start, str) and fmt is None:
+            start = pd.to_datetime(start)
+        elif isinstance(start, str) and fmt is not None:
+            start = datetime.strptime(start, fmt)
+
+        if isinstance(end, str) and fmt is None:
+            end = pd.to_datetime(end)
+        elif isinstance(end, str) and fmt is not None:
+            end = datetime.strptime(end, fmt)
+
         holes = []
         for hole in self.holes:
-            if hasattr(hole.header, "XY") and ("Date" in hole.header.XY):
-                date = hole.header.XY["Date"]
-                sbool = (date >= start) if start is not None else True
-                ebool = (date <= end) if end is not None else True
-                if sbool and ebool:
-                    holes.append(hole)
+            date = hole.header.date
+            if pd.isnull(date):
+                continue
+            if isinstance(date, str):
+                continue
+            sbool = (date >= start) if start is not None else True
+            ebool = (date <= end) if end is not None else True
+            if sbool and ebool:
+                holes.append(hole)
         return Holes(holes)
 
     def value_counts(self):
@@ -195,14 +214,18 @@ class Holes:
         """
         _, ext = os.path.splitext(path)
         if ext not in (".txt", ".csv"):
-            raise FileExtensionMissingError(": {}, use '.csv' or '.txt'".format(path))
-        with open(path, "r") as f:
+            msg = ": {}, use '.csv' or '.txt'".format(path)
+            logger.critical(msg)
+            raise FileExtensionMissing()
+        with open(path, "w") as f:
             self.dataframe.to_csv(f, **kwargs)
 
     def to_excel(self, path, **kwargs):
         _, ext = os.path.splitext(path)
         if ext not in (".xlsx", ".xls"):
-            raise FileExtensionMissingError(": {}".format(path))
+            msg = "ext not in ('.xlsx', '.xls'): {}".format(path)
+            logger.critical(msg)
+            raise FileExtensionMissing()
         with ExcelWriter(path) as writer:
             self.dataframe.to_excel(writer, **kwargs)
 

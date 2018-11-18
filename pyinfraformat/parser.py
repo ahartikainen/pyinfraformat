@@ -2,7 +2,7 @@ from glob import glob
 from datetime import datetime
 import numpy as np
 import os
-from pandas import DataFrame
+from pandas import DataFrame, NaT
 import logging
 
 logger = logging.getLogger("pyinfraformat")
@@ -533,6 +533,7 @@ class Hole:
         if not len(self._dataframe):
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:
+            self._dataframe.loc[:, "Date"] = self.header.date
             for key_, item in getattr(self.header, key).items():
                 self._dataframe.loc[:, "header_{}_{}".format(key, key_)] = item
         for key in self.fileheader.keys:
@@ -564,9 +565,10 @@ class FileHeader:
 class Header:
     def __init__(self):
         self.keys = set()
+        self.date = NaT
 
     def add(self, key, values):
-        if key == "XY" and hasattr(values, "Date"):
+        if key == "XY" and ("Date" in values):
             if len(values["Date"]) == 6:
                 date = datetime.strptime(values["Date"], "%d%m%y")
             elif len(values["Date"]) == 8:
@@ -575,8 +577,8 @@ class Header:
                 try:
                     date = pd.to_datetime(values["Date"])
                 except ValueError:
-                    date = values["Date"]
-            values["Date"] = date
+                    date = NaT
+            self.date = date
         setattr(self, key, values)
         self.keys.add(key)
 
