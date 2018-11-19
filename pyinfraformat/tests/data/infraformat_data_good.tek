@@ -1,0 +1,44 @@
+FO 2.3 Infraformat_Good
+KJ ETRS-GK25 N2000
+OM TEST
+ML TEST
+OR TEST
+TY 1
+TT PA - 0 - -
+XY - - 0 01011999 1
+AL 0 - -
+  1.00 1 1 Sa
+  1.50 2 1
+HM Water
+VH
+  2.10 100 1 Hk
+  2.75 200 1
+EM Ki
+  3.13 1000 1 Ka
+-1 KL
+TY 2
+TT PA - 0 - -
+XY - - 0 01011999 1
+AL 0 - -
+  1.00 1 1 Sa
+  1.50 2 1
+HM Water
+VH
+  2.10 100 1 Hk
+  2.75 200 1
+EM Ki
+  3.13 1000 1 Ka
+-1 KL
+TY 3
+TT PA - 0 - -
+XY - - 0 01011999 1
+AL 0 - -
+  1.00 1 1 Sa
+  1.50 2 1
+HM Water
+VH
+  2.10 100 1 Hk
+  2.75 200 1
+EM Ki
+  3.13 1000 1 Ka
+-1 KL

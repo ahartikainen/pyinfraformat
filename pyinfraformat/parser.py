@@ -1,23 +1,13 @@
 from glob import glob
-import os
-import warnings
+from datetime import datetime
 import numpy as np
-from pandas import DataFrame
+import os
+from pandas import DataFrame, NaT
+import logging
 
-warnings.simplefilter("once", UserWarning)
+logger = logging.getLogger("pyinfraformat")
 
-# def warning_on_one_line(message, category, filename, lineno, file=None, line=None):
-#    return ' {}:{}: {}:{}'.format(filename, lineno, category.__name__, message)
-
-# warnings.formatwarning = warning_on_one_line
-
-
-class PathNotFound(Exception):
-    def __init__(self):
-        self.msg = "Path not found"
-
-    def __str__(self):
-        return repr(self.msg)
+__all__ = ["identifiers"]
 
 
 def _is_number(number_str):
@@ -39,7 +29,7 @@ def custom_int(number):
             msg = (
                 "Non-integer value detected, a floating point number is returned"
             )  #: {}".format(number)
-            warnings.warn(msg)
+            logger.warning(msg)
             return float(number)
         if int(float(number)) == float(number):
             return int(float(number))
@@ -47,7 +37,7 @@ def custom_int(number):
             msg = (
                 "Non-integer value detected, a floating point number is returned"
             )  #: {}".format(number)
-            warnings.warn(msg)
+            logger.warning(msg)
             return float(number)
 
 
@@ -360,73 +350,7 @@ def identifiers():
     return result_tuple
 
 
-def read(path, encoding="utf-8", use_glob=False, verbose=False, extension=None, robust_read=False):
-    """Read inframodel file(s)
-
-    Paramaters
-    ----------
-    path : str, optional, default None
-        path to read data (file / folder / glob statement, see use_glob)
-    encoding : str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
-    use_glob : bool, optional, default False
-        path is a glob string
-    extension : bool, optional, default None
-    robust_read : bool, optional, default False
-        Enable reading ill-defined holes
-    """
-    if use_glob:
-        filelist = glob(path)
-    elif os.path.isfile(path):
-        filelist = [path]
-    elif os.path.isdir(path):
-        if extension is None:
-            filelist = glob(os.path.join(path, "*"))
-        else:
-            if not extension.startswith("."):
-                extension = ".{}".format(extension)
-            filelist = glob(os.path.join(path, "*{}".format(extension)))
-    else:
-        raise PathNotFound("{}".format(path))
-
-    hole_list = []
-    if robust_read:
-        if not hasattr(robust_read, "__iter__"):
-            # Common encoding types
-            robust_read = [
-                "utf-8",
-                "latin-1",
-                "cp1252",
-                "latin-6",
-                "latin-2",
-                "latin-3",
-                "latin-5",
-                "utf-16",
-            ]
-        for filepath in filelist:
-            try:
-                holes = _read(filepath, encoding=encoding, verbose=verbose)
-            except UnicodeDecodeError:
-                holes = []
-                for encoding_ in robust_read:
-                    if encoding_ == encoding:
-                        continue
-                    try:
-                        holes = _read(filepath, encoding=encoding_, verbose=verbose)
-                        break
-                    except (UnicodeDecodeError, UnicodeEncodeError):
-                        continue
-            if holes:
-                hole_list.extend(holes)
-    else:
-        for filepath in filelist:
-            holes = _read(filepath, encoding=encoding, verbose=verbose)
-            hole_list.extend(holes)
-
-    return hole_list
-
-
-def _read(path, encoding="utf-8", verbose=False):
+def read(path, encoding="utf-8", verbose=False):
     """Helper function for read
 
     Paramaters
@@ -556,6 +480,15 @@ class Hole:
         self.survey = Survey()
         self._illegal = Illegal()
 
+    def __str__(self):
+        from pprint import pformat
+
+        d = pformat(self.header.__dict__)
+        return f"Infraformat Hole -object:\n  {d}"
+
+    def __repr__(self):
+        return self.__str__()
+
     def add_fileheader(self, key, fileheader):
         self.fileheader.add(key, fileheader)
 
@@ -600,6 +533,7 @@ class Hole:
         if not len(self._dataframe):
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:
+            self._dataframe.loc[:, "Date"] = self.header.date
             for key_, item in getattr(self.header, key).items():
                 self._dataframe.loc[:, "header_{}_{}".format(key, key_)] = item
         for key in self.fileheader.keys:
@@ -617,14 +551,39 @@ class FileHeader:
         setattr(self, key, values)
         self.keys.add(key)
 
+    def __str__(self):
+        msg = f"FileHeader object - Fileheader contains {len(self.keys)} items"
+        return msg
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __getitem__(self, attr):
+        return getattr(self.holes, attr)
+
 
 class Header:
     def __init__(self):
         self.keys = set()
+        self.date = NaT
 
     def add(self, key, values):
+        if key == "XY" and ("Date" in values):
+            if len(values["Date"]) == 6:
+                date = datetime.strptime(values["Date"], "%d%m%y")
+            elif len(values["Date"]) == 8:
+                date = datetime.strptime(values["Date"], "%d%m%Y")
+            else:
+                try:
+                    date = pd.to_datetime(values["Date"])
+                except ValueError:
+                    date = NaT
+            self.date = date
         setattr(self, key, values)
         self.keys.add(key)
+
+    def __getitem__(self, attr):
+        return getattr(self.holes, attr)
 
 
 class InlineComment:
