@@ -1,3 +1,4 @@
+"""Core function for PyInfraformat"""
 import pandas as pd
 from datetime import datetime
 from gc import collect
@@ -10,14 +11,6 @@ from .io import from_infraformat, to_infraformat
 logger = logging.getLogger("pyinfraformat")
 
 __all__ = ["Holes"]
-
-
-class FileExtensionMissing(Exception):
-    def __init__(self):
-        self.msg = "File extension is missing"
-
-    def __str__(self):
-        return repr(self.msg)
 
 
 class Holes:
@@ -46,7 +39,7 @@ class Holes:
     def __str__(self):
         msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
         value_counts = self.value_counts()
-        if len(self.holes):
+        if self.holes:
             max_length = max([len(str(values)) for values in value_counts.values()]) + 1
             counts = "\n".join(
                 "    - {key} ...{value:.>7}".format(
@@ -79,35 +72,55 @@ class Holes:
         return Holes(self.holes + other.holes)
 
     def filter_holes(
-        self, by="coordinates", *, bbox=None, type=None, start=None, end=None, fmt=None, **kwargs
+        self,
+        by="coordinates",
+        *,
+        bbox=None,
+        hole_type=None,
+        start=None,
+        end=None,
+        fmt=None,
+        **kwargs,
     ):
-        """Filter holes
+        """Filter holes.
 
         Parameters
         ----------
         by : str {'coordinate', 'survey', 'date'}
+        bbox : tuple
+            left, right, bottom, top
+        hole_type : str
+        start : str
+            Date string. Format is either yyyy-mm-dd or `fmt`.
+        end : str
+            Date string. Format is either yyyy-mm-dd or `fmt`.
+        fmt : str
+            Date string format.
 
         Returns
         -------
+        list
+            List containing filtered holes.
 
-        _filter_coordinates(bbox, **kwargs)
-        _filter_type(type, **kwargs)
-        _filter_date(start=None, end=None, fmt=None, **kwargs)
+        Examples
+        --------
 
-        bbox : left, right, bottom, top
-
-        start, end -fmt: yyyy-mm-dd
-
+        Return types are:
+            _filter_coordinates(bbox, **kwargs)
+            _filter_type(hole_type, **kwargs)
+            _filter_date(start=None, end=None, fmt=None, **kwargs)
         """
         if by == "coordinates":
-            filtered_holes = self._filter_coordinates(bbox, **kwargs)
+            filtered_holes = self._filter_coordinates(bbox)
         elif by == "type":
-            filtered_holes = self._filter_type(type, **kwargs)
+            filtered_holes = self._filter_type(type)
         elif by == "date":
-            filtered_holes = self._filter_date(start, end, **kwargs)
+            filtered_holes = self._filter_date(start, end)
+        else:
+            raise TypeError("Argument was not valid: by={by}")
         return filtered_holes
 
-    def _filter_coordinates(self, bbox, **kwargs):
+    def _filter_coordinates(self, bbox):
         """Filter object by coordinates"""
         if bbox is None:
             return Holes(self.holes)
@@ -122,7 +135,7 @@ class Holes:
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_type(self, type, **kwargs):
+    def _filter_type(self, type):
         """Filter object by survey abbreviation (type)"""
         if type is None:
             Holes(self.holes)
@@ -138,7 +151,7 @@ class Holes:
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_date(self, start=None, end=None, fmt=None, **kwargs):
+    def _filter_date(self, start=None, end=None, fmt=None):
         """Filter object by datetime"""
 
         if start is None and end is None:

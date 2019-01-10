@@ -2,20 +2,12 @@ from collections import Counter
 from glob import glob
 import logging
 import os
+from .exceptions import PathNotFoundError
 from .parser import read, identifiers
 
 logger = logging.getLogger("pyinfraformat")
 
 __all__ = ["from_infraformat"]
-
-
-class PathNotFound(Exception):
-    def __init__(self):
-        self.msg = "Path not found"
-
-    def __str__(self):
-        logger.critical(self.msg)
-        return repr(self.msg)
 
 
 def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None, robust_read=False):
@@ -51,7 +43,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
     else:
         filelist = glob(path)
         if not len(filelist):
-            raise PathNotFound("{}".format(path))
+            raise PathNotFoundError("{}".format(path))
 
     hole_list = []
     if robust_read:

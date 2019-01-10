@@ -54,16 +54,13 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=missing-docstring,
-        no-else-return,
-        len-as-condition,
+disable=no-else-return,
         too-many-arguments,
         too-many-locals,
         too-many-branches,
         too-many-statements,
         no-self-use,
-        too-few-public-methods,
-        bad-continuation
+        bad-continuation,
 
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -237,13 +234,16 @@ good-names=i,
            j,
            k,
            t,
-           df,
-           ax,
+           n,
            x,
            y,
            z,
-           logger
-           holes
+           ax,
+           by,
+           df,
+           logger,
+           handler,
+           holes,
 
 # Include a hint for the correct naming format with invalid-name
 include-naming-hint=no
