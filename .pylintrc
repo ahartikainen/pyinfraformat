@@ -199,8 +199,7 @@ bad-names=foo,
           baz,
           toto,
           tutu,
-          tata,
-          logger,
+          tata
 
 # Naming style matching correct class attribute names
 class-attribute-naming-style=any
@@ -242,7 +241,9 @@ good-names=i,
            ax,
            x,
            y,
-           z
+           z,
+           logger
+           holes
 
 # Include a hint for the correct naming format with invalid-name
 include-naming-hint=no

@@ -1,3 +1,4 @@
+# pylint: disable=wildcard-import,invalid-name,wrong-import-position
 from .core import *
 from .parser import *
 from .io import *
