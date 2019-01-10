@@ -1,9 +1,10 @@
+""".tek -file parsing submodule."""
 from glob import glob
 from datetime import datetime
-import numpy as np
-import os
-from pandas import DataFrame, NaT
 import logging
+import os
+import numpy as np
+import pandas as pd  # pd.DataFrame, pd.NaT
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -11,6 +12,7 @@ __all__ = ["identifiers"]
 
 
 def _is_number(number_str):
+    """Test if number_str is number"""
     try:
         complex(number_str)
     except ValueError:
@@ -21,27 +23,25 @@ def _is_number(number_str):
 
 
 def custom_int(number):
+    """Test if number is integer"""
     try:
         return int(number)
     except ValueError:
         if number == "-":
             return np.nan
-            msg = (
-                "Non-integer value detected, a floating point number is returned"
-            )  #: {}".format(number)
+            msg = "Non-integer value detected, a floating point number is returned"
             logger.warning(msg)
             return float(number)
         if int(float(number)) == float(number):
             return int(float(number))
         else:
-            msg = (
-                "Non-integer value detected, a floating point number is returned"
-            )  #: {}".format(number)
+            msg = "Non-integer value detected, a floating point number is returned"
             logger.warning(msg)
             return float(number)
 
 
 def custom_float(number):
+    """Test if number is floating point number"""
     if number.strip() == "-":
         return np.nan
     else:
@@ -63,7 +63,7 @@ def identifiers():
     """
     file_header_identifiers = {
         "FO": (["Format version", "Software", "Software version"], [str, str, str]),
-        "KJ": (["Coordinate system", "Height reference"], [str, str]),
+        "KJ": (["Coordipd.NaTe system", "Height reference"], [str, str]),
     }
 
     # point specific
@@ -107,7 +107,7 @@ def identifiers():
         "EM": (["Unofficial soil type"], [str]),
         "VH": (["Water level observation"], []),
         "KK": (
-            ["Azimuth (degrees)", "Inclination (degrees)", "Diameter (mm)"],
+            ["Azimuth (degrees)", "Inclipd.NaTion (degrees)", "Diameter (mm)"],
             [custom_float, custom_float, custom_int],
         ),
     }
@@ -377,7 +377,7 @@ def read(path, encoding="utf-8", verbose=False):
                 names, dtypes = file_header_identifiers[head.upper()]
                 fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
                 fileheaders[head.upper()] = fileheader
-            # TODO: make this robust check with peek
+            # make this robust check with peek
             elif head == "-1":
                 hole_object = parse_hole(holestr_list)
                 # Add fileheaders to hole objects
@@ -463,16 +463,18 @@ def parse_hole(str_list):
                 survey["linenumber"] = linenum
                 hole.add_survey(survey)
             else:
-                # TODO: Add warning
+                # In future add warning
                 hole._add_illegal((linenum, line))
         except (ValueError, KeyError) as e:
             raise
-            # TODO: Add warning
+            # In future add warning
             hole._add_illegal((linenum, line))
     return hole
 
 
 class Hole:
+    """"Class to hold Hole information."""
+
     def __init__(self):
         self.fileheader = FileHeader()
         self.header = Header()
@@ -528,7 +530,7 @@ class Hole:
             return self._dataframe
 
         dict_list = self.survey.data
-        self._dataframe = DataFrame(dict_list)
+        self._dataframe = pd.DataFrame(dict_list)
         self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
         if not len(self._dataframe):
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
@@ -565,7 +567,7 @@ class FileHeader:
 class Header:
     def __init__(self):
         self.keys = set()
-        self.date = NaT
+        self.date = pd.NaT
 
     def add(self, key, values):
         if key == "XY" and ("Date" in values):
@@ -577,7 +579,7 @@ class Header:
                 try:
                     date = pd.to_datetime(values["Date"])
                 except ValueError:
-                    date = NaT
+                    date = pd.NaT
             self.date = date
         setattr(self, key, values)
         self.keys.add(key)

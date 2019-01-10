@@ -1,3 +1,4 @@
+"""Input and output methods."""
 from collections import Counter
 from glob import glob
 import logging
@@ -31,7 +32,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
     """
     from .core import Holes
 
-    if path is None or not len(path):
+    if path is None or not path:
         return Holes()
     if os.path.isdir(path):
         if extension is None:
@@ -42,7 +43,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
             filelist = glob(os.path.join(path, "*{}".format(extension)))
     else:
         filelist = glob(path)
-        if not len(filelist):
+        if not filelist:
             raise PathNotFoundError("{}".format(path))
 
     hole_list = []
@@ -112,6 +113,7 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None):
 
 
 def write_fileheader(data, f, fo=None, kj=None):
+    """Create fileheader format"""
     if fo is None:
         from .__init__ import __version__
 
@@ -121,7 +123,7 @@ def write_fileheader(data, f, fo=None, kj=None):
             "Software version": str(__version__),
         }
     if kj is None:
-        # TODO: add coord transformations
+        # add coord transformations
         coord = []
         height = []
         for hole in data:
@@ -152,13 +154,14 @@ def write_header(header, f):
         if hasattr(header, key):
             header_string.append(key)
             attr = getattr(header, key)
-            for key, value in attr.items():
-                if key == "linenumber":
+            for key_, value in attr.items():
+                if key_ == "linenumber":
                     continue
                 header_string.append(str(value))
             print(" ".join(header_string), file=f)
 
 
+# pylint: disable=protected-access
 def write_body(hole, f, comments=True, illegal=False):
     """
     hole : Hole object
@@ -168,6 +171,7 @@ def write_body(hole, f, comments=True, illegal=False):
     """
     body_text = {}
     # Gather survey information
+    line_dict = {}
     for line_dict in hole.survey.data:
         line_string = " ".join(
             [str(value) for key, value in line_dict.items() if key != "linenumber"]

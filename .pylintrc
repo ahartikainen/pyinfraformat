@@ -230,7 +230,8 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,
+good-names=f,
+           i,
            j,
            k,
            t,
@@ -241,6 +242,8 @@ good-names=i,
            ax,
            by,
            df,
+           fo,
+           kj,
            logger,
            handler,
            holes,
