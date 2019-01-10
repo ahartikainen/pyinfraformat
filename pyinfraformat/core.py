@@ -47,9 +47,12 @@ class Holes:
         msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
         value_counts = self.value_counts()
         if len(self.holes):
-            max_length = max([len(str(values)) for values in value_counts.values()])+1
+            max_length = max([len(str(values)) for values in value_counts.values()]) + 1
             counts = "\n".join(
-                "    - {key} ...{value:.>7}".format(key=key, value=("{:>" + f"{max_length}" +"}").format(value)) for key, value in value_counts.items()
+                "    - {key} ...{value:.>7}".format(
+                    key=key, value=("{:>" + f"{max_length}" + "}").format(value)
+                )
+                for key, value in value_counts.items()
             )
             msg = "\n".join((msg, counts))
         return msg
@@ -75,7 +78,9 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
-    def filter_holes(self, by="coordinates", *, bbox=None, type=None, start=None, end=None, fmt=None, **kwargs):
+    def filter_holes(
+        self, by="coordinates", *, bbox=None, type=None, start=None, end=None, fmt=None, **kwargs
+    ):
         """Filter holes
 
         Parameters

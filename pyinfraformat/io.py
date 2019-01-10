@@ -38,6 +38,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
     Holes -object
     """
     from .core import Holes
+
     if path is None or not len(path):
         return Holes()
     if os.path.isdir(path):
