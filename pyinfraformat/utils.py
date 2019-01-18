@@ -3,13 +3,11 @@ __all__ = []
 
 
 def info_fi():
-    """
-    Print class info in Finnish, infraformaatti 2.3
+    """Print class info in Finnish, infraformaatti 2.3.
 
     Main site: http://www.citygeomodel.fi/
     Link to file: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
     """
-
     helper_str = """    tiedot kerätty infraformaatti 2.3
         Pääsivu: http://www.citygeomodel.fi/
         Linkki tiedostoon: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
@@ -333,5 +331,4 @@ def info_fi():
             F    Seulamillimetri
             F    Läpäisyprosentti
     """
-
     return helper_str

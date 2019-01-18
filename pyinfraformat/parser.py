@@ -347,7 +347,7 @@ def identifiers():
 
 
 def read(path, encoding="utf-8"):
-    """Helper function for read.
+    """Read input data.
 
     Paramaters
     ----------
@@ -467,7 +467,7 @@ def parse_hole(str_list):
 
 
 class Hole:
-    """"Class to hold Hole information."""
+    """Class to hold Hole information."""
 
     def __init__(self):
         self.fileheader = FileHeader()
