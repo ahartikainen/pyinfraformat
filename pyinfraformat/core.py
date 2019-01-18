@@ -6,7 +6,7 @@ import os
 import pandas as pd
 
 from .exceptions import FileExtensionMissingError
-from .io import to_infraformat
+from .io import to_infraformat  # pylint: disable=cyclic-import
 
 logger = logging.getLogger("pyinfraformat")
 
