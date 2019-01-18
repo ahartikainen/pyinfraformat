@@ -47,14 +47,15 @@ def custom_float(number):
 
 
 def identifiers():
-    """ helper function to return header identifiers.
+    """Helper function to return header identifiers.
 
-        returns a tuple:
-            file_header_identifiers,
-            header_identifiers, ,
-            inline_identifiers,
-            survey_identifiers,
-
+    Returns
+    -------
+    tuple
+        file_header_identifiers,
+        header_identifiers,
+        inline_identifiers,
+        survey_identifiers,
     """
     file_header_identifiers = {
         "FO": (["Format version", "Software", "Software version"], [str, str, str]),
@@ -355,7 +356,6 @@ def read(path, encoding="utf-8"):
     encoding : str, optional, default 'utf-8'
         file encoding, if 'utf-8' fails, code will try to use 'latin-1'
     """
-
     file_header_identifiers, *_ = identifiers()
 
     fileheaders = {}
@@ -398,7 +398,7 @@ def read(path, encoding="utf-8"):
 
 
 def parse_hole(str_list):
-    """Function parse inframodel lines to hole objects.
+    """Parse inframodel lines to hole objects.
 
     Paramaters
     ----------
@@ -511,8 +511,9 @@ class Hole:
         return self._get_dataframe(update=False)
 
     def _get_dataframe(self, update=False):
-        """
-        Get pandas.DataFrame. Creates a new pandas.DataFrame if it doesn't exists of update is True
+        """Get pandas.DataFrame object.
+
+        Creates a new pandas.DataFrame if it doesn't exists of update is True
 
         Paramaters
         ----------
