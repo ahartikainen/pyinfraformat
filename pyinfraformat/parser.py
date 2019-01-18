@@ -10,7 +10,7 @@ __all__ = ["identifiers"]
 
 
 def _is_number(number_str):
-    """Test if number_str is number"""
+    """Test if number_str is number."""
     try:
         complex(number_str)
     except ValueError:
@@ -21,7 +21,7 @@ def _is_number(number_str):
 
 
 def custom_int(number):
-    """Test if number is integer"""
+    """Test if number is integer."""
     try:
         return int(number)
     except ValueError:
@@ -36,7 +36,7 @@ def custom_int(number):
 
 
 def custom_float(number):
-    """Test if number is floating point number"""
+    """Test if number is floating point number."""
     if number.strip() == "-":
         return np.nan
     else:
@@ -47,7 +47,7 @@ def custom_float(number):
 
 
 def identifiers():
-    """ helper function to return header identifiers
+    """ helper function to return header identifiers.
 
         returns a tuple:
             file_header_identifiers,
@@ -346,7 +346,7 @@ def identifiers():
 
 
 def read(path, encoding="utf-8"):
-    """Helper function for read
+    """Helper function for read.
 
     Paramaters
     ----------
@@ -398,7 +398,7 @@ def read(path, encoding="utf-8"):
 
 
 def parse_hole(str_list):
-    """Function parse inframodel lines to hole objects
+    """Function parse inframodel lines to hole objects.
 
     Paramaters
     ----------

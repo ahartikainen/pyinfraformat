@@ -12,7 +12,7 @@ __all__ = ["from_infraformat"]
 
 
 def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=False):
-    """Read inframodel file(s)
+    """Read inframodel file(s).
 
     Paramaters
     ----------
@@ -84,7 +84,8 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None):
-    """
+    """Export data to infraformat.
+
     Parameters
     ----------
     data : list
@@ -104,7 +105,6 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None):
             'Height reference', default mode(data)
         default mode of the holes
     """
-
     with open(path, mode="w") as f:
         write_fileheader(data, f, fo=fo, kj=kj)
         for hole in data:
@@ -113,7 +113,17 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None):
 
 
 def write_fileheader(data, f, fo=None, kj=None):
-    """Create fileheader format"""
+    """Write fileheader format out.
+
+    Parameters
+    ----------
+    data : Infraformat
+    f : fileobject
+    fo : dict, optional
+        Dictionary for fileformat, software and software version.
+    kj : dict, optional
+        Dictionary for Coordinate system and Height reference.
+    """
     if fo is None:
         from .__init__ import __version__
 
@@ -142,8 +152,11 @@ def write_fileheader(data, f, fo=None, kj=None):
 
 
 def write_header(header, f):
-    """
-    header : header object
+    """Write header format out.
+
+    Parameters
+    ----------
+    header : Header object
     f : fileobject
     """
     header_keys = list(identifiers()[1].keys())
@@ -163,7 +176,10 @@ def write_header(header, f):
 
 # pylint: disable=protected-access
 def write_body(hole, f, comments=True, illegal=False):
-    """
+    """Write data out.
+
+    Parameters
+    ----------
     hole : Hole object
     f : fileobject
     comments : bool

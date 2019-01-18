@@ -14,9 +14,7 @@ __all__ = ["Holes"]
 
 
 class Holes:
-    """
-    Container for multiple infraformat hole information.
-    """
+    """Container for multiple infraformat hole information."""
 
     def __init__(self, holes=None, lowmemory=False):
         """Container for multiple infraformat hole information.
@@ -125,7 +123,6 @@ class Holes:
             by="date", start="05/15/15", end="08/06/16", fmt="%x"
         )
 
-
         Return types are from:
             _filter_coordinates(bbox, **kwargs)
             _filter_type(hole_type, **kwargs)
@@ -174,7 +171,6 @@ class Holes:
 
     def _filter_date(self, start=None, end=None, fmt=None):
         """Filter object by datetime."""
-
         if start is None and end is None:
             return Holes(self.holes)
 
