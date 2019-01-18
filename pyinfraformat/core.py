@@ -1,4 +1,4 @@
-"""Core function for PyInfraformat"""
+"""Core function for PyInfraformat."""
 from datetime import datetime
 from gc import collect
 import logging
@@ -34,7 +34,7 @@ class Holes:
         self.n = None
 
     def add_holes(self, holes):
-        """Add list of holes to class"""
+        """Add list of holes to class."""
         self.holes.extend(holes)
 
     def __str__(self):
@@ -109,7 +109,6 @@ class Holes:
 
         Examples
         --------
-
         filtered_holes = holes_object.filter_holes(
             by="coordinate", bbox=(24,25,60,61)
         )
@@ -143,7 +142,7 @@ class Holes:
         return filtered_holes
 
     def _filter_coordinates(self, bbox):
-        """Filter object by coordinates"""
+        """Filter object by coordinates."""
         if bbox is None:
             return Holes(self.holes)
         xmin, xmax, ymin, ymax = bbox
@@ -158,7 +157,7 @@ class Holes:
         return Holes(holes)
 
     def _filter_type(self, hole_type):
-        """Filter object by survey abbreviation (type)"""
+        """Filter object by survey abbreviation (type)."""
         if hole_type is None:
             Holes(self.holes)
         holes = []
@@ -174,7 +173,7 @@ class Holes:
         return Holes(holes)
 
     def _filter_date(self, start=None, end=None, fmt=None):
-        """Filter object by datetime"""
+        """Filter object by datetime."""
 
         if start is None and end is None:
             return Holes(self.holes)
@@ -250,7 +249,7 @@ class Holes:
         Paramaters
         ----------
         path : str
-        wargs
+        kwargs
             Passed to `pandas.DataFrame.to_csv` function.
         """
         _, ext = os.path.splitext(path)
@@ -267,7 +266,7 @@ class Holes:
         Paramaters
         ----------
         path : str
-        wargs
+        kwargs
             Passed to `pandas.DataFrame.to_csv` function.
         """
         _, ext = os.path.splitext(path)

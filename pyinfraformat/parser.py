@@ -530,7 +530,7 @@ class Hole:
         dict_list = self.survey.data
         self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
         self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
-        if not self._dataframe:
+        if not self._dataframe.empty:
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:
             self._dataframe.loc[:, "Date"] = self.header.date
