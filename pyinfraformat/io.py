@@ -11,7 +11,7 @@ logger = logging.getLogger("pyinfraformat")
 __all__ = ["from_infraformat"]
 
 
-def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None, robust_read=False):
+def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=False):
     """Read inframodel file(s)
 
     Paramaters
@@ -30,7 +30,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
     -------
     Holes -object
     """
-    from .core import Holes
+    from .core import Holes  # pylint: disable=cyclic-import
 
     if path is None or not path:
         return Holes()
@@ -62,14 +62,14 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
             ]
         for filepath in filelist:
             try:
-                holes = read(filepath, encoding=encoding, verbose=verbose)
+                holes = read(filepath, encoding=encoding)
             except UnicodeDecodeError:
                 holes = []
                 for encoding_ in robust_read:
                     if encoding_ == encoding:
                         continue
                     try:
-                        holes = read(filepath, encoding=encoding_, verbose=verbose)
+                        holes = read(filepath, encoding=encoding_)
                         break
                     except (UnicodeDecodeError, UnicodeEncodeError):
                         continue
@@ -77,7 +77,7 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
                 hole_list.extend(holes)
     else:
         for filepath in filelist:
-            holes = read(filepath, encoding=encoding, verbose=verbose)
+            holes = read(filepath, encoding=encoding)
             hole_list.extend(holes)
 
     return Holes(hole_list)

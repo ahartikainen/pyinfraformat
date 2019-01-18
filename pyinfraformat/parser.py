@@ -1,8 +1,6 @@
 """.tek -file parsing submodule."""
-from glob import glob
 from datetime import datetime
 import logging
-import os
 import numpy as np
 import pandas as pd  # pd.DataFrame, pd.NaT
 
@@ -29,9 +27,6 @@ def custom_int(number):
     except ValueError:
         if number == "-":
             return np.nan
-            msg = "Non-integer value detected, a floating point number is returned"
-            logger.warning(msg)
-            return float(number)
         if int(float(number)) == float(number):
             return int(float(number))
         else:
@@ -350,7 +345,7 @@ def identifiers():
     return result_tuple
 
 
-def read(path, encoding="utf-8", verbose=False):
+def read(path, encoding="utf-8"):
     """Helper function for read
 
     Paramaters
@@ -381,7 +376,7 @@ def read(path, encoding="utf-8", verbose=False):
             elif head == "-1":
                 hole_object = parse_hole(holestr_list)
                 # Add fileheaders to hole objects
-                if len(fileheaders):
+                if fileheaders:
                     for key, value in fileheaders.items():
                         hole_object.add_fileheader(key, value)
                 if tail:
@@ -391,11 +386,11 @@ def read(path, encoding="utf-8", verbose=False):
             else:
                 holestr_list.append((linenumber, line.strip()))
         # check incase that '-1' is not the last line
-        if len(holestr_list):
+        if holestr_list:
             hole_object = parse_hole(holestr_list)
-            if len(fileheaders):
-                for key, value in fileheaders:
-                    hole_object.add_fileheader(key)
+            if fileheaders:
+                for key, value in fileheaders.items():
+                    hole_object.add_fileheader(key, value)
             holes.append(hole_object)
             holestr_list = []
 
@@ -464,11 +459,10 @@ def parse_hole(str_list):
                 hole.add_survey(survey)
             else:
                 # In future add warning
-                hole._add_illegal((linenum, line))
-        except (ValueError, KeyError) as e:
-            raise
+                hole._add_illegal((linenum, line))  # pylint: disable=protected-access
+        except (ValueError, KeyError):
             # In future add warning
-            hole._add_illegal((linenum, line))
+            hole._add_illegal((linenum, line))  # pylint: disable=protected-access
     return hole
 
 
@@ -485,31 +479,35 @@ class Hole:
     def __str__(self):
         from pprint import pformat
 
-        d = pformat(self.header.__dict__)
-        return f"Infraformat Hole -object:\n  {d}"
+        msg = pformat(self.header.__dict__)
+        return f"Infraformat Hole -object:\n  {msg}"
 
     def __repr__(self):
         return self.__str__()
 
     def add_fileheader(self, key, fileheader):
+        """Add fileheader to object."""
         self.fileheader.add(key, fileheader)
 
     def add_header(self, key, header):
+        """Add header to object."""
         self.header.add(key, header)
 
     def add_inline_comment(self, key, comment):
+        """Add inline comment to object."""
         self.inline_comment.add(key, comment)
 
     def add_survey(self, survey):
+        """Add survey information to object."""
         self.survey.add(survey)
 
     def _add_illegal(self, illegal):
+        """Add illegal lines to object."""
         self._illegal.add(illegal)
 
     @property
     def dataframe(self):
-        """Create pandas.DataFrame
-        """
+        """Create pandas.DataFrame."""
         return self._get_dataframe(update=False)
 
     def _get_dataframe(self, update=False):
@@ -526,13 +524,13 @@ class Hole:
             True
                 Calculate a new pandas.DataFrame
         """
-        if hasattr(self, "_dataframe") and update == False:
-            return self._dataframe
+        if hasattr(self, "_dataframe") and not update:
+            return self._dataframe  # pylint: disable=access-member-before-definition
 
         dict_list = self.survey.data
-        self._dataframe = pd.DataFrame(dict_list)
+        self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
         self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
-        if not len(self._dataframe):
+        if not self._dataframe:
             self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:
             self._dataframe.loc[:, "Date"] = self.header.date
@@ -546,10 +544,13 @@ class Hole:
 
 
 class FileHeader:
+    """Class to hold file header information."""
+
     def __init__(self):
         self.keys = set()
 
     def add(self, key, values):
+        """Add member to class."""
         setattr(self, key, values)
         self.keys.add(key)
 
@@ -561,15 +562,22 @@ class FileHeader:
         return self.__str__()
 
     def __getitem__(self, attr):
-        return getattr(self.holes, attr)
+        if attr in self.keys:
+            return getattr(self, attr)
+        else:
+            raise TypeError("Attribute not found: {}".format(attr))
 
 
+# pylint: disable=too-few-public-methods
 class Header:
+    """Class to hold header information."""
+
     def __init__(self):
         self.keys = set()
         self.date = pd.NaT
 
     def add(self, key, values):
+        """Add header items to object."""
         if key == "XY" and ("Date" in values):
             if len(values["Date"]) == 6:
                 date = datetime.strptime(values["Date"], "%d%m%y")
@@ -585,28 +593,52 @@ class Header:
         self.keys.add(key)
 
     def __getitem__(self, attr):
-        return getattr(self.holes, attr)
+        if attr in self.keys:
+            return getattr(self, attr)
+        else:
+            raise TypeError("Attribute not found: {}".format(attr))
 
 
+# pylint: disable=too-few-public-methods
 class InlineComment:
+    """Class to inline comments."""
+
     def __init__(self):
         self.data = list()
 
     def add(self, key, values):
+        """Add inline comments to object."""
         self.data.append((key, values))
 
+    def __getitem__(self, attr):
+        return self.data[attr]
 
+
+# pylint: disable=too-few-public-methods
 class Survey:
+    """Class to survey information."""
+
     def __init__(self):
         self.data = list()
 
     def add(self, values):
+        """Add survey information to object."""
         self.data.append(values)
 
+    def __getitem__(self, attr):
+        return self.data[attr]
 
+
+# pylint: disable=too-few-public-methods
 class Illegal:
+    """Class to contain illegal lines."""
+
     def __init__(self):
         self.data = list()
 
     def add(self, values):
+        """Add illegal lines to object."""
         self.data.append(values)
+
+    def __getitem__(self, attr):
+        return self.data[attr]

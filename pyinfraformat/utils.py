@@ -1,3 +1,4 @@
+"""General information concerning Finnish Infraformat."""
 __all__ = []
 
 

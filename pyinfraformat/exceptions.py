@@ -13,6 +13,7 @@ class FileExtensionMissingError(Exception):
 class PathNotFoundError(Exception):
     """Exception class for invalid path"""
 
-    self.message = message
-    self.errors = errors
-    super(PathNotFoundError, self).__init__(message)
+    def __init__(self, message, errors=None):
+        self.message = message
+        self.errors = errors
+        super(PathNotFoundError, self).__init__(message)
