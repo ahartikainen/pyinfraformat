@@ -1,2 +1,2 @@
 # pylint: disable=wildcard-import
-"""Plotting functionality"""
+"""Plotting functionality."""
