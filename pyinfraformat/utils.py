@@ -7,6 +7,17 @@ __all__ = ["identifiers", "print_info"]
 logger = logging.getLogger("pyinfraformat")
 
 
+def is_number(number_str):
+    """Test if number_str is number including infraformat logic."""
+    try:
+        complex(number_str)
+    except ValueError:
+        if number_str == "-":
+            return True
+        return False
+    return True
+
+
 def custom_int(number):
     """Test if number is integer."""
     try:

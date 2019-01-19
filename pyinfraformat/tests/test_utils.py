@@ -1,7 +1,25 @@
 import numpy as np
 import pytest
 
-from pyinfraformat.utils import print_info, info_fi, custom_int, custom_float
+from pyinfraformat.utils import is_number, print_info, info_fi, custom_int, custom_float
+
+
+@pytest.mark.parametrize(
+    "nums",
+    [
+        (1, True),
+        ("1", True),
+        ("1.1", True),
+        ("1j", True),
+        ("1.j", True),
+        ("-", True),
+        ("a", False),
+        ("1a", False),
+    ],
+)
+def test_is_number(nums):
+    num, bool_ = nums
+    assert is_number(num) is bool_
 
 
 @pytest.mark.parametrize("language", ["fi", "Fi", "FI", "fI"])

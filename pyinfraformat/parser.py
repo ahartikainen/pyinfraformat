@@ -4,22 +4,11 @@ import logging
 import numpy as np
 import pandas as pd
 
-from .utils import identifiers
+from .utils import identifiers, _is_number
 
 logger = logging.getLogger("pyinfraformat")
 
-__all__ = ["identifiers"]
-
-
-def _is_number(number_str):
-    """Test if number_str is number."""
-    try:
-        complex(number_str)
-    except ValueError:
-        if number_str == "-":
-            return True
-        return False
-    return True
+__all__ = []
 
 
 def read(path, encoding="utf-8"):
