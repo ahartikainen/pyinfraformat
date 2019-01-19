@@ -1,4 +1,4 @@
-from ..utils import print_info, _info_fi, custom_int, custom_float
+from pyinfraformat.utils import print_info, _info_fi, custom_int, custom_float
 import pytest
 
 
