@@ -451,7 +451,7 @@ def info_fi():
         PISTEKOHTAISET
         OM: Tiedon omistaja
             t   Nimi
-        ML: Maa- tai kalliolajiluokitus
+        ML: Maa- tai kalliolajiluokitus (SFS-EN ISO 14688-2)
             t   Nimi
         OR: Tutkimusorganisaatio
             t   Nimi
