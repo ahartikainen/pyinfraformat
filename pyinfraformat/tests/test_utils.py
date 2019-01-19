@@ -60,7 +60,7 @@ def test_custom_float(nums):
     assert not np.isnan(custom_integer)
 
 
-@pytest.mark.parametrize("nums", ["-", "nan", "NaN", "NA", "test", "string", "1.2a"])
+@pytest.mark.parametrize("num", ["-", "nan", "NaN", "NA", "test", "string", "1.2a"])
 def test_custom_float_bad(num):
     custom_floating = custom_float(num)
     assert isinstance(custom_floating, float)
