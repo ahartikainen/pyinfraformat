@@ -1,5 +1,7 @@
-from pyinfraformat.utils import print_info, info_fi, custom_int, custom_float
+import numpy as np
 import pytest
+
+from pyinfraformat.utils import print_info, info_fi, custom_int, custom_float
 
 
 @pytest.mark.parametrize("language", ["fi", "Fi", "FI", "fI"])
