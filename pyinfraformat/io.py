@@ -4,8 +4,8 @@ from glob import glob
 import logging
 import os
 from .exceptions import PathNotFoundError
-from .parser import read  # pylint: disable=cyclic-import
-from .utils import identifiers  # pylint: disable=cyclic-import
+from .parser import read
+from .utils import identifiers
 
 logger = logging.getLogger("pyinfraformat")
 

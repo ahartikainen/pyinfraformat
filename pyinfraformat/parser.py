@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from .utils import identifiers, _is_number
+from .utils import identifiers, is_number
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -106,7 +106,7 @@ def parse_hole(str_list):
                 }
                 inline_comment["linenumber"] = linenum
                 hole.add_inline_comment(head, inline_comment)
-            elif _is_number(head) and survey_type:
+            elif is_number(head) and survey_type:
                 if survey_type != "HP":
                     names, dtypes = survey_identifiers[survey_type]
                     line = line.split(maxsplit=len(dtypes))
