@@ -6,7 +6,6 @@ import os
 import pandas as pd
 
 from .exceptions import FileExtensionMissingError
-from .io import to_infraformat  # pylint: disable=cyclic-import
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -286,6 +285,8 @@ class Holes:
             filenames for each file
             valid only if split is True
         """
+        from .io import to_infraformat  # pylint: disable=cyclic-import
+
         if split:
             use_format = False
             if namelist is None:
