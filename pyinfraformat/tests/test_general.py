@@ -2,7 +2,7 @@ import pyinfraformat as pif
 import pytest
 
 
-test.mark.parametrize("language", ['fi', 'Fi', 'FI', 'fI'])
+@pytest.mark.parametrize("language", ['fi', 'Fi', 'FI', 'fI'])
 def test_info(language):
     assert print_info() is None
     assert print_info(language=language) is None
