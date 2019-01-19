@@ -30,11 +30,11 @@ def custom_int(number):
                 return integer_number
             else:
                 msg = "Non-integer value detected, a floating point number is returned"
-                logger.warning(msg)
+                logger.debug(msg)
                 return floating_number
         except ValueError:
             msg = "Not a Number (NaN) value detected, a NaN is returned"
-            logger.warning(msg)
+            logger.debug(msg)
             return np.nan
 
 
@@ -44,7 +44,7 @@ def custom_float(number):
         return float(number.replace(",", "."))
     except ValueError:
         msg = "Not a Number (NaN) value detected, a NaN is returned"
-        logger.warning(msg)
+        logger.debug(msg)
         return np.nan
 
 
