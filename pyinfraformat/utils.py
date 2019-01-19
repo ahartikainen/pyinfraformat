@@ -12,25 +12,29 @@ def custom_int(number):
     try:
         return int(number)
     except ValueError:
-        if number == "-":
-            return np.nan
-        if int(float(number)) == float(number):
-            return int(float(number))
-        else:
-            msg = "Non-integer value detected, a floating point number is returned"
+        try:
+            floating_number = float(number.replace(",", "."))
+            integer_number = int(floating_number)
+            if integer_number == floating_number:
+                return integer_number
+            else:
+                msg = "Non-integer value detected, a floating point number is returned"
+                logger.warning(msg)
+                return floating_number
+        except ValueError:
+            msg = "Not a Number (NaN) value detected, a NaN is returned"
             logger.warning(msg)
-            return float(number)
+            return np.nan
 
 
 def custom_float(number):
     """Test if number is floating point number."""
-    if number.strip() == "-":
+    try:
+        return float(number.replace(",", "."))
+    except ValueError:
+        msg = "Not a Number (NaN) value detected, a NaN is returned"
+        logger.warning(msg)
         return np.nan
-    else:
-        try:
-            return float(number)
-        except ValueError:
-            return np.nan
 
 
 def identifiers():
