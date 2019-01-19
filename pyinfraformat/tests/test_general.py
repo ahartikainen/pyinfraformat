@@ -2,13 +2,14 @@ import pyinfraformat as pif
 import pytest
 
 
-def test_info():
+test.mark.parametrize("language", ['fi', 'Fi', 'FI', 'fI'])
+def test_info(language):
     assert print_info() is None
+    assert print_info(language=language) is None
     assert isinstance(_info_fi(), str) 
 
 
-def test_info_bad()
+@pytest.mark.parametrize("language", ['se', 'en', 'fin'])
+def test_info_bad(language):
     with pytest.raises(NotImplementedError):
-        print_info(language="se")
-    with pytest.raises(NotImplementedError):
-        print_info(language="en")
+        print_info(language)
