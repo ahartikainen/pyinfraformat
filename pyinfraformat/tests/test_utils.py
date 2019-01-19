@@ -6,7 +6,7 @@ import pytest
 def test_info(language):
     assert print_info() is None
     assert print_info(language=language) is None
-    assert isinstance(_info_fi(), str)
+    assert isinstance(info_fi(), str)
 
 
 @pytest.mark.parametrize("language", ["se", "en", "fin"])
