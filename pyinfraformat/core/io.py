@@ -3,7 +3,7 @@ from collections import Counter
 from glob import glob
 import logging
 import os
-from .exceptions import PathNotFoundError
+from ..exceptions import PathNotFoundError
 from .parser import read
 from .utils import identifiers
 
@@ -84,29 +84,32 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
     return Holes(hole_list)
 
 
-def to_infraformat(data, path, comments=True, fo=None, kj=None):
+def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
     """Export data to infraformat.
 
     Parameters
     ----------
     data : list
-        a list containing hole data
+        A list containing hole data.
     path : str
-        path to save data
+        Path to save data.
     fo : dict
-        dictionary for fileformat
-        contains
-            'Format version', default 2.3
-            'Software', default 'pyInfraformat'
-            'Software version', default 'str(__version__)'
+        Dictionary for fileformat.
+        Contains:
+            - 'Format version', default 2.3
+            - 'Software', default 'pyinfraformat'
+            - 'Software version', default 'str(__version__)'
     kj : dict
-        dictionary  for coordinate system
-        contains
-            'Coordinate system', default mode(data)
-            'Height reference', default mode(data)
-        default mode of the holes
+        Dictionary  for coordinate system.
+        Contains:
+            - 'Coordinate system', defaults to mode(data)
+            - 'Height reference', defaults to mode(data)
+        Defaults to mode of the holes.
+    write_mode : str
+        By default create a new file.
+        If "wa" appends to current file and it is recommended to set fo and kj to False.
     """
-    with open(path, mode="w") as f:
+    with open(path, mode=write_mode) as f:
         write_fileheader(data, f, fo=fo, kj=kj)
         for hole in data:
             write_header(hole.header, f)
@@ -126,11 +129,11 @@ def write_fileheader(data, f, fo=None, kj=None):
         Dictionary for Coordinate system and Height reference.
     """
     if fo is None:
-        from .__init__ import __version__
+        from ..__init__ import __version__
 
         fo = {
             "Format version": "2.3",
-            "Software": "pyInfraformat",
+            "Software": "pyinfraformat",
             "Software version": str(__version__),
         }
     if kj is None:
@@ -148,8 +151,11 @@ def write_fileheader(data, f, fo=None, kj=None):
     for key, subdict in {"FO": fo, "KJ": kj}.items():
         line_string = [key]
         for _, value in subdict.items():
+            if value is False:
+                continue
             line_string.append(str(value))
-        print(" ".join(line_string), file=f)
+        if len(line_string) > 1:
+            print(" ".join(line_string), file=f)
 
 
 def write_header(header, f):
@@ -176,7 +182,7 @@ def write_header(header, f):
 
 
 # pylint: disable=protected-access
-def write_body(hole, f, comments=True, illegal=False):
+def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spacer_start=None):
     """Write data out.
 
     Parameters
@@ -185,12 +191,20 @@ def write_body(hole, f, comments=True, illegal=False):
     f : fileobject
     comments : bool
     illegal : bool
+    body_spacer : str
+        str used as a spacer in the body part. Defaults to 4 spaces.
+    body_spacer_start : str
+        str used as a spacer in the start of the body part. Defaults to 4 spaces.
     """
+    if body_spacer is None:
+        body_spacer = "    "
+    if body_spacer_start is None:
+        body_spacer_start = "   "
     body_text = {}
     # Gather survey information
     line_dict = {}
     for line_dict in hole.survey.data:
-        line_string = " ".join(
+        line_string = body_spacer_start + "{}".format(body_spacer).join(
             [str(value) for key, value in line_dict.items() if key != "linenumber"]
         )
         if int(line_dict["linenumber"]) not in body_text:

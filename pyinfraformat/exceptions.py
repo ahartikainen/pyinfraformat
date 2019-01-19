@@ -1,4 +1,4 @@
-"""Custom Exceptions for PyInfraformat module."""
+"""Custom Exceptions for pyinfraformat module."""
 
 
 class FileExtensionMissingError(Exception):

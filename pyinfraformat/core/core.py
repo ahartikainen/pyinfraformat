@@ -1,11 +1,11 @@
-"""Core function for PyInfraformat."""
+"""Core function for pyinfraformat."""
 from datetime import datetime
 from gc import collect
 import logging
 import os
 import pandas as pd
 
-from .exceptions import FileExtensionMissingError
+from ..exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -23,6 +23,7 @@ class Holes:
         holes : list
             list of infraformat hole information
         lowmemory : bool, optional
+            Create Pandas DataFrame one by one minimizing memory use.
         """
         if holes is None:
             holes = []
@@ -35,13 +36,13 @@ class Holes:
         self.holes.extend(holes)
 
     def __str__(self):
-        msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
+        msg = "Infraformat Holes -object:\n  Total of {n} holes".format(n=len(self.holes))
         value_counts = self.value_counts()
         if self.holes:
             max_length = max([len(str(values)) for values in value_counts.values()]) + 1
             counts = "\n".join(
                 "    - {key} ...{value:.>7}".format(
-                    key=key, value=("{:>" + f"{max_length}" + "}").format(value)
+                    key=key, value=("{:>" + "{}".format(max_length) + "}").format(value)
                 )
                 for key, value in value_counts.items()
             )
@@ -134,7 +135,7 @@ class Holes:
         elif by == "date":
             filtered_holes = self._filter_date(start, end, fmt=fmt, **kwargs)
         else:
-            raise TypeError("Argument was not valid: by={by}")
+            raise TypeError("Argument was not valid: by={}".format(by))
         return filtered_holes
 
     def _filter_coordinates(self, bbox):

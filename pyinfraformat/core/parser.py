@@ -145,7 +145,7 @@ class Hole:
         from pprint import pformat
 
         msg = pformat(self.header.__dict__)
-        return f"Infraformat Hole -object:\n  {msg}"
+        return "Infraformat Hole -object:\n  {}".format(msg)
 
     def __repr__(self):
         return self.__str__()
@@ -221,7 +221,7 @@ class FileHeader:
         self.keys.add(key)
 
     def __str__(self):
-        msg = f"FileHeader object - Fileheader contains {len(self.keys)} items"
+        msg = "FileHeader object - Fileheader contains {} items".format(len(self.keys))
         return msg
 
     def __repr__(self):
@@ -234,7 +234,6 @@ class FileHeader:
             raise TypeError("Attribute not found: {}".format(attr))
 
 
-# pylint: disable=too-few-public-methods
 class Header:
     """Class to hold header information."""
 
@@ -265,7 +264,6 @@ class Header:
             raise TypeError("Attribute not found: {}".format(attr))
 
 
-# pylint: disable=too-few-public-methods
 class InlineComment:
     """Class to inline comments."""
 
@@ -280,7 +278,6 @@ class InlineComment:
         return self.data[attr]
 
 
-# pylint: disable=too-few-public-methods
 class Survey:
     """Class to survey information."""
 
@@ -295,7 +292,6 @@ class Survey:
         return self.data[attr]
 
 
-# pylint: disable=too-few-public-methods
 class Illegal:
     """Class to contain illegal lines."""
 
