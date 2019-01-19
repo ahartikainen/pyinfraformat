@@ -2,7 +2,7 @@
 import logging
 import numpy as np
 
-__all__ = [identifiers]
+__all__ = ["identifiers"]
 
 logger = logging.getLogger("pyinfraformat")
 
