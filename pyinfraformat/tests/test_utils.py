@@ -45,7 +45,7 @@ def test_custom_int_pure(nums):
 
 
 @pytest.mark.parametrize("nums", [("1.", 1), ("1_000,0", 1000), (".0", 0), ("1,0e3", 1000)])
-def test_custom_int_pure(nums):
+def test_custom_int_float(nums):
     """Input string num and number pair"""
     str_num, num = nums
     custom_integer = custom_int(str_num)
@@ -65,7 +65,7 @@ def test_custom_int_to_float(nums):
 
 
 @pytest.mark.parametrize("num", ["-", "nan", "NaN", "NA", "test", "value", "1.2a"])
-def test_custom_int_nan(num):
+def test_custom_int_to_nan(num):
     custom_integer = custom_int(num)
     assert isinstance(custom_integer, float)
     assert np.isnan(custom_integer)
@@ -81,7 +81,7 @@ def test_custom_float(nums):
 
 
 @pytest.mark.parametrize("num", ["-", "nan", "NaN", "NA", "test", "string", "1.2a"])
-def test_custom_float_bad(num):
+def test_custom_float_to_nan(num):
     custom_floating = custom_float(num)
     assert isinstance(custom_floating, float)
     assert np.isnan(custom_floating)
