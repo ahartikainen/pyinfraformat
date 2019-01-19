@@ -1,0 +1,235 @@
+FO 2.3 Infraformat_holes_test
+KJ ETRS-GK25 N2000
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PA 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 100 10 Sa
+2.4 103 10
+2.6 120 10
+2.8 150 10 Cl
+3.0 120 10
+3.2 110 10
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PI 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 2 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 100 10 Sa
+2.4 103 10
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT LY 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 3 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 100 10 Sa
+2.4 103 10
+2.6 30 3 Cl
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT SI 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18 1 10
+2.4 23 18 1 10
+2.6 23 18 1 13
+2.8 25 16 1 14
+3.0 23 18 1 10
+3.2 23 18 1 10
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT HE 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 Sa
+2.4 23
+2.6 23
+2.8 25
+3.0 23
+3.2 23
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT HK 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18
+2.4 23 15
+2.6 23 16
+2.8 25 14
+3.0 23 19
+3.2 23 19
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PT 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 Sa
+2.4
+2.6
+2.8
+3.0
+3.2
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT TR 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 Sa
+2.4
+2.6
+2.8
+3.0
+3.2
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PR 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18 Sa
+2.4 23 15
+2.6 23 16
+2.8 25 14
+3.0 23 19
+3.2 23 19
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT CP 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18 3 Sa
+2.4 23 15 3
+2.6 23 16 3
+2.8 25 14 3
+3.0 23 19 2
+3.2 23 19 1
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT CU 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18 3 23 Sa
+2.4 23 15 3 23
+2.6 23 16 3 25
+2.8 25 14 3 26
+3.0 23 19 2 27
+3.2 23 19 1 27
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT HP 0 0 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0 0
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 23 18 H Sa
+2.4 23 15 H
+2.6 23 16 H
+2.8 25 23 P Cl
+3.0 23 21 P
+3.2 23 20 P
+-1 KI
