@@ -16,7 +16,7 @@ def test_reading_good():
     for path in get_datafiles():
         if "_bad_" not in path:
             holes = pif.from_infraformat(path)
-            assert str(type(holes)) == "<class 'pyinfraformat.core.Holes'>"
+            assert isinstance(holes, pif.Holes)
             assert isinstance(holes.holes, list)
 
 
@@ -30,9 +30,9 @@ def test_reading_bad():
 
 def test_reading_empty():
     holes = pif.from_infraformat()
-    assert str(type(holes)) == "<class 'pyinfraformat.core.Holes'>"
+    assert isinstance(holes, pif.Holes)
     holes = pif.from_infraformat([])
-    assert str(type(holes)) == "<class 'pyinfraformat.core.Holes'>"
+    assert isinstance(holes, pif.Holes)
 
 
 def test_output():
