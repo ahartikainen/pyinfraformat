@@ -34,9 +34,9 @@ def test_custom_int_pure(nums):
 
 
 @pytest.mark.parametrize(
-    "num", [(".1", 0.1), ("1.1", 1.1), ("1_000,1", 1000.1), ("1,2345e3", 1234.5)]
+    "nums", [(".1", 0.1), ("1.1", 1.1), ("1_000,1", 1000.1), ("1,2345e3", 1234.5)]
 )
-def test_custom_int_to_float(num):
+def test_custom_int_to_float(nums):
     str_num, num = nums
     custom_integer = custom_int(str_num)
     assert custom_integer == num
