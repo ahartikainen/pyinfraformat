@@ -2,7 +2,7 @@
 import logging
 import numpy as np
 
-__all__ = ["identifiers"]
+__all__ = ["identifiers", "print_info"]
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -663,3 +663,19 @@ def info_fi():
             F    Läpäisyprosentti
     """
     return helper_str
+
+
+def print_info(language="fi"):
+    """Print out information about the finnish infraformat.
+
+    Currently defined only in Finnish.
+
+    Parameters
+    ----------
+    language : str, {"fi"}
+        short format for language.
+    """
+    if language.lower() != "fi":
+        logger.critical("Only 'fi' info is implemented")
+        raise NotImplementedError("Only 'fi' info is implemented")
+    print(_info_fi())
