@@ -1,29 +1,19 @@
-import pandas as pd
+"""Core function for PyInfraformat."""
 from datetime import datetime
 from gc import collect
 import logging
 import os
+import pandas as pd
 
-from .parser import identifiers
-from .io import from_infraformat, to_infraformat
+from .exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
 
 __all__ = ["Holes"]
 
 
-class FileExtensionMissing(Exception):
-    def __init__(self):
-        self.msg = "File extension is missing"
-
-    def __str__(self):
-        return repr(self.msg)
-
-
 class Holes:
-    """
-    Container for multiple infraformat hole information.
-    """
+    """Container for multiple infraformat hole information."""
 
     def __init__(self, holes=None, lowmemory=False):
         """Container for multiple infraformat hole information.
@@ -38,18 +28,22 @@ class Holes:
             holes = []
         self.holes = holes
         self._lowmemory = lowmemory
+        self.n = None
 
     def add_holes(self, holes):
-        """Add list of holes to class"""
+        """Add list of holes to class."""
         self.holes.extend(holes)
 
     def __str__(self):
         msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
         value_counts = self.value_counts()
-        if len(self.holes):
-            max_length = max([len(str(values)) for values in value_counts.values()])+1
+        if self.holes:
+            max_length = max([len(str(values)) for values in value_counts.values()]) + 1
             counts = "\n".join(
-                "    - {key} ...{value:.>7}".format(key=key, value=("{:>" + f"{max_length}" +"}").format(value)) for key, value in value_counts.items()
+                "    - {key} ...{value:.>7}".format(
+                    key=key, value=("{:>" + f"{max_length}" + "}").format(value)
+                )
+                for key, value in value_counts.items()
             )
             msg = "\n".join((msg, counts))
         return msg
@@ -75,35 +69,76 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
-    def filter_holes(self, by="coordinates", *, bbox=None, type=None, start=None, end=None, fmt=None, **kwargs):
-        """Filter holes
+    def filter_holes(
+        self,
+        by="coordinate",
+        *,
+        bbox=None,
+        hole_type=None,
+        start=None,
+        end=None,
+        fmt=None,
+        **kwargs,
+    ):
+        """Filter holes.
 
         Parameters
         ----------
         by : str {'coordinate', 'survey', 'date'}
+        bbox : tuple
+            left, right, bottom, top
+        hole_type : str
+        start : str
+            Date string. Recommended format is yyyy-mm-dd.
+            Value is passed to `pandas.to_datetime`.
+        end : str
+            Date string. Recommended format is yyyy-mm-dd.
+            Value is passed to `pandas.to_datetime`.
+        fmt : str
+            Custom date string format for `start` and `end`.
+            Value is passed for `datetime.strptime`.
+            See https://docs.python.org/3.7/library/datetime.html#strftime-and-strptime-behavior
 
         Returns
         -------
+        list
+            Filtered holes.
 
-        _filter_coordinates(bbox, **kwargs)
-        _filter_type(type, **kwargs)
-        _filter_date(start=None, end=None, fmt=None, **kwargs)
+        Examples
+        --------
+        filtered_holes = holes_object.filter_holes(
+            by="coordinate", bbox=(24,25,60,61)
+        )
 
-        bbox : left, right, bottom, top
+        filtered_holes = holes_object.filter_holes(
+            by="survey", hole_type=["P"]
+        )
 
-        start, end -fmt: yyyy-mm-dd
+        filtered_holes = holes_object.filter_holes(
+            by="date", start="2015-05-15", end="2016-08-06"
+        )
 
+        filtered_holes = holes_object.filter_holes(
+            by="date", start="05/15/15", end="08/06/16", fmt="%x"
+        )
+
+        Return types are from:
+            _filter_coordinates(bbox, **kwargs)
+            _filter_type(hole_type, **kwargs)
+            _filter_date(start=None, end=None, fmt=None, **kwargs)
         """
         if by == "coordinates":
             filtered_holes = self._filter_coordinates(bbox, **kwargs)
         elif by == "type":
-            filtered_holes = self._filter_type(type, **kwargs)
+            filtered_holes = self._filter_type(hole_type, **kwargs)
         elif by == "date":
-            filtered_holes = self._filter_date(start, end, **kwargs)
+            filtered_holes = self._filter_date(start, end, fmt=fmt, **kwargs)
+        else:
+            raise TypeError("Argument was not valid: by={by}")
         return filtered_holes
 
-    def _filter_coordinates(self, bbox, **kwargs):
-        """Filter object by coordinates"""
+    def _filter_coordinates(self, bbox):
+        """Filter object by coordinates."""
         if bbox is None:
             return Holes(self.holes)
         xmin, xmax, ymin, ymax = bbox
@@ -117,25 +152,24 @@ class Holes:
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_type(self, type, **kwargs):
-        """Filter object by survey abbreviation (type)"""
-        if type is None:
+    def _filter_type(self, hole_type):
+        """Filter object by survey abbreviation (type)."""
+        if hole_type is None:
             Holes(self.holes)
         holes = []
-        if isinstance(type, str):
-            type = [type]
+        if isinstance(hole_type, str):
+            hole_type = [hole_type]
         for hole in self.holes:
             if (
                 hasattr(hole.header, "TT")
                 and ("Survey abbreviation" in hole.header.TT)
-                and any(item == hole.header.TT["Survey abbreviation"] for item in type)
+                and any(item == hole.header.TT["Survey abbreviation"] for item in hole_type)
             ):
                 holes.append(hole)
         return Holes(holes)
 
-    def _filter_date(self, start=None, end=None, fmt=None, **kwargs):
-        """Filter object by datetime"""
-
+    def _filter_date(self, start=None, end=None, fmt=None):
+        """Filter object by datetime."""
         if start is None and end is None:
             return Holes(self.holes)
 
@@ -163,6 +197,7 @@ class Holes:
         return Holes(holes)
 
     def value_counts(self):
+        """Count for each subgroup."""
         counts = {}
         for hole in self.holes:
             if hasattr(hole.header, "TT") and ("Survey abbreviation" in hole.header.TT):
@@ -177,21 +212,21 @@ class Holes:
         return counts
 
     def drop_duplicates(self):
-        """TODO:
-        Check if hole headers/datas are unique; drop duplicates"""
+        """Check if hole headers/datas are unique; drop duplicates."""
         raise NotImplementedError
 
     @property
     def dataframe(self):
-        """Create pandas.DataFrame
-        """
+        """Create pandas.DataFrame."""
         return self._get_dataframe()
 
+    # pylint: disable=protected-access, attribute-defined-outside-init
     def _get_dataframe(self):
+        """Build and combine DataFrame."""
         if not self.holes:
             return pd.DataFrame()
         elif self._lowmemory:
-            tmp_df = DataFrame()
+            tmp_df = pd.DataFrame()
             for hole in self.holes:
                 hole_df = hole._get_dataframe(update=True).copy()
                 tmp_df = pd.concat((tmp_df, hole_df), axis=0, sort=False)
@@ -204,43 +239,54 @@ class Holes:
         return self._dataframe
 
     def to_csv(self, path, **kwargs):
-        """
+        """Save data in table format to CSV.
+
         Paramaters
         ----------
         path : str
-            path to save data
         kwargs
-            keyword arguments going for pandas.DataFrame.to_csv function
+            Passed to `pandas.DataFrame.to_csv` function.
         """
         _, ext = os.path.splitext(path)
         if ext not in (".txt", ".csv"):
             msg = ": {}, use '.csv' or '.txt'".format(path)
             logger.critical(msg)
-            raise FileExtensionMissing()
+            raise FileExtensionMissingError(msg)
         with open(path, "w") as f:
             self.dataframe.to_csv(f, **kwargs)
 
     def to_excel(self, path, **kwargs):
+        """Save data in table format to Excel.
+
+        Paramaters
+        ----------
+        path : str
+        kwargs
+            Passed to `pandas.DataFrame.to_csv` function.
+        """
         _, ext = os.path.splitext(path)
         if ext not in (".xlsx", ".xls"):
             msg = "ext not in ('.xlsx', '.xls'): {}".format(path)
             logger.critical(msg)
-            raise FileExtensionMissing()
-        with ExcelWriter(path) as writer:
+            raise FileExtensionMissingError(msg)
+        with pd.ExcelWriter(path) as writer:
             self.dataframe.to_excel(writer, **kwargs)
 
     def to_infraformat(self, path, split=False, namelist=None):
-        """
+        """Save data in infraformat.
+
         Parameters
         ----------
         path : str
             path to save data
-        split : bool
+        split : bool, optional
             save in invidual files
-        namelist : list
+        namelist : list, optional
             filenames for each file
             valid only if split is True
         """
+        from .io import to_infraformat  # pylint: disable=cyclic-import
+
         if split:
             use_format = False
             if namelist is None:
@@ -252,7 +298,6 @@ class Holes:
             else:
                 assert len(namelist) == len(self.holes)
             for i, hole in self.holes:
-                pass
                 if use_format:
                     path_ = path.format(i)
                 else:

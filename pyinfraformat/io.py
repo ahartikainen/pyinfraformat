@@ -1,25 +1,19 @@
+"""Input and output methods."""
 from collections import Counter
 from glob import glob
 import logging
 import os
-from .parser import read, identifiers
+from .exceptions import PathNotFoundError
+from .parser import read  # pylint: disable=cyclic-import
+from .utils import identifiers  # pylint: disable=cyclic-import
 
 logger = logging.getLogger("pyinfraformat")
 
 __all__ = ["from_infraformat"]
 
 
-class PathNotFound(Exception):
-    def __init__(self):
-        self.msg = "Path not found"
-
-    def __str__(self):
-        logger.critical(self.msg)
-        return repr(self.msg)
-
-
-def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None, robust_read=False):
-    """Read inframodel file(s)
+def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=False):
+    """Read inframodel file(s).
 
     Paramaters
     ----------
@@ -37,8 +31,9 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
     -------
     Holes -object
     """
-    from .core import Holes
-    if path is None or not len(path):
+    from .core import Holes  # pylint: disable=cyclic-import
+
+    if path is None or not path:
         return Holes()
     if os.path.isdir(path):
         if extension is None:
@@ -49,8 +44,8 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
             filelist = glob(os.path.join(path, "*{}".format(extension)))
     else:
         filelist = glob(path)
-        if not len(filelist):
-            raise PathNotFound("{}".format(path))
+        if not filelist:
+            raise PathNotFoundError("{}".format(path))
 
     hole_list = []
     if robust_read:
@@ -68,14 +63,14 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
             ]
         for filepath in filelist:
             try:
-                holes = read(filepath, encoding=encoding, verbose=verbose)
+                holes = read(filepath, encoding=encoding)
             except UnicodeDecodeError:
                 holes = []
                 for encoding_ in robust_read:
                     if encoding_ == encoding:
                         continue
                     try:
-                        holes = read(filepath, encoding=encoding_, verbose=verbose)
+                        holes = read(filepath, encoding=encoding_)
                         break
                     except (UnicodeDecodeError, UnicodeEncodeError):
                         continue
@@ -83,14 +78,15 @@ def from_infraformat(path=None, encoding="utf-8", verbose=False, extension=None,
                 hole_list.extend(holes)
     else:
         for filepath in filelist:
-            holes = read(filepath, encoding=encoding, verbose=verbose)
+            holes = read(filepath, encoding=encoding)
             hole_list.extend(holes)
 
     return Holes(hole_list)
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None):
-    """
+    """Export data to infraformat.
+
     Parameters
     ----------
     data : list
@@ -110,7 +106,6 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None):
             'Height reference', default mode(data)
         default mode of the holes
     """
-
     with open(path, mode="w") as f:
         write_fileheader(data, f, fo=fo, kj=kj)
         for hole in data:
@@ -119,6 +114,17 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None):
 
 
 def write_fileheader(data, f, fo=None, kj=None):
+    """Write fileheader format out.
+
+    Parameters
+    ----------
+    data : Infraformat
+    f : fileobject
+    fo : dict, optional
+        Dictionary for fileformat, software and software version.
+    kj : dict, optional
+        Dictionary for Coordinate system and Height reference.
+    """
     if fo is None:
         from .__init__ import __version__
 
@@ -128,7 +134,7 @@ def write_fileheader(data, f, fo=None, kj=None):
             "Software version": str(__version__),
         }
     if kj is None:
-        # TODO: add coord transformations
+        # add coord transformations
         coord = []
         height = []
         for hole in data:
@@ -147,8 +153,11 @@ def write_fileheader(data, f, fo=None, kj=None):
 
 
 def write_header(header, f):
-    """
-    header : header object
+    """Write header format out.
+
+    Parameters
+    ----------
+    header : Header object
     f : fileobject
     """
     header_keys = list(identifiers()[1].keys())
@@ -159,15 +168,19 @@ def write_header(header, f):
         if hasattr(header, key):
             header_string.append(key)
             attr = getattr(header, key)
-            for key, value in attr.items():
-                if key == "linenumber":
+            for key_, value in attr.items():
+                if key_ == "linenumber":
                     continue
                 header_string.append(str(value))
             print(" ".join(header_string), file=f)
 
 
+# pylint: disable=protected-access
 def write_body(hole, f, comments=True, illegal=False):
-    """
+    """Write data out.
+
+    Parameters
+    ----------
     hole : Hole object
     f : fileobject
     comments : bool
@@ -175,6 +188,7 @@ def write_body(hole, f, comments=True, illegal=False):
     """
     body_text = {}
     # Gather survey information
+    line_dict = {}
     for line_dict in hole.survey.data:
         line_string = " ".join(
             [str(value) for key, value in line_dict.items() if key != "linenumber"]

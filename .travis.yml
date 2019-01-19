@@ -1,5 +1,5 @@
 dist: xenial
-sudo: yes
+
 language: python
 
 python:
@@ -9,7 +9,15 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
-  - python setup.py install
+  - pip install -e .
+  - pip install coveralls
 
 script:
-  - pytest
+  - pytest -v pyinfraformat/tests/ --cov=pyinfraformat/
+  - python -m pydocstyle --add-ignore=D105 --convention=numpy pyinfraformat/
+  - python -m black -l 100 --check pyinfraformat/
+  - python -m pylint pyinfraformat/
+
+after_success:
+  - echo "Success!"
+  - coveralls
