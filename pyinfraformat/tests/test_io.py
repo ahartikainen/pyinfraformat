@@ -1,5 +1,6 @@
 from glob import glob
 import os
+from uuid import uuid4
 import pyinfraformat as pif
 import pytest
 
@@ -38,12 +39,10 @@ def test_output():
     for path in get_datafiles():
         if "_bad_" not in path:
             holes = pif.from_infraformat(path)
-            assert str(type(holes)) == "<class 'pyinfraformat.core.Holes'>"
+            assert isinstance(holes, pif.Holes)
             if len(holes.holes) > 0:
                 here = os.path.dirname(os.path.abspath(__file__))
-                output_path = os.path.join(here, "test_data", "test_output.csv")
-                if os.path.exists(output_path):
-                    os.remove(output_path)
+                output_path = os.path.join(here, "test_data", str(uuid4()) + "_output_example.csv")
                 assert not os.path.exists(output_path)
                 holes.to_csv(output_path)
                 assert os.path.exists(output_path)
