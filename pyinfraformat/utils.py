@@ -34,7 +34,7 @@ def custom_float(number):
 
 
 def identifiers():
-    """Helper function to return header identifiers.
+    """Return header identifiers.
 
     Returns
     -------
