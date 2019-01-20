@@ -252,7 +252,7 @@ class Holes:
         """
         _, ext = os.path.splitext(path)
         if ext not in (".txt", ".csv"):
-            msg = ": %, use '.csv' or '.txt'".format(path)
+            msg = "Found extension {}, use '.csv' or '.txt'.".format(path)
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with open(path, "w") as f:
