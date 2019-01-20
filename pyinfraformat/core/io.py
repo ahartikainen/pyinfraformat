@@ -13,7 +13,7 @@ logger = logging.getLogger("pyinfraformat")
 __all__ = ["from_infraformat"]
 
 # pylint: disable=redefined-argument-from-local
-def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=False):
+def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
     """Read inframodel file(s).
 
     Paramaters
@@ -26,7 +26,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
-    robust_read : bool, optional, default False
+    robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
 
     Returns
@@ -51,7 +51,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
         encoding_list = [encoding]
 
     hole_list = []
-    if robust_read:
+    if robust:
         # Common encoding types
         common_encoding = [
             "utf-8",
@@ -68,12 +68,12 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
 
         for filepath in filelist:
             try:
-                holes = read(filepath, encoding=encoding, robust_read=robust_read)
+                holes = read(filepath, encoding=encoding, robust=robust)
             except UnicodeDecodeError:
                 holes = None
                 for i, encoding in enumerate(common_encoding, 1):
                     try:
-                        holes = read(filepath, encoding=encoding, robust_read=robust_read)
+                        holes = read(filepath, encoding=encoding, robust=robust)
                     except (UnicodeDecodeError, UnicodeEncodeError):
                         continue
                     except:
@@ -90,7 +90,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
         for filepath in filelist:
             for encoding in encoding_list:
                 try:
-                    holes = read(filepath, encoding=encoding, robust_read=robust_read)
+                    holes = read(filepath, encoding=encoding, robust=robust)
                 except (UnicodeDecodeError, UnicodeEncodeError):
                     continue
                 except:
@@ -283,7 +283,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
         print(body_text[key], file=f)
 
 
-def read(path, encoding="utf-8", robust_read=False):
+def read(path, encoding="utf-8", robust=False):
     """Read input data.
 
     Paramaters
@@ -291,7 +291,7 @@ def read(path, encoding="utf-8", robust_read=False):
     path : str, optional, default None
         path to read data (file / folder / glob statement, see use_glob)
     encoding : str, optional, default 'utf-8'
-    robust_read : bool, optional, default False
+    robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     """
     file_header_identifiers, *_ = identifiers()
@@ -325,7 +325,7 @@ def read(path, encoding="utf-8", robust_read=False):
                 holestr_list.append((linenumber, line.strip()))
         # check incase that '-1' is not the last line
         if holestr_list:
-            hole_object = parse_hole(holestr_list, robust_read=robust_read)
+            hole_object = parse_hole(holestr_list, robust=robust)
             if fileheaders:
                 for key, value in fileheaders.items():
                     hole_object.add_fileheader(key, value)
@@ -335,14 +335,14 @@ def read(path, encoding="utf-8", robust_read=False):
     return holes
 
 
-def parse_hole(str_list, robust_read=False):
+def parse_hole(str_list, robust=False):
     """Parse inframodel lines to hole objects.
 
     Paramaters
     ----------
     str_list : list
         lines as list of strings
-    robust_read : bool, optional, default False
+    robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
 
     """
@@ -404,7 +404,7 @@ def parse_hole(str_list, robust_read=False):
                 msg = 'Illegal line found! Line {}: "{}"'.format(
                     linenum, line if len(line) < 100 else line[:100] + "..."
                 )
-                if robust_read:
+                if robust:
                     logger.warning(msg)
                 else:
                     logger.critical(msg)
@@ -415,12 +415,12 @@ def parse_hole(str_list, robust_read=False):
                 msg = 'Illegal line found! Line {}: "{}"'.format(
                     linenum, line if len(line) < 100 else line[:100] + "..."
                 )
-                if robust_read:
+                if robust:
                     logger.warning(msg)
                 else:
                     logger.critical(msg)
                     raise ValueError(msg)
-            elif not robust_read:
+            elif not robust:
                 raise
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
     return hole
