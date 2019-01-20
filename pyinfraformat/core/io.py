@@ -3,9 +3,9 @@ from collections import Counter
 from glob import glob
 import logging
 import os
+from .core import Holes, Hole
 from ..exceptions import PathNotFoundError
-from .parser import read
-from .utils import identifiers
+from .utils import identifiers, is_number
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -31,8 +31,6 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
     -------
     Holes -object
     """
-    from .core import Holes  # pylint: disable=cyclic-import
-
     if path is None or not path:
         return Holes()
     if os.path.isdir(path):
@@ -265,3 +263,123 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
     # print to file
     for key in sorted(body_text.keys()):
         print(body_text[key], file=f)
+
+
+def read(path, encoding="utf-8"):
+    """Read input data.
+
+    Paramaters
+    ----------
+    path : str, optional, default None
+        path to read data (file / folder / glob statement, see use_glob)
+    encoding : str, optional, default 'utf-8'
+        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
+    """
+    file_header_identifiers, *_ = identifiers()
+
+    fileheaders = {}
+    holes = []
+    with open(path, "r", encoding=encoding) as f:
+        holestr_list = []
+        for linenumber, line in enumerate(f):
+            if not line.strip():
+                continue
+            head, *tail = line.split(maxsplit=1)
+            # Check if head is fileheader
+            if head.upper() in file_header_identifiers:
+                tail = tail[0].strip().split() if tail else []
+                names, dtypes = file_header_identifiers[head.upper()]
+                fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
+                fileheaders[head.upper()] = fileheader
+            # make this robust check with peek
+            elif head == "-1":
+                hole_object = parse_hole(holestr_list)
+                # Add fileheaders to hole objects
+                if fileheaders:
+                    for key, value in fileheaders.items():
+                        hole_object.add_fileheader(key, value)
+                if tail:
+                    hole_object.add_header("-1", {"Ending": tail[0].strip()})
+                holes.append(hole_object)
+                holestr_list = []
+            else:
+                holestr_list.append((linenumber, line.strip()))
+        # check incase that '-1' is not the last line
+        if holestr_list:
+            hole_object = parse_hole(holestr_list)
+            if fileheaders:
+                for key, value in fileheaders.items():
+                    hole_object.add_fileheader(key, value)
+            holes.append(hole_object)
+            holestr_list = []
+
+    return holes
+
+
+def parse_hole(str_list):
+    """Parse inframodel lines to hole objects.
+
+    Paramaters
+    ----------
+    str_list : list
+        lines as list of strings
+    """
+    _, header_identifiers, inline_identifiers, survey_identifiers = identifiers()
+
+    hole = Hole()
+    survey_type = None
+    for linenum, line in str_list:
+        if not line.strip():
+            continue
+        head, *tail = line.split(maxsplit=1)
+        head = head.upper()
+
+        if survey_type is None and hasattr(hole.header, "TT"):
+            survey_type = getattr(hole.header, "TT").get("Survey abbreviation", None)
+            if survey_type:
+                survey_type = survey_type.upper()
+
+        try:
+            if head in header_identifiers:
+                names, dtypes = header_identifiers[head]
+                if len(dtypes) == 1:
+                    tail = [tail[0].strip()] if tail else []
+                else:
+                    tail = tail[0].strip().split() if tail else []
+                header = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
+                header["linenumber"] = linenum
+                hole.add_header(head, header)
+            elif head in inline_identifiers:
+                names, dtypes = inline_identifiers[head]
+                if len(dtypes) == 1:
+                    tail = [tail[0].strip()] if tail else []
+                else:
+                    tail = tail[0].strip().split() if tail else []
+                inline_comment = {
+                    key: format(value) for key, format, value in zip(names, dtypes, tail)
+                }
+                inline_comment["linenumber"] = linenum
+                hole.add_inline_comment(head, inline_comment)
+            elif is_number(head) and survey_type:
+                if survey_type != "HP":
+                    names, dtypes = survey_identifiers[survey_type]
+                    line = line.split(maxsplit=len(dtypes))
+                # HP survey is a special case
+                else:
+                    survey_dict = survey_identifiers[survey_type]
+                    if any(item.upper() == "H" for item in line.split()):
+                        names, dtypes = survey_dict["H"]
+                    else:
+                        names, dtypes = survey_dict["P"]
+
+                    line = line.split(maxsplit=len(dtypes))
+                survey = {key: format(value) for key, format, value in zip(names, dtypes, line)}
+                survey["linenumber"] = linenum
+                hole.add_survey(survey)
+            else:
+                # In future add warning
+                hole._add_illegal((linenum, line))  # pylint: disable=protected-access
+        except (ValueError, KeyError):
+            # In future add warning
+            hole._add_illegal((linenum, line))  # pylint: disable=protected-access
+    return hole
