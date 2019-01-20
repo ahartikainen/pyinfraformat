@@ -252,7 +252,7 @@ class Holes:
         """
         _, ext = os.path.splitext(path)
         if ext not in (".txt", ".csv"):
-            msg = ": {}, use '.csv' or '.txt'".format(path)
+            msg = ": %, use '.csv' or '.txt'".format(path)
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with open(path, "w") as f:
@@ -375,9 +375,9 @@ class Hole:
 
         dict_list = self.survey.data
         if not dict_list:
-            logger.debug("No data in Hole object. Header: {}".format(self.__str__()))
-            self._dataframe = pd.DataFrame()
-            return self._dataframe  # pylint: disable=attribute-defined-outside-init
+            msg = "No data in Hole object. Header: {}".format(self.__str__())
+            logger.warning(msg)
+            return pd.DataFrame()
         self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
         self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
         if not self._dataframe.empty:
