@@ -1,6 +1,7 @@
 black
 numpydoc
 openpyxl
+xlrd
 pydocstyle
 pylint
 pytest

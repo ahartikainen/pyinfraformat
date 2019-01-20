@@ -60,6 +60,7 @@ disable=cyclic-import,
         too-many-locals,
         too-many-branches,
         too-many-statements,
+        too-few-public-methods,
         no-self-use,
         bad-continuation,
 

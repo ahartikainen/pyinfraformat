@@ -2,9 +2,20 @@
 import logging
 import numpy as np
 
-__all__ = ["identifiers"]
+__all__ = ["identifiers", "print_info"]
 
 logger = logging.getLogger("pyinfraformat")
+
+
+def is_number(number_str):
+    """Test if number_str is number including infraformat logic."""
+    try:
+        complex(number_str)
+    except ValueError:
+        if number_str == "-":
+            return True
+        return False
+    return True
 
 
 def custom_int(number):
@@ -12,25 +23,29 @@ def custom_int(number):
     try:
         return int(number)
     except ValueError:
-        if number == "-":
+        try:
+            floating_number = float(number.replace(",", "."))
+            integer_number = int(floating_number)
+            if integer_number == floating_number:
+                return integer_number
+            else:
+                msg = "Non-integer value detected, a floating point number is returned"
+                logger.debug(msg)
+                return floating_number
+        except ValueError:
+            msg = "Not a Number (NaN) value detected, a NaN is returned"
+            logger.debug(msg)
             return np.nan
-        if int(float(number)) == float(number):
-            return int(float(number))
-        else:
-            msg = "Non-integer value detected, a floating point number is returned"
-            logger.warning(msg)
-            return float(number)
 
 
 def custom_float(number):
     """Test if number is floating point number."""
-    if number.strip() == "-":
+    try:
+        return float(number.replace(",", "."))
+    except ValueError:
+        msg = "Not a Number (NaN) value detected, a NaN is returned"
+        logger.debug(msg)
         return np.nan
-    else:
-        try:
-            return float(number)
-        except ValueError:
-            return np.nan
 
 
 def identifiers():
@@ -436,7 +451,7 @@ def info_fi():
         PISTEKOHTAISET
         OM: Tiedon omistaja
             t   Nimi
-        ML: Maa- tai kalliolajiluokitus
+        ML: Maa- tai kalliolajiluokitus (SFS-EN ISO 14688-2)
             t   Nimi
         OR: Tutkimusorganisaatio
             t   Nimi
@@ -663,3 +678,19 @@ def info_fi():
             F    Läpäisyprosentti
     """
     return helper_str
+
+
+def print_info(language="fi"):
+    """Print out information about the finnish infraformat.
+
+    Currently defined only in Finnish.
+
+    Parameters
+    ----------
+    language : str, {"fi"}
+        short format for language.
+    """
+    if language.lower() != "fi":
+        logger.critical("Only 'fi' info is implemented")
+        raise NotImplementedError("Only 'fi' info is implemented")
+    print(info_fi())

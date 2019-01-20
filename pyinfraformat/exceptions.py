@@ -1,4 +1,6 @@
-"""Custom Exceptions for PyInfraformat module."""
+"""Custom Exceptions for pyinfraformat module."""
+
+__all__ = ["FileExtensionMissingError", "PathNotFoundError"]
 
 
 class FileExtensionMissingError(Exception):
