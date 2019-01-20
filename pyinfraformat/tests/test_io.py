@@ -61,7 +61,7 @@ def test_output():
             with pytest.raises(FileExtensionMissingError):
                 holes.to_csv(output_path)
 
-            output_path = os.path.join(here, "test_data", str(uuid4()) + "_output_example.csv")
+            output_path = os.path.join(here, "test_data", str(uuid4()) + "_output_example.xlsx")
             assert not os.path.exists(output_path)
             holes.to_excel(output_path)
             assert os.path.exists(output_path)
