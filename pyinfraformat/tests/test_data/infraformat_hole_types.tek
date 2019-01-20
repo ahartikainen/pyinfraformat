@@ -791,7 +791,7 @@ ML Sa
 OR pyinfraformat-devs-org
 TY 1
 PK 1 Dev1 Dev2 Dev3
-TT LB 0 id1 SI_Img SIHand
+TT RK 0 id1 SI_Img SIHand
 LA 123123 SDrill 5000
 XY 6674772.0 25490433.1 15.0 01011999 1
 LN 1 0.1 0.1

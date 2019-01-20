@@ -1,3 +1,4 @@
+# pylint: disable=try-except-raise
 """Input and output methods."""
 from collections import Counter
 from glob import glob
@@ -11,7 +12,7 @@ logger = logging.getLogger("pyinfraformat")
 
 __all__ = ["from_infraformat"]
 
-
+# pylint: disable=redefined-argument-from-local
 def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=False):
     """Read inframodel file(s).
 
@@ -19,13 +20,14 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
     ----------
     path : str, optional, default None
         path to read data (file / folder / glob statement)
-    encoding : str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
+    encoding : str or list of str, optional, default 'utf-8'
+        file encoding, if 'utf-8' fails, code will try to use 'latin-1'.
+        If input is a list, will try to read with path in given order.
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
     robust_read : bool, optional, default False
-        Enable reading ill-defined holes
+        If True, enable reading files with ill-defined/illegal lines.
 
     Returns
     -------
@@ -45,39 +47,55 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust_read=Fa
         if not filelist:
             raise PathNotFoundError("{}".format(path))
 
+    if isinstance(encoding, str):
+        encoding_list = [encoding]
+
     hole_list = []
     if robust_read:
-        if not hasattr(robust_read, "__iter__"):
-            # Common encoding types
-            robust_read = [
-                "utf-8",
-                "latin-1",
-                "cp1252",
-                "latin-6",
-                "latin-2",
-                "latin-3",
-                "latin-5",
-                "utf-16",
-            ]
+        # Common encoding types
+        common_encoding = [
+            "utf-8",
+            "latin-1",
+            "cp1252",
+            "latin-6",
+            "latin-2",
+            "latin-3",
+            "latin-5",
+            "utf-16",
+        ]
+        n_user_encoding = len(encoding_list)
+        encoding, *common_encoding = list(encoding_list) + common_encoding
+
         for filepath in filelist:
             try:
-                holes = read(filepath, encoding=encoding)
+                holes = read(filepath, encoding=encoding, robust_read=robust_read)
             except UnicodeDecodeError:
-                holes = []
-                for encoding_ in robust_read:
-                    if encoding_ == encoding:
-                        continue
+                holes = None
+                for i, encoding in enumerate(common_encoding, 1):
                     try:
-                        holes = read(filepath, encoding=encoding_)
-                        break
+                        holes = read(filepath, encoding=encoding, robust_read=robust_read)
                     except (UnicodeDecodeError, UnicodeEncodeError):
                         continue
+                    except:
+                        raise
+                    else:
+                        if i > n_user_encoding:
+                            msg = "Non-default encoding used for reading: {}".format(encoding)
+                            logger.info(msg)
+            except:
+                raise
             if holes:
                 hole_list.extend(holes)
     else:
         for filepath in filelist:
-            holes = read(filepath, encoding=encoding)
-            hole_list.extend(holes)
+            for encoding in encoding_list:
+                try:
+                    holes = read(filepath, encoding=encoding, robust_read=robust_read)
+                except (UnicodeDecodeError, UnicodeEncodeError):
+                    continue
+                except:
+                    raise
+                hole_list.extend(holes)
 
     return Holes(hole_list)
 
@@ -265,7 +283,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
         print(body_text[key], file=f)
 
 
-def read(path, encoding="utf-8"):
+def read(path, encoding="utf-8", robust_read=False):
     """Read input data.
 
     Paramaters
@@ -273,7 +291,8 @@ def read(path, encoding="utf-8"):
     path : str, optional, default None
         path to read data (file / folder / glob statement, see use_glob)
     encoding : str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'
+    robust_read : bool, optional, default False
+        If True, enable reading files with ill-defined/illegal lines.
     """
     file_header_identifiers, *_ = identifiers()
 
@@ -306,7 +325,7 @@ def read(path, encoding="utf-8"):
                 holestr_list.append((linenumber, line.strip()))
         # check incase that '-1' is not the last line
         if holestr_list:
-            hole_object = parse_hole(holestr_list)
+            hole_object = parse_hole(holestr_list, robust_read=robust_read)
             if fileheaders:
                 for key, value in fileheaders.items():
                     hole_object.add_fileheader(key, value)
@@ -316,13 +335,16 @@ def read(path, encoding="utf-8"):
     return holes
 
 
-def parse_hole(str_list):
+def parse_hole(str_list, robust_read=False):
     """Parse inframodel lines to hole objects.
 
     Paramaters
     ----------
     str_list : list
         lines as list of strings
+    robust_read : bool, optional, default False
+        If True, enable reading files with ill-defined/illegal lines.
+
     """
     _, header_identifiers, inline_identifiers, survey_identifiers = identifiers()
 
@@ -339,6 +361,7 @@ def parse_hole(str_list):
             if survey_type:
                 survey_type = survey_type.upper()
 
+        illegal_line = False
         try:
             if head in header_identifiers:
                 names, dtypes = header_identifiers[head]
@@ -360,7 +383,7 @@ def parse_hole(str_list):
                 }
                 inline_comment["linenumber"] = linenum
                 hole.add_inline_comment(head, inline_comment)
-            elif is_number(head) and survey_type:
+            elif (is_number(head) and survey_type) or survey_type in ("LB",):
                 if survey_type != "HP":
                     names, dtypes = survey_identifiers[survey_type]
                     line = line.split(maxsplit=len(dtypes))
@@ -377,9 +400,27 @@ def parse_hole(str_list):
                 survey["linenumber"] = linenum
                 hole.add_survey(survey)
             else:
-                # In future add warning
+                illegal_line = True
+                msg = 'Illegal line found! Line {}: "{}"'.format(
+                    linenum, line if len(line) < 100 else line[:100] + "..."
+                )
+                if robust_read:
+                    logger.warning(msg)
+                else:
+                    logger.critical(msg)
+                    raise ValueError(msg)
                 hole._add_illegal((linenum, line))  # pylint: disable=protected-access
         except (ValueError, KeyError):
-            # In future add warning
+            if not illegal_line:
+                msg = 'Illegal line found! Line {}: "{}"'.format(
+                    linenum, line if len(line) < 100 else line[:100] + "..."
+                )
+                if robust_read:
+                    logger.warning(msg)
+                else:
+                    logger.critical(msg)
+                    raise ValueError(msg)
+            elif not robust_read:
+                raise
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
     return hole

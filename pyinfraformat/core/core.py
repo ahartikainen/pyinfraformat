@@ -42,8 +42,9 @@ class Holes:
         if self.holes:
             max_length = max([len(str(values)) for values in value_counts.values()]) + 1
             counts = "\n".join(
-                "    - {key} ...{value:.>7}".format(
-                    key=key, value=("{:>" + "{}".format(max_length) + "}").format(value)
+                "    - {key:.<10}{value:.>6}".format(
+                    key="{} ".format(key),
+                    value=("{:>" + "{}".format(max_length) + "}").format(value),
                 )
                 for key, value in value_counts.items()
             )
