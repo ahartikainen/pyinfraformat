@@ -625,3 +625,183 @@ AL 2.1 Lk Sa
 3.0 1.1 2.2
 3.2 1.1 2.2
 -1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PS 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 1.1 2.2
+2.4 1.1 2.2
+2.6 1.1 2.2
+2.8 1.1 2.2
+3.0 1.1 2.2
+3.2 1.1 2.2
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT PMT 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 1.1 2.2
+2.4 1.1 2.2
+2.6 1.1 2.2
+2.8 1.1 2.2
+3.0 1.1 2.2
+3.2 1.1 2.2
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT KO 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 Sa 1.1 2 3.2 2.3
+2.4 Sa 1.1 2 3.2 2.3
+2.6 Sa 1.1 2 3.2 2.3
+2.8 Sa 1.1 2 3.2 2.3
+3.0 Sa 1.1 2 3.2 2.3
+3.2 Sa 1.1 2 3.2 2.3
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT KE 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 4.3
+2.4 4.3
+2.6 4.3
+2.8 4.3
+3.0 4.3
+3.2 4.3
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT KR 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 4.3
+2.4 4.3
+2.6 4.3
+2.8 4.3
+3.0 4.3
+3.2 4.3
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT NO 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 NX1 4.3 Sa
+2.4 NX2 4.3 Sa
+2.6 NX3 4.3 Sa
+2.8 NX4 4.3 Sa
+3.0 NX5 4.3 Sa
+3.2 NX6 4.3 Sa
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT NE 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+2.2 NX1 4.3 Sa
+2.4 NX2 4.3 Sa
+2.6 NX3 4.3 Sa
+2.8 NX4 4.3 Sa
+3.0 NX5 4.3 Sa
+3.2 NX6 4.3 Sa
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT LB 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+PINF 23a kg
+PINF 23a kg
+PINF 23a kg
+PINF 23a kg
+PINF 23a kg
+PINF 23a kg
+-1 KI
+
+OM pyinfraformat-devs
+ML Sa
+OR pyinfraformat-devs-org
+TY 1
+PK 1 Dev1 Dev2 Dev3
+TT LB 0 id1 SI_Img SIHand
+LA 123123 SDrill 5000
+XY 6674772.0 25490433.1 15.0 01011999 1
+LN 1 0.1 0.1
+GR ImaginaryField 01011989 Dev0
+GL Test Field Instructions - Ten lines max.
+AL 2.1 Lk Sa
+60.5 100.2
+40.3 78.2
+30.5 43.2
+35.2 10.2
+0.24 10.2
+0.006 1.4
+-1 KI
