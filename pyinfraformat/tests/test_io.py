@@ -41,24 +41,12 @@ def test_reading_dir():
     paths_read = []
     try:
         path_read = from_infraformat(data_directory)
-        assert isinstance(path_read, Holes)
     except:
         # this just tests that one of the files is read correctly.
         pass
 
-    try:
-        path_read = from_infraformat(data_directory, extension=".tek")
-        assert isinstance(path_read, Holes)
-    except:
-        # this just tests that one of the files is read correctly.
-        pass
-
-    try:
-        path_read = from_infraformat(data_directory, extension="tek")
-        assert isinstance(path_read, Holes)
-    except:
-        # this just tests that one of the files is read correctly.
-        pass
+    path_read = from_infraformat(data_directory, extension=".tek2")
+    path_read = from_infraformat(data_directory, extension="tek2")
 
 
 def test_reading_empty():
