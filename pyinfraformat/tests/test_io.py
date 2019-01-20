@@ -35,6 +35,37 @@ def test_reading_bad():
         from_infraformat("../ImaginaryFolder")
 
 
+def test_reading_dir():
+    here = os.path.dirname(os.path.abspath(__file__))
+    data_directory = os.path.join(here, "test_data")
+    paths_read = []
+    try:
+        path_read = from_infraformat(data_directory)
+        assert path_read
+        paths_read.append(True)
+    except:
+        # this just tests that one of the files is read correctly.
+        pass
+
+    try:
+        path_read = from_infraformat(data_directory, extension=".tek")
+        assert path_read
+        paths_read.append(True)
+    except:
+        # this just tests that one of the files is read correctly.
+        pass
+
+    try:
+        path_read = from_infraformat(data_directory, extension="tek")
+        assert path_read
+        paths_read.append(True)
+    except:
+        # this just tests that one of the files is read correctly.
+        pass
+
+    assert paths_read
+
+
 def test_reading_empty():
     holes = from_infraformat()
     assert isinstance(holes, Holes)
