@@ -370,7 +370,7 @@ class Hole:
                 Calculate a new pandas.DataFrame
         """
         if hasattr(self, "_dataframe") and not update:
-            if not self._dataframe.empty:
+            if not self._dataframe.empty:  # pylint: disable=access-member-before-definition
                 return self._dataframe  # pylint: disable=access-member-before-definition
 
         dict_list = self.survey.data
