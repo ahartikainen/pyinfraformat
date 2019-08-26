@@ -11,7 +11,7 @@ setup(
     name="pyinfraformat",
     version="0.1.0a-dev",
     description="Python library for Finnish Infraformat",
-    long_description=long_description,
+    long_description=#long_description,
     author="Ari Hartikainen & Taavi Dettenborn & Martti Hallipelto",
     license="Apache-2.0",
     classifiers=[
