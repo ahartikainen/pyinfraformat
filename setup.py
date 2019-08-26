@@ -15,7 +15,7 @@ setup(
     author="Ari Hartikainen & Taavi Dettenborn & Martti Hallipelto",
     license="Apache-2.0",
     classifiers=[
-        "Development Statut :: 3 - Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Topic :: Scientific/Engineering :: Physics",
         "License :: OSI Approved :: Apache Software License",
