@@ -15,7 +15,7 @@ install:
 script:
   - mkdir new_folder
   - cd new_folder
-  - pytest -v ../pyinfraformat/tests/ --cov=..pyinfraformat/
+  - pytest -v ../pyinfraformat/tests/ --cov=pyinfraformat/
   - python -m pydocstyle --add-ignore=D105 --convention=numpy ../pyinfraformat/
   - python -m black -l 100 --check ../pyinfraformat/
   - python -m pylint ../pyinfraformat/
