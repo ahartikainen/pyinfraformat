@@ -273,7 +273,7 @@ class Holes:
             msg = "ext not in ('.xlsx', '.xls'): {}".format(path)
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
-        with pd.ExcelWriter(path) as writer:
+        with pd.ExcelWriter(path) as writer:  # pylint: disable=abstract-class-instantiated
             self.dataframe.to_excel(writer, **kwargs)
 
     def to_infraformat(self, path, split=False, namelist=None):
