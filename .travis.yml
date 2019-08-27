@@ -13,7 +13,10 @@ install:
   - python -m pip install coveralls
 
 script:
-  - pytest -v pyinfraformat/tests/ --cov=pyinfraformat/
+  - mkdir new_folder
+  - cd new_folder
+  - pytest -v ../pyinfraformat/tests/ --cov=../pyinfraformat/*
+  - cd ..
   - python -m pydocstyle --add-ignore=D105 --convention=numpy pyinfraformat/
   - python -m black -l 100 --check pyinfraformat/
   - python -m pylint pyinfraformat/
