@@ -5,7 +5,11 @@ Python library for Finnish Infraformat (version 2.3)
 
 ## Installation
 
-`pyinfraformat` can be installed with pip (needs git-tools).
+Latest (stable) `pyinfraformat` can be installed with pip
+
+    python -m pip install pyinfraformat
+
+The latest (unstable) version can be installed from git with pip (needs git-tools).
 
     python -m pip install git+https://github.com/ahartikainen/pyinfraformat
 
