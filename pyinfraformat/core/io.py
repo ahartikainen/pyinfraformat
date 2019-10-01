@@ -312,7 +312,7 @@ def read(path, encoding="utf-8", robust=False):
                 fileheaders[head.upper()] = fileheader
             # make this robust check with peek
             elif head == "-1":
-                hole_object = parse_hole(holestr_list)
+                hole_object = parse_hole(holestr_list, robust=robust)
                 # Add fileheaders to hole objects
                 if fileheaders:
                     for key, value in fileheaders.items():

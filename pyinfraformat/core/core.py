@@ -145,13 +145,11 @@ class Holes:
         if bbox is None:
             return Holes(self.holes)
         xmin, xmax, ymin, ymax = bbox
-        xrange = range(xmin, xmax)
-        yrange = range(ymin, ymax)
         holes = []
         for hole in self.holes:
-            if not (hasattr(hole.header, "X") and hasattr(hole.header, "Y")):
+            if not (hasattr(hole.header, "XY") and "X" in hole.header.XY.keys() and "Y" in hole.header.XY.keys() ):
                 continue
-            if hole.header.XY["X"] in xrange and hole.header.XY["Y"] in yrange:
+            if hole.header.XY["X"]>xmin and hole.header.XY["X"]<xmax and hole.header.XY["Y"]>ymin and hole.header.XY["Y"]<ymax:
                 holes.append(hole)
         return Holes(holes)
 
@@ -273,7 +271,7 @@ class Holes:
             msg = "ext not in ('.xlsx', '.xls'): {}".format(path)
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
-        with pd.ExcelWriter(path) as writer:  # pylint: disable=abstract-class-instantiated
+        with pd.ExcelWriter(path) as writer:
             self.dataframe.to_excel(writer, **kwargs)
 
     def to_infraformat(self, path, split=False, namelist=None):
