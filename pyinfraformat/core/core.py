@@ -147,9 +147,18 @@ class Holes:
         xmin, xmax, ymin, ymax = bbox
         holes = []
         for hole in self.holes:
-            if not (hasattr(hole.header, "XY") and "X" in hole.header.XY.keys() and "Y" in hole.header.XY.keys() ):
+            if not (
+                hasattr(hole.header, "XY")
+                and "X" in hole.header.XY.keys()
+                and "Y" in hole.header.XY.keys()
+            ):
                 continue
-            if hole.header.XY["X"]>xmin and hole.header.XY["X"]<xmax and hole.header.XY["Y"]>ymin and hole.header.XY["Y"]<ymax:
+            if (
+                hole.header.XY["X"] >= xmin
+                and hole.header.XY["X"] <= xmax
+                and hole.header.XY["Y"] >= ymin
+                and hole.header.XY["Y"] <= ymax
+            ):
                 holes.append(hole)
         return Holes(holes)
 
