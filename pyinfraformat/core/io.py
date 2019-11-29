@@ -153,16 +153,19 @@ def write_fileheader(data, f, fo=None, kj=None):
             "Software version": str(__version__),
         }
     if kj is None:
-        # add coord transformations
-        coord = []
-        height = []
-        for hole in data:
-            if hasattr(hole.fileheader, "KJ"):
-                coord.append(hole.fileheader.KJ["Coordinate system"])
-                height.append(hole.fileheader.KJ["Height reference"])
-        ((coord, _),) = Counter(coord).most_common()
-        ((height, _),) = Counter(height).most_common()
-        kj = {"Coordinate system": coord, "Height reference": height}
+        try:
+            # add coord transformations
+            coord = []
+            height = []
+            for hole in data:
+                if hasattr(hole.fileheader, "KJ"):
+                    coord.append(hole.fileheader.KJ["Coordinate system"])
+                    height.append(hole.fileheader.KJ["Height reference"])
+            coord, _ = Counter(coord).most_common()
+            height, _ = Counter(height).most_common()
+            kj = {"Coordinate system": coord, "Height reference": height}
+        except:
+            kj = {"Coordinate system": "-", "Height reference": "-"}
 
     for key, subdict in {"FO": fo, "KJ": kj}.items():
         line_string = [key]

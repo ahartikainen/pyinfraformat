@@ -130,7 +130,7 @@ class Holes:
             _filter_type(hole_type, **kwargs)
             _filter_date(start=None, end=None, fmt=None, **kwargs)
         """
-        if by == "coordinates":
+        if str(by).lower() in ("coordinates", "coordinate"):
             filtered_holes = self._filter_coordinates(bbox, **kwargs)
         elif by == "type":
             filtered_holes = self._filter_type(hole_type, **kwargs)
