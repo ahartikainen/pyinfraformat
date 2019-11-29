@@ -394,9 +394,9 @@ def parse_hole(str_list, robust=False):
                 else:
                     survey_dict = survey_identifiers[survey_type]
                     if any(item.upper() == "H" for item in line.split()):
-                        names, dtypes = survey_dict["H"]
+                        names, dtypes, _ = survey_dict["H"]
                     else:
-                        names, dtypes = survey_dict["P"]
+                        names, dtypes, _ = survey_dict["P"]
 
                     line = line.split(maxsplit=len(dtypes))
                 survey = {key: format(value) for key, format, value in zip(names, dtypes, line)}
