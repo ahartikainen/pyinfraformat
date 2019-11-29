@@ -148,7 +148,7 @@ def write_fileheader(data, f, fo=None, kj=None):
         from ..__init__ import __version__
 
         fo = {
-            "Format version": "2.3",
+            "Format version": "2.5",
             "Software": "pyinfraformat",
             "Software version": str(__version__),
         }
@@ -160,8 +160,8 @@ def write_fileheader(data, f, fo=None, kj=None):
             if hasattr(hole.fileheader, "KJ"):
                 coord.append(hole.fileheader.KJ["Coordinate system"])
                 height.append(hole.fileheader.KJ["Height reference"])
-        (coord, _), = Counter(coord).most_common()
-        (height, _), = Counter(height).most_common()
+        ((coord, _),) = Counter(coord).most_common()
+        ((height, _),) = Counter(height).most_common()
         kj = {"Coordinate system": coord, "Height reference": height}
 
     for key, subdict in {"FO": fo, "KJ": kj}.items():
@@ -213,9 +213,9 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
         str used as a spacer in the start of the body part. Defaults to 4 spaces.
     """
     if body_spacer is None:
-        body_spacer = "    "
+        body_spacer = " " * 4
     if body_spacer_start is None:
-        body_spacer_start = "   "
+        body_spacer_start = " " * 4
     body_text = {}
     # Gather survey information
     line_dict = {}
