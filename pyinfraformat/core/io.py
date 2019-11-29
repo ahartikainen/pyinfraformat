@@ -148,21 +148,24 @@ def write_fileheader(data, f, fo=None, kj=None):
         from ..__init__ import __version__
 
         fo = {
-            "Format version": "2.3",
+            "Format version": "2.5",
             "Software": "pyinfraformat",
             "Software version": str(__version__),
         }
     if kj is None:
-        # add coord transformations
-        coord = []
-        height = []
-        for hole in data:
-            if hasattr(hole.fileheader, "KJ"):
-                coord.append(hole.fileheader.KJ["Coordinate system"])
-                height.append(hole.fileheader.KJ["Height reference"])
-        (coord, _), = Counter(coord).most_common()
-        (height, _), = Counter(height).most_common()
-        kj = {"Coordinate system": coord, "Height reference": height}
+        try:
+            # add coord transformations
+            coord = []
+            height = []
+            for hole in data:
+                if hasattr(hole.fileheader, "KJ"):
+                    coord.append(hole.fileheader.KJ["Coordinate system"])
+                    height.append(hole.fileheader.KJ["Height reference"])
+            coord, _ = Counter(coord).most_common()
+            height, _ = Counter(height).most_common()
+            kj = {"Coordinate system": coord, "Height reference": height}
+        except:
+            kj = {"Coordinate system": "-", "Height reference": "-"}
 
     for key, subdict in {"FO": fo, "KJ": kj}.items():
         line_string = [key]
@@ -213,9 +216,9 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
         str used as a spacer in the start of the body part. Defaults to 4 spaces.
     """
     if body_spacer is None:
-        body_spacer = "    "
+        body_spacer = " " * 4
     if body_spacer_start is None:
-        body_spacer_start = "   "
+        body_spacer_start = " " * 4
     body_text = {}
     # Gather survey information
     line_dict = {}
@@ -307,7 +310,7 @@ def read(path, encoding="utf-8", robust=False):
             # Check if head is fileheader
             if head.upper() in file_header_identifiers:
                 tail = tail[0].strip().split() if tail else []
-                names, dtypes = file_header_identifiers[head.upper()]
+                names, dtypes, _ = file_header_identifiers[head.upper()]
                 fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
                 fileheaders[head.upper()] = fileheader
             # make this robust check with peek
@@ -364,7 +367,7 @@ def parse_hole(str_list, robust=False):
         illegal_line = False
         try:
             if head in header_identifiers:
-                names, dtypes = header_identifiers[head]
+                names, dtypes, _ = header_identifiers[head]
                 if len(dtypes) == 1:
                     tail = [tail[0].strip()] if tail else []
                 else:
@@ -373,7 +376,7 @@ def parse_hole(str_list, robust=False):
                 header["linenumber"] = linenum
                 hole.add_header(head, header)
             elif head in inline_identifiers:
-                names, dtypes = inline_identifiers[head]
+                names, dtypes, _ = inline_identifiers[head]
                 if len(dtypes) == 1:
                     tail = [tail[0].strip()] if tail else []
                 else:
@@ -385,15 +388,15 @@ def parse_hole(str_list, robust=False):
                 hole.add_inline_comment(head, inline_comment)
             elif (is_number(head) and survey_type) or survey_type in ("LB",):
                 if survey_type != "HP":
-                    names, dtypes = survey_identifiers[survey_type]
+                    names, dtypes, _ = survey_identifiers[survey_type]
                     line = line.split(maxsplit=len(dtypes))
                 # HP survey is a special case
                 else:
                     survey_dict = survey_identifiers[survey_type]
                     if any(item.upper() == "H" for item in line.split()):
-                        names, dtypes = survey_dict["H"]
+                        names, dtypes, _ = survey_dict["H"]
                     else:
-                        names, dtypes = survey_dict["P"]
+                        names, dtypes, _ = survey_dict["P"]
 
                     line = line.split(maxsplit=len(dtypes))
                 survey = {key: format(value) for key, format, value in zip(names, dtypes, line)}

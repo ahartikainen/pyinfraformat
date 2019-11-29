@@ -130,7 +130,7 @@ class Holes:
             _filter_type(hole_type, **kwargs)
             _filter_date(start=None, end=None, fmt=None, **kwargs)
         """
-        if by == "coordinates":
+        if str(by).lower() in ("coordinates", "coordinate"):
             filtered_holes = self._filter_coordinates(bbox, **kwargs)
         elif by == "type":
             filtered_holes = self._filter_type(hole_type, **kwargs)
@@ -436,15 +436,15 @@ class Header:
     def add(self, key, values):
         """Add header items to object."""
         if key == "XY" and ("Date" in values):
-            if len(values["Date"]) == 6:
-                date = datetime.strptime(values["Date"], "%d%m%y")
-            elif len(values["Date"]) == 8:
-                date = datetime.strptime(values["Date"], "%d%m%Y")
-            else:
-                try:
+            try:
+                if len(values["Date"]) == 6:
+                    date = datetime.strptime(values["Date"], "%d%m%y")
+                elif len(values["Date"]) == 8:
+                    date = datetime.strptime(values["Date"], "%d%m%Y")
+                else:
                     date = pd.to_datetime(values["Date"])
-                except ValueError:
-                    date = pd.NaT
+            except ValueError:
+                date = pd.NaT
             self.date = date
         setattr(self, key, values)
         self.keys.add(key)
