@@ -307,7 +307,7 @@ def read(path, encoding="utf-8", robust=False):
             # Check if head is fileheader
             if head.upper() in file_header_identifiers:
                 tail = tail[0].strip().split() if tail else []
-                names, dtypes = file_header_identifiers[head.upper()]
+                names, dtypes, _ = file_header_identifiers[head.upper()]
                 fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
                 fileheaders[head.upper()] = fileheader
             # make this robust check with peek
@@ -364,7 +364,7 @@ def parse_hole(str_list, robust=False):
         illegal_line = False
         try:
             if head in header_identifiers:
-                names, dtypes = header_identifiers[head]
+                names, dtypes, _ = header_identifiers[head]
                 if len(dtypes) == 1:
                     tail = [tail[0].strip()] if tail else []
                 else:
@@ -373,7 +373,7 @@ def parse_hole(str_list, robust=False):
                 header["linenumber"] = linenum
                 hole.add_header(head, header)
             elif head in inline_identifiers:
-                names, dtypes = inline_identifiers[head]
+                names, dtypes, _ = inline_identifiers[head]
                 if len(dtypes) == 1:
                     tail = [tail[0].strip()] if tail else []
                 else:
@@ -385,7 +385,7 @@ def parse_hole(str_list, robust=False):
                 hole.add_inline_comment(head, inline_comment)
             elif (is_number(head) and survey_type) or survey_type in ("LB",):
                 if survey_type != "HP":
-                    names, dtypes = survey_identifiers[survey_type]
+                    names, dtypes, _ = survey_identifiers[survey_type]
                     line = line.split(maxsplit=len(dtypes))
                 # HP survey is a special case
                 else:
