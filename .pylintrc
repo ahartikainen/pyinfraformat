@@ -63,6 +63,8 @@ disable=cyclic-import,
         too-few-public-methods,
         no-self-use,
         bad-continuation,
+        import-outside-toplevel,
+        bare-except,
 
 
 # Enable the message, report, category or checker with the given id(s). You can
