@@ -5,6 +5,7 @@ language: python
 python:
   - "3.6"
   - "3.7"
+  - "3.8"
 
 install:
   - python -m pip install -r requirements.txt
@@ -23,6 +24,7 @@ script:
 
 after_success:
   - echo "Success!"
+  - cd new_folder
   - ls -lh
   - cat .coverage
   - coveralls
