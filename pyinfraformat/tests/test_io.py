@@ -26,7 +26,6 @@ def test_reading_good(robust):
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.xfail(reason="read invalid data")
 def test_reading_bad():
     for path in get_datafiles("bad"):
         with pytest.raises(Exception):
