@@ -6,12 +6,16 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  
+env:
+  - COVERALLS_PARALLEL=true
 
 install:
   - python -m pip install -r requirements.txt
   - python -m pip install -r requirements-dev.txt
   - python -m pip install -e .
   - python -m pip install coveralls
+  - python -m pip freeze
 
 script:
   - mkdir new_folder
@@ -25,6 +29,11 @@ script:
 after_success:
   - echo "Success!"
   - cd new_folder
-  - ls -lh
+  - ls -lha
   - cat .coverage
+  - mv .coverage ..
+  - cd ..
   - coveralls
+
+notifications:
+  webhooks: https://coveralls.io/webhook
