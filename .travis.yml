@@ -27,5 +27,7 @@ after_success:
   - echo "Success!"
   - cd new_folder
   - ls -lha
-  - sed -i 's/\/home\/travis\/build\/ahartikainen\/pyinfraformat\/pyinfraformat/pyinfraformat/g' .coverage
+  - cat .coverage
+  #- sed -i 's/\/home\/travis\/build\/ahartikainen\/pyinfraformat\/pyinfraformat/pyinfraformat/g' .coverage
+  #- cat .coverage
   - coveralls
