@@ -15,7 +15,7 @@ install:
 script:
   - mkdir new_folder
   - cd new_folder
-  - pytest -v ../pyinfraformat/tests/ --cov=../pyinfraformat/*
+  - pytest -v ../pyinfraformat/tests/ --cov=../pyinfraformat/ --durations=0
   - cd ..
   - python -m pydocstyle --add-ignore=D105 --convention=numpy pyinfraformat/
   - python -m black -l 100 --check pyinfraformat/
@@ -23,4 +23,6 @@ script:
 
 after_success:
   - echo "Success!"
+  - ls -lh
+  - cat .coverage
   - coveralls
