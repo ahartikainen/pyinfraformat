@@ -1,3 +1,5 @@
+branca
+folium
 numpy
 matplotlib
 mpld3
