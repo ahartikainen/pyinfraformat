@@ -18,6 +18,7 @@ class Holes:
 
     def __init__(self, holes=None, lowmemory=False):
         """Container for multiple infraformat hole information.
+
         Parameters
         ----------
         holes : list
@@ -72,77 +73,77 @@ class Holes:
         return Holes(self.holes + other.holes)
 
     def filter_holes(
-            self,
-            *,
-            bbox=None,
-            hole_type=None,
-            start=None,
-            end=None,
-            fmt=None,
-            **kwargs,
-        ):
-            """Filter holes.
+        self,
+        *,
+        bbox=None,
+        hole_type=None,
+        start=None,
+        end=None,
+        fmt=None,
+        **kwargs,
+    ):
+        """Filter holes.
 
-            Parameters
-            ----------
-            bbox : tuple
-                left, right, bottom, top
-            hole_type : str
-            start : str
-                Date string. Recommended format is yyyy-mm-dd.
-                Value is passed to `pandas.to_datetime`.
-            end : str
-                Date string. Recommended format is yyyy-mm-dd.
-                Value is passed to `pandas.to_datetime`.
-            fmt : str
-                Custom date string format for `start` and `end`.
-                Value is passed for `datetime.strptime`.
-                See https://docs.python.org/3.7/library/datetime.html#strftime-and-strptime-behavior
+        Parameters
+        ----------
+        bbox : tuple
+            left, right, bottom, top
+        hole_type : str
+        start : str
+            Date string. Recommended format is yyyy-mm-dd.
+            Value is passed to `pandas.to_datetime`.
+        end : str
+            Date string. Recommended format is yyyy-mm-dd.
+            Value is passed to `pandas.to_datetime`.
+        fmt : str
+            Custom date string format for `start` and `end`.
+            Value is passed for `datetime.strptime`.
+            See https://docs.python.org/3.7/library/datetime.html#strftime-and-strptime-behavior
 
-            Returns
-            -------
-            list
-                Filtered holes.
+        Returns
+        -------
+        list
+            Filtered holes.
 
-            Examples
-            --------
-            filtered_holes = holes_object.filter_holes(
-                by="coordinate", bbox=(24,25,60,61)
-            )
+        Examples
+        --------
+        filtered_holes = holes_object.filter_holes(
+            by="coordinate", bbox=(24,25,60,61)
+        )
 
-            filtered_holes = holes_object.filter_holes(
-                by="survey", hole_type=["PO"]
-            )
+        filtered_holes = holes_object.filter_holes(
+            by="survey", hole_type=["PO"]
+        )
 
-            filtered_holes = holes_object.filter_holes(
-                by="date", start="2015-05-15", end="2016-08-06"
-            )
+        filtered_holes = holes_object.filter_holes(
+            by="date", start="2015-05-15", end="2016-08-06"
+        )
 
-            filtered_holes = holes_object.filter_holes(
-                by="date", start="05/15/15", end="08/06/16", fmt="%x"
-            )
+        filtered_holes = holes_object.filter_holes(
+            by="date", start="05/15/15", end="08/06/16", fmt="%x"
+        )
 
-            Return types are from:
-                _filter_coordinates(bbox, **kwargs)
-                _filter_type(hole_type, **kwargs)
-                _filter_date(start=None, end=None, fmt=None, **kwargs)
-            """
-            filtered_holes = self.holes
-            if bbox is not None:
-                filtered_holes = self._filter_coordinates(filtered_holes, bbox, **kwargs)
-            if hole_type is not None:
-                filtered_holes = self._filter_type(filtered_holes, hole_type, **kwargs)
-            if start is not None or end is not None :
-                filtered_holes = self._filter_date(filtered_holes, start, end, fmt=fmt, **kwargs)
-            return filtered_holes
+        Return types are from:
+            _filter_coordinates(bbox, **kwargs)
+            _filter_type(hole_type, **kwargs)
+            _filter_date(start=None, end=None, fmt=None, **kwargs)
+        """
+        filtered_holes = self.holes
+        if bbox is not None:
+            filtered_holes = self._filter_coordinates(filtered_holes, bbox, **kwargs)
+        if hole_type is not None:
+            filtered_holes = self._filter_type(filtered_holes, hole_type, **kwargs)
+        if start is not None and end is not None :
+            filtered_holes = self._filter_date(filtered_holes, start, end, fmt=fmt, **kwargs)
+        return filtered_holes
 
-    def _filter_coordinates(self, bbox):
+    def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
         if bbox is None:
-            return Holes(self.holes)
+            return Holes(holes)
         xmin, xmax, ymin, ymax = bbox
-        holes = []
-        for hole in self.holes:
+        filtered_holes = []
+        for hole in holes:
             if not (
                 hasattr(hole.header, "XY")
                 and "X" in hole.header.XY.keys()
@@ -155,29 +156,29 @@ class Holes:
                 and hole.header.XY["Y"] >= ymin
                 and hole.header.XY["Y"] <= ymax
             ):
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
-    def _filter_type(self, hole_type):
+    def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
         if hole_type is None:
-            Holes(self.holes)
-        holes = []
+            Holes(holes)
+        filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
-        for hole in self.holes:
+        for hole in holes:
             if (
                 hasattr(hole.header, "TT")
                 and ("Survey abbreviation" in hole.header.TT)
                 and any(item == hole.header.TT["Survey abbreviation"] for item in hole_type)
             ):
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
-    def _filter_date(self, start=None, end=None, fmt=None):
+    def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
         if start is None and end is None:
-            return Holes(self.holes)
+            return Holes(holes)
 
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
@@ -189,8 +190,8 @@ class Holes:
         elif isinstance(end, str) and fmt is not None:
             end = datetime.strptime(end, fmt)
 
-        holes = []
-        for hole in self.holes:
+        filtered_holes = []
+        for hole in holes:
             date = hole.header.date
             if pd.isnull(date):
                 continue
@@ -199,8 +200,8 @@ class Holes:
             sbool = (date >= start) if start is not None else True
             ebool = (date <= end) if end is not None else True
             if sbool and ebool:
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
     def value_counts(self):
         """Count for each subgroup."""
@@ -247,6 +248,7 @@ class Holes:
 
     def to_csv(self, path, **kwargs):
         """Save data in table format to CSV.
+
         Paramaters
         ----------
         path : str
@@ -263,6 +265,7 @@ class Holes:
 
     def to_excel(self, path, **kwargs):
         """Save data in table format to Excel.
+
         Paramaters
         ----------
         path : str
@@ -279,6 +282,7 @@ class Holes:
 
     def to_infraformat(self, path, split=False, namelist=None):
         """Save data in infraformat.
+
         Parameters
         ----------
         path : str
@@ -357,7 +361,9 @@ class Hole:
 
     def _get_dataframe(self, update=False):
         """Get pandas.DataFrame object.
+
         Creates a new pandas.DataFrame if it doesn't exists of update is True
+
         Paramaters
         ----------
         update : None or bool, optional, default None
