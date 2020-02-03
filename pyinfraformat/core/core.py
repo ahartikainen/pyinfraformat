@@ -72,16 +72,7 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
-    def filter_holes(
-        self,
-        *,
-        bbox=None,
-        hole_type=None,
-        start=None,
-        end=None,
-        fmt=None,
-        **kwargs,
-    ):
+    def filter_holes(self, *, bbox=None, hole_type=None, start=None, end=None, fmt=None, **kwargs):
         """Filter holes.
 
         Parameters
@@ -108,19 +99,19 @@ class Holes:
         Examples
         --------
         filtered_holes = holes_object.filter_holes(
-            by="coordinate", bbox=(24,25,60,61)
+             bbox=(24,25,60,61)
         )
 
         filtered_holes = holes_object.filter_holes(
-            by="survey", hole_type=["PO"]
+            hole_type=["PO"]
         )
 
         filtered_holes = holes_object.filter_holes(
-            by="date", start="2015-05-15", end="2016-08-06"
+            start="2015-05-15", end="2016-08-06"
         )
 
         filtered_holes = holes_object.filter_holes(
-            by="date", start="05/15/15", end="08/06/16", fmt="%x"
+            start="05/15/15", end="08/06/16", fmt="%x"
         )
 
         Return types are from:
@@ -133,7 +124,7 @@ class Holes:
             filtered_holes = self._filter_coordinates(filtered_holes, bbox, **kwargs)
         if hole_type is not None:
             filtered_holes = self._filter_type(filtered_holes, hole_type, **kwargs)
-        if start is not None and end is not None :
+        if start is not None and end is not None:
             filtered_holes = self._filter_date(filtered_holes, start, end, fmt=fmt, **kwargs)
         return filtered_holes
 
