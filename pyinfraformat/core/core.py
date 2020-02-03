@@ -74,7 +74,6 @@ class Holes:
 
     def filter_holes(
         self,
-        by="coordinate",
         *,
         bbox=None,
         hole_type=None,
@@ -87,7 +86,6 @@ class Holes:
 
         Parameters
         ----------
-        by : str {'coordinate', 'survey', 'date'}
         bbox : tuple
             left, right, bottom, top
         hole_type : str
@@ -114,7 +112,7 @@ class Holes:
         )
 
         filtered_holes = holes_object.filter_holes(
-            by="survey", hole_type=["P"]
+            by="survey", hole_type=["PO"]
         )
 
         filtered_holes = holes_object.filter_holes(
@@ -130,23 +128,22 @@ class Holes:
             _filter_type(hole_type, **kwargs)
             _filter_date(start=None, end=None, fmt=None, **kwargs)
         """
-        if str(by).lower() in ("coordinates", "coordinate"):
-            filtered_holes = self._filter_coordinates(bbox, **kwargs)
-        elif by == "type":
-            filtered_holes = self._filter_type(hole_type, **kwargs)
-        elif by == "date":
-            filtered_holes = self._filter_date(start, end, fmt=fmt, **kwargs)
-        else:
-            raise TypeError("Argument was not valid: by={}".format(by))
+        filtered_holes = self.holes
+        if bbox is not None:
+            filtered_holes = self._filter_coordinates(filtered_holes, bbox, **kwargs)
+        if hole_type is not None:
+            filtered_holes = self._filter_type(filtered_holes, hole_type, **kwargs)
+        if start is not None or end is not None :
+            filtered_holes = self._filter_date(filtered_holes, start, end, fmt=fmt, **kwargs)
         return filtered_holes
 
-    def _filter_coordinates(self, bbox):
+    def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
         if bbox is None:
-            return Holes(self.holes)
+            return Holes(holes)
         xmin, xmax, ymin, ymax = bbox
-        holes = []
-        for hole in self.holes:
+        filtered_holes = []
+        for hole in holes:
             if not (
                 hasattr(hole.header, "XY")
                 and "X" in hole.header.XY.keys()
@@ -159,29 +156,29 @@ class Holes:
                 and hole.header.XY["Y"] >= ymin
                 and hole.header.XY["Y"] <= ymax
             ):
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
-    def _filter_type(self, hole_type):
+    def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
         if hole_type is None:
-            Holes(self.holes)
-        holes = []
+            Holes(holes)
+        filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
-        for hole in self.holes:
+        for hole in holes:
             if (
                 hasattr(hole.header, "TT")
                 and ("Survey abbreviation" in hole.header.TT)
                 and any(item == hole.header.TT["Survey abbreviation"] for item in hole_type)
             ):
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
-    def _filter_date(self, start=None, end=None, fmt=None):
+    def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
         if start is None and end is None:
-            return Holes(self.holes)
+            return Holes(holes)
 
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
@@ -193,8 +190,8 @@ class Holes:
         elif isinstance(end, str) and fmt is not None:
             end = datetime.strptime(end, fmt)
 
-        holes = []
-        for hole in self.holes:
+        filtered_holes = []
+        for hole in holes:
             date = hole.header.date
             if pd.isnull(date):
                 continue
@@ -203,8 +200,8 @@ class Holes:
             sbool = (date >= start) if start is not None else True
             ebool = (date <= end) if end is not None else True
             if sbool and ebool:
-                holes.append(hole)
-        return Holes(holes)
+                filtered_holes.append(hole)
+        return Holes(filtered_holes)
 
     def value_counts(self):
         """Count for each subgroup."""
@@ -436,15 +433,15 @@ class Header:
     def add(self, key, values):
         """Add header items to object."""
         if key == "XY" and ("Date" in values):
-            try:
-                if len(values["Date"]) == 6:
-                    date = datetime.strptime(values["Date"], "%d%m%y")
-                elif len(values["Date"]) == 8:
-                    date = datetime.strptime(values["Date"], "%d%m%Y")
-                else:
+            if len(values["Date"]) == 6:
+                date = datetime.strptime(values["Date"], "%d%m%y")
+            elif len(values["Date"]) == 8:
+                date = datetime.strptime(values["Date"], "%d%m%Y")
+            else:
+                try:
                     date = pd.to_datetime(values["Date"])
-            except ValueError:
-                date = pd.NaT
+                except ValueError:
+                    date = pd.NaT
             self.date = date
         setattr(self, key, values)
         self.keys.add(key)
