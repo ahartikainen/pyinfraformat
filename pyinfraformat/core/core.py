@@ -72,6 +72,9 @@ class Holes:
     def __add__(self, other):
         return Holes(self.holes + other.holes)
 
+    def __len__(self, other):
+        return len(self.holes)
+        
     def filter_holes(self, *, bbox=None, hole_type=None, start=None, end=None, fmt=None, **kwargs):
         """Filter holes.
 
