@@ -63,13 +63,13 @@ def test_filter_by_date():
     assert len(filtered_holes) <= len(holes)
 
 
-def test_filter_by_type():
+def test_filter_by_hole_type():
     holes = get_object()
     filtered_holes = holes.filter_holes(hole_type=["PO"])
     assert len(filtered_holes) <= len(holes)
 
 
-def test_filter_by_type():
+def test_filter_by_coordinates():
     holes = get_object()
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
     assert len(filtered_holes) <= len(holes)
