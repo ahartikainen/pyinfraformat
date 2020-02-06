@@ -30,7 +30,7 @@ def fig_to_hmtl(fig, clear_memory=True):
 
 
 def plot_po(one_survey):
-    """Plot a diagram of PO (Porakonekairaus) with matlplotlib
+    """Plot a diagram of PO (Porakonekairaus) with matlplotlib.
 
     Parameters
     ----------
@@ -75,7 +75,7 @@ def plot_po(one_survey):
 
 
 def plot_pa(one_survey):
-    """Plot a diagram of PA (Painokairaus) with matlplotlib
+    """Plot a diagram of PA (Painokairaus) with matlplotlib.
 
     Parameters
     ----------
@@ -114,7 +114,7 @@ def plot_pa(one_survey):
 
 
 def plot_hole(one_survey, backend="mpld3"):
-    """Plot a diagram of PA (Painokairaus) with matplotlib
+    """Plot a diagram of PA (Painokairaus) with matplotlib.
 
     Parameters
     ----------
