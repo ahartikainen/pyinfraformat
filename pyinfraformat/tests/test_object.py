@@ -62,6 +62,7 @@ def test_filter_by_date():
     filtered_holes = holes.filter_holes(start="2014-05-18", end="2019-01-10", fmt="%Y-%m-%d")
     assert len(filtered_holes) <= len(holes)
 
+
 def test_filter_by_type():
     holes = get_object()
     filtered_holes = holes.filter_holes(hole_type=["PO"])
