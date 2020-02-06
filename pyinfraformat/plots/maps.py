@@ -1,4 +1,4 @@
-"""Plot a html folium map from holes object"""
+"""Plot a html folium map from holes object."""
 import folium
 import branca
 from folium.plugins import MarkerCluster
@@ -48,7 +48,7 @@ def to_lanlot(x, y, intput_epsg="EPSG:3067"):
 
 
 def plot_map(holes):
-    """Plot a leaflet map from holes with popup hole plots
+    """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
     ----------
