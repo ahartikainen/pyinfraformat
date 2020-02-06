@@ -1,114 +1,147 @@
-"""Plots for single hole
-different plots for each hole type
-"""
+"""Plot diagrams for a single hole."""
+import gc
+import mpld3
 import pandas as pd
 import matplotlib.pyplot as plt
-import mpld3
 
 
-def plot_po(one_survey, return_value="fig"):
-    """Plot a PO, Porakonekairaus
-    returns a mpld3 html or matplotlib fig"""
+def fig_to_hmtl(fig, clear_memory=True):
+    """Transform matplotlib figure to html with mpld3.
+
+    Parameters
+    ----------
+    fig: matplotlib figure
+
+    Returns
+    -------
+    html : str
+    """
+    html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple")
+    if len(fig.axes) == 2:  # remove left axes scale
+        html = (
+            html[0 : html.find(', {"position": "left",')]
+            + html[html.find(', "visible": false}') + 19 :]
+        )
+    if clear_memory:
+        fig.clear()
+        plt.close()
+        gc.collect()
+    return html
+
+
+def plot_po(one_survey):
+    """Plot a diagram of PO (Porakonekairaus) with matlplotlib
+
+    Parameters
+    ----------
+    one_survey : hole object
+
+    Returns
+    -------
+    axes : list of axes
+    """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
         soils = df.dropna(subset=["Soil type"])
     else:
         soils = None
-    df = pd.concat((df, df)).sort_values(by=["Depth (m)", "linenumber"])
-    df["Depth (m)"] = df["Depth (m)"].shift(1)
 
-    fig, (left, right) = plt.subplots(
-        1, 2, sharey=True, gridspec_kw={"wspace": 0, "width_ratios": [2, 2]}
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, sharey=True, figsize=(4, 4), gridspec_kw={"wspace": 0, "width_ratios": [2, 2]}
     )
     fig.set_figwidth(4)
-    left.plot(df["Time (s)"], df["Depth (m)"], c="k")
-    left.invert_yaxis()
-    left.spines["top"].set_visible(False)
-    left.spines["left"].set_visible(False)
-    left.get_yaxis().set_visible(False)
-    left.set_xlim([110, 0])
-    plt.setp(left.get_yticklabels(), visible=False)
+    ax_left.step(df["Time (s)"], df["Depth (m)"], where="post", c="k")
+    ax_left.invert_yaxis()
+    ax_left.spines["top"].set_visible(False)
+    ax_left.spines["left"].set_visible(False)
+    ax_left.get_yaxis().set_visible(False)
+    ax_left.set_xlim([110, 0])
+    plt.setp(ax_left.get_yticklabels(), visible=False)
 
-    right.yaxis.set_tick_params(which="both", labelbottom=True)
-    right.spines["top"].set_visible(False)
-    right.spines["right"].set_visible(False)
-    right.spines["bottom"].set_visible(False)
-    right.set_xticks([])
-    right.set_title(one_survey.header.date.isoformat().split("T")[0])
-    left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    right.set_ylim(right.get_ylim()[0], 0)
+    ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
+    ax_right.spines["top"].set_visible(False)
+    ax_right.spines["right"].set_visible(False)
+    ax_right.spines["bottom"].set_visible(False)
+    ax_right.set_xticks([])
+    ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
+    ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
+    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
 
     if soils is not None:
         for _, row in soils.iterrows():
-            right.text(0.03, row["Depth (m)"], s=row["Soil type"])
+            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"])
 
-    if return_value == "fig":
-        return fig.axes
-    if return_value == "html":
-        html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple")
-        html = (
-            html[0 : html.find(', {"position": "left",')]
-            + html[html.find(', "visible": false}') + 19 :]
-        )
-        fig.clear()
-        plt.close()
-        return html
-    else:
-        raise ValueError("return_value invalid")
+    return fig
 
 
-def plot_pa(one_survey, return_value="fig"):
-    """Plot a PA, Painokairaus
-    returns a mpld3 html or matplotlib fig"""
+def plot_pa(one_survey):
+    """Plot a diagram of PA (Painokairaus) with matlplotlib
+
+    Parameters
+    ----------
+    one_survey : hole object
+
+    Returns
+    -------
+    axes : list of axes
+    """
     df = pd.DataFrame(one_survey.survey.data)
-    df = pd.concat((df, df)).sort_values(by=["Depth (m)", "linenumber"])
-    df["Depth (m)"] = df["Depth (m)"].shift(1)
-    # df["Load (kN)"][df["Load (kN)"]>=100] = 0
     df.loc[df["Load (kN)"] >= 100, "Load (kN)"] = 0
 
-    fig, (left, right) = plt.subplots(
-        1, 2, sharey=True, gridspec_kw={"wspace": 0, "width_ratios": [1, 3]}
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, sharey=True, figsize=(4, 4), gridspec_kw={"wspace": 0, "width_ratios": [1, 3]}
     )
     fig.set_figwidth(4)
-    left.plot(df["Load (kN)"], df["Depth (m)"], c="k")
-    left.invert_yaxis()
-    left.spines["top"].set_visible(False)
-    left.spines["left"].set_visible(False)
-    left.get_yaxis().set_visible(False)
+    ax_left.step(df["Load (kN)"], df["Depth (m)"], where="post", c="k")
+    ax_left.invert_yaxis()
+    ax_left.spines["top"].set_visible(False)
+    ax_left.spines["left"].set_visible(False)
+    ax_left.get_yaxis().set_visible(False)
 
-    plt.setp(left.get_yticklabels(), visible=False)
+    plt.setp(ax_left.get_yticklabels(), visible=False)
 
-    left.set_xlim([100, 0])
-    right.plot(df["Rotation of half turns (-)"], df["Depth (m)"], c="k")
-    right.yaxis.set_tick_params(which="both", labelbottom=True)
-    right.spines["top"].set_visible(False)
-    right.spines["right"].set_visible(False)
-    right.set_xlim([0, 110])
-    right.set_title(one_survey.header.date.isoformat().split("T")[0])
-    left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    right.set_ylim(right.get_ylim()[0], 0)
+    ax_left.set_xlim([100, 0])
+    ax_right.step(df["Rotation of half turns (-)"], df["Depth (m)"], where="post", c="k")
+    ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
+    ax_right.spines["top"].set_visible(False)
+    ax_right.spines["right"].set_visible(False)
+    ax_right.set_xlim([0, 110])
+    ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
+    ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
+    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
 
-    if return_value == "fig":
-        return fig.axes
-    if return_value == "html":
-        html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple")
-        html = (
-            html[0 : html.find(', {"position": "left",')]
-            + html[html.find(', "visible": false}') + 19 :]
-        )
-        fig.clear()
-        plt.close()
-        return html
-    else:
-        raise ValueError("return_value invalid")
+    return fig
 
 
-def plot_hole(one_survey, return_value="fig"):
-    """Plot hole object"""
+def plot_hole(one_survey, backend="mpld3"):
+    """Plot a diagram of PA (Painokairaus) with matplotlib
+
+    Parameters
+    ----------
+    one_survey : hole object
+    backend : str
+        Backend to plot with
+        possible values 'mpld3' and 'matplotlib'
+
+    Returns
+    -------
+    axes : axes
+    """
     hole_type = one_survey.header["TT"]["Survey abbreviation"]
     if hole_type == "PO":
-        return plot_po(one_survey, return_value=return_value)
-    if hole_type == "PA":
-        return plot_pa(one_survey, return_value=return_value)
+        fig = plot_po(one_survey)
+        if backend == "matplotlib":
+            return fig
+        elif backend == "mpld3":
+            return fig_to_hmtl(fig)
+        else:
+            raise NotImplementedError("Plotting backend {} not implemented".format(backend))
+    elif hole_type == "PA":
+        fig = plot_pa(one_survey)
+        if backend == "matplotlib":
+            return fig
+        elif backend == "mpld3":
+            return fig_to_hmtl(fig)
+        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     else:
-        raise NotImplementedError
+        raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))

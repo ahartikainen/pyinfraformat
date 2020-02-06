@@ -1,14 +1,13 @@
 """Plot a html folium map from holes object"""
-
 import folium
 import branca
 from folium.plugins import MarkerCluster
 from pyproj import Transformer
 import numpy as np
 
-from .holes import plot_pa, plot_po
+from .holes import plot_hole
 
-abbreviations = {
+ABBREVIATIONS = {
     "PA": "Painokairaus",
     "PI": "Pistokairaus",
     "LY": "Lyöntikairaus",
@@ -29,9 +28,21 @@ abbreviations = {
 }
 
 
-def to_lanlot(x, y):
-    """ETRS-TM35FIN to WGS84"""
-    transformer = Transformer.from_crs("EPSG:3067", "EPSG:4326")
+def to_lanlot(x, y, intput_epsg="EPSG:3067"):
+    """Transform coordinates to WGS84.
+
+    Parameters
+    ----------
+    x : list or float
+    x : list or float
+    intput_epsg : str
+
+    Returns
+    -------
+    x : list or float
+    y : list or float
+    """
+    transformer = Transformer.from_crs(intput_epsg, "EPSG:4326")
     x, y = transformer.transform(x, y)
     return x, y
 
@@ -60,46 +71,62 @@ def plot_map(holes):
             # disableClusteringAtZoom = 18
         ),
     ).add_to(map_fig)
-
-    pa_cluster = folium.plugins.FeatureGroupSubGroup(cluster, name="Painokairaus", show=True)
-    po_cluster = folium.plugins.FeatureGroupSubGroup(cluster, name="Porakonekairaukset", show=True)
-    lo_cluster = folium.plugins.FeatureGroupSubGroup(cluster, name="Muut kairaukset", show=False)
-
     map_fig.add_child(cluster)
-    map_fig.add_child(pa_cluster)
-    map_fig.add_child(po_cluster)
-    map_fig.add_child(lo_cluster)
+    hole_clusters = {}
+    colors = [
+        "red",
+        "blue",
+        "green",
+        "purple",
+        "orange",
+        "darkred",
+        "lightred",
+        "beige",
+        "darkblue",
+        "darkgreen",
+        "cadetblue",
+        "darkpurple",
+        "white",
+        "pink",
+        "lightblue",
+        "lightgreen",
+        "gray",
+        "black",
+        "lightgray",
+    ]
+    clust_colors = {}
+    for color, key in zip(colors, holes.value_counts().keys()):
+        hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
+            cluster, name=ABBREVIATIONS[key], show=True
+        )
+        clust_colors[key] = color
+        map_fig.add_child(hole_clusters[key])
 
     icon = ""
+    width = 300
+    height = 300
     for i, kairaus in enumerate(holes):
         y, x = [kairaus.header.XY["X"], kairaus.header.XY["Y"]]
         x, y = to_lanlot(x, y)
-        tyyppi = kairaus.header["TT"]["Survey abbreviation"]
-        if tyyppi == "PA":
-            html = plot_pa(kairaus, "html")
-            iframe = branca.element.IFrame(html=html, width=300, height=320)
-            popup = folium.Popup(iframe, max_width=300)
+        key = kairaus.header["TT"]["Survey abbreviation"]
+        try:
+            html = plot_hole(kairaus, backend="mpld3")
+            iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
+            popup = folium.Popup(iframe, max_width=width)
             folium.Marker(
                 location=[x, y],
                 color="blue",
                 popup=popup,
-                icon=folium.Icon(color="blue", icon=icon),
-            ).add_to(pa_cluster)
-        elif tyyppi == "PO":
-            html = plot_po(kairaus, "html")
-            iframe = branca.element.IFrame(html=html, width=300, height=320)
-            popup = folium.Popup(iframe, max_width=300)
-            folium.Marker(
-                location=[x, y], color="red", popup=popup, icon=folium.Icon(color="red", icon=icon)
-            ).add_to(po_cluster)
+                icon=folium.Icon(color=clust_colors[key], icon=icon),
+            ).add_to(hole_clusters[key])
 
-        else:
+        except NotImplementedError:
             folium.Marker(
                 location=[x, y],
                 color="red",
-                popup=abbreviations[tyyppi] + " " + str(i),
-                icon=folium.Icon(color="orange", icon=icon),
-            ).add_to(lo_cluster)
+                popup=ABBREVIATIONS[key] + " " + str(i),
+                icon=folium.Icon(color=clust_colors[key], icon=icon),
+            ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
     return map_fig
