@@ -1,7 +1,7 @@
 from glob import glob
 import os
 from uuid import uuid4
-from pyinfraformat import plot_map
+from pyinfraformat import plot_map, from_infraformat
 import folium
 import pytest
 
