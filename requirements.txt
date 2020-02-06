@@ -1,2 +1,7 @@
+branca
+folium
 numpy
+matplotlib
+mpld3
 pandas
+pyproj
