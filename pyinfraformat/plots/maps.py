@@ -1,4 +1,5 @@
 """Plot a html folium map from holes object."""
+from itertools import cycle
 import folium
 import branca
 from folium.plugins import MarkerCluster
@@ -6,25 +7,47 @@ from pyproj import Transformer
 import numpy as np
 
 from .holes import plot_hole
+from .. import core
 
 ABBREVIATIONS = {
-    "PA": "Painokairaus",
-    "PI": "Pistokairaus",
-    "LY": "Lyöntikairaus",
-    "SI": "Siipikairaus",
-    "HE": "Heijarikairaus",
-    "PT": "Putkikairaus",
-    "TR": "Tärykairaus",
-    "PR": "Puristinkairaus",
     "CP": "CPT -kairaus",
+    "CP/CPT": "CPT -kairaus",
+    "CPT": "CPT -kairaus",
+    "CPTU": "CPTU -kairaus",
     "CU": "CPTU -kairaus",
+    "CU/CPTU": "CPTU -kairaus",
+    "FVT": "Siipikairaus",
+    "HE": "Heijarikairaus",
+    "HE/DP": "Heijarikairaus",
+    "HK": "Heijarikairaus vääntömomentilla",
+    "HK/DP": "Heijarikairaus vääntömomentilla",
     "HP": "Puristin-heijari -kairaus",
-    "PO": "Porakonekairaus",
-    "VP": "Pohjaveden mittausputki",
-    "VO": "Orsiveden mittausputki",
+    "KE": "Kallionäytekairaus laajennettu",
     "KO": "Koekuoppa",
-    "NO": "Näytteenotto häiritty",
+    "KR": "Kallionäytekairaus videoitu",
+    "LB": "Laboratoriotutkimukset // Kallionäytetutkimus",
+    "LY": "Lyöntikairaus",
+    "MW": "MWD -kairaus",
     "NE": "Näytteenotto häiriintymätön",
+    "NO": "Näytteenotto häiritty",
+    "PA": "Painokairaus",
+    "PA/WST": "Painokairaus",
+    "PI": "Pistokairaus",
+    "PMT": "Pressometrikoe",
+    "PO": "Porakonekairaus",
+    "PR": "Puristinkairaus",
+    "PS": "Pressometrikoe",
+    "PS/PMT": "Pressometrikoe",
+    "PT": "Putkikairaus",
+    "RK": "Rakeisuus",
+    "SI": "Siipikairaus",
+    "SI/FVT": "Siipikairaus",
+    "TR": "Tärykairaus",
+    "VK": "Vedenpinnan mittaus kaivosta",
+    "VO": "Orsiveden mittausputki",
+    "VP": "Pohjaveden mittausputki",
+    "VPK": "Kalliopohjavesiputki",
+    "WST": "Painokairaus",
 }
 
 
@@ -58,7 +81,13 @@ def plot_map(holes):
     -------
     map_fig : folium map object
     """
-    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes], 0)
+    holes_filtered = []
+    for hole in holes:
+        if hasattr(hole, "header") and hasattr(hole.header, "XY"):
+            if "X" in hole.header.XY and "Y" in hole.header.XY:
+                holes_filtered.append(hole)
+    holes_filtered = core.Holes(holes_filtered)
+    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
     x, y = to_lanlot(x, y)
     map_fig = folium.Map(location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True)
 
@@ -94,8 +123,9 @@ def plot_map(holes):
         "black",
         "lightgray",
     ]
+    colors = cycle(colors)
     clust_colors = {}
-    for color, key in zip(colors, holes.value_counts().keys()):
+    for color, key in zip(colors, holes_filtered.value_counts().keys()):
         hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
             cluster, name=ABBREVIATIONS[key], show=True
         )
@@ -105,7 +135,7 @@ def plot_map(holes):
     icon = ""
     width = 300
     height = 300
-    for i, kairaus in enumerate(holes):
+    for i, kairaus in enumerate(holes_filtered):
         y, x = [kairaus.header.XY["X"], kairaus.header.XY["Y"]]
         x, y = to_lanlot(x, y)
         key = kairaus.header["TT"]["Survey abbreviation"]
