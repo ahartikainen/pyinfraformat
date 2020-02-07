@@ -2,7 +2,7 @@
 from itertools import cycle
 import folium
 import branca
-from folium.plugins import MarkerCluster
+from folium.plugins import MarkerCluster, MeasureControl
 from pyproj import Transformer
 import numpy as np
 
@@ -89,7 +89,9 @@ def plot_map(holes):
     holes_filtered = core.Holes(holes_filtered)
     x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
     x, y = to_lanlot(x, y)
-    map_fig = folium.Map(location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True)
+    map_fig = folium.Map(
+        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
+    )
 
     cluster = MarkerCluster(
         control=False,
@@ -159,4 +161,10 @@ def plot_map(holes):
             ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
+    MeasureControl(
+        secondary_length_unit="",
+        secondary_area_unit="",
+        activeColor="#aecfeb",
+        completedColor="#73b9f5",
+    ).add_to(map_fig)
     return map_fig
