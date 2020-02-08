@@ -88,16 +88,10 @@ def plot_map(holes):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
     holes_filtered = core.Holes(holes_filtered)
-    x, y = np.mean(
-        [(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0
-    )
+    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
     x, y = to_lanlot(x, y)
     map_fig = folium.Map(
-        location=[x, y],
-        zoom_start=14,
-        max_zoom=19,
-        prefer_canvas=True,
-        control_scale=True,
+        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
     )
 
     cluster = MarkerCluster(
