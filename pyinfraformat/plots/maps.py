@@ -9,6 +9,7 @@ import numpy as np
 from .holes import plot_hole
 from .. import core
 
+
 ABBREVIATIONS = {
     "CP": "CPT -kairaus",
     "CP/CPT": "CPT -kairaus",
@@ -87,10 +88,16 @@ def plot_map(holes):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
     holes_filtered = core.Holes(holes_filtered)
-    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
+    x, y = np.mean(
+        [(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0
+    )
     x, y = to_lanlot(x, y)
     map_fig = folium.Map(
-        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
+        location=[x, y],
+        zoom_start=14,
+        max_zoom=19,
+        prefer_canvas=True,
+        control_scale=True,
     )
 
     cluster = MarkerCluster(
@@ -137,12 +144,12 @@ def plot_map(holes):
     icon = ""
     width = 300
     height = 300
-    for i, kairaus in enumerate(holes_filtered):
-        y, x = [kairaus.header.XY["X"], kairaus.header.XY["Y"]]
+    for i, hole in enumerate(holes_filtered):
+        y, x = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = to_lanlot(x, y)
-        key = kairaus.header["TT"]["Survey abbreviation"]
+        key = hole.header["TT"]["Survey abbreviation"]
         try:
-            html = plot_hole(kairaus, backend="mpld3")
+            html = plot_hole(hole, backend="mpld3")
             iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
             popup = folium.Popup(iframe, max_width=width)
             folium.Marker(

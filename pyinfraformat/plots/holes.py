@@ -38,7 +38,7 @@ def plot_po(one_survey):
 
     Returns
     -------
-    axes : list of axes
+    figure : matlplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -83,7 +83,7 @@ def plot_pa(one_survey):
 
     Returns
     -------
-    axes : list of axes
+    figure : matlplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     df.loc[df["Load (kN)"] >= 100, "Load (kN)"] = 0
