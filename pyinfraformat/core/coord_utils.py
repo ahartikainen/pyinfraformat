@@ -22,7 +22,8 @@ def proj_espoo(x, y):
     """Project Espoo coordinates into ETRS-GK24.
 
     https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen
-    /Kiinteiston_muodostus/Koordinaattiuudistus(19923)"""
+    /Kiinteiston_muodostus/Koordinaattiuudistus(19923)
+    """
     # pylint: disable=invalid-name
     a = 6599858.007479810200000
     b = 24499824.978235636000000
@@ -37,7 +38,8 @@ def proj_helsinki(x, y):
     """Project Helsinki coordinates into ETRS-GK25.
 
     https://www.hel.fi/helsinki/fi/kartat-ja-liikenne/kartat-ja-paikkatieto
-    /paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat"""
+    /paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat
+    """
     # pylint: disable=invalid-name
     a = 6654650.14636
     b = 25447166.49457
@@ -51,7 +53,8 @@ def proj_helsinki(x, y):
 def proj_porvoo(x, y):
     """Project Helsinki coordinates into KKJ3.
 
-    https://www.porvoo.fi/koordinaatti-ja-korkeusjarjestelma"""
+    https://www.porvoo.fi/koordinaatti-ja-korkeusjarjestelma
+    """
     # pylint: disable=invalid-name
     P = x - 6699461.017
     I = y - 427129.490
