@@ -71,9 +71,7 @@ def project_hole(hole, output_epsg="EPSG:4326"):
     else:
         raise ValueError("Hole has no coordinate system")
 
-    if not (
-        hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY
-    ):
+    if not (hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY):
         raise ValueError("Hole has no coordinates")
 
     if input_str in epsg_systems:
