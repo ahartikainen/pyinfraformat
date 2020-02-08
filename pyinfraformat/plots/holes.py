@@ -30,7 +30,7 @@ def fig_to_hmtl(fig, clear_memory=True):
 
 
 def plot_po(one_survey):
-    """Plot a diagram of PO (Porakonekairaus) with matlplotlib.
+    """Plot a diagram of PO (Porakonekairaus) with matplotlib.
 
     Parameters
     ----------
