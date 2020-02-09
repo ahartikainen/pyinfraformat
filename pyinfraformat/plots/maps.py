@@ -152,7 +152,6 @@ def plot_map(holes):
         except NotImplementedError:
             folium.Marker(
                 location=[x, y],
-                color="red",
                 popup=ABBREVIATIONS[key] + " " + str(i),
                 icon=folium.Icon(**clust_icon_kwargs[key]),
             ).add_to(hole_clusters[key])
