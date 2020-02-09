@@ -7,7 +7,7 @@ from pyproj import Transformer
 import numpy as np
 
 from .holes import plot_hole
-from .. import core
+from ..core import Holes
 
 
 ABBREVIATIONS = {
@@ -87,7 +87,12 @@ def plot_map(holes):
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
-    holes_filtered = core.Holes(holes_filtered)
+                if hole.fileheader.KJ["Coordinate system"].upper() != "ETRS-TM35FIN":
+                    msg = "Coordinate system {} not implemted"
+                    msg = msg.format(hole.fileheader.KJ["Coordinate system"])
+                    raise NotImplementedError(msg)
+    holes_filtered = Holes(holes_filtered)
+
     x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
     x, y = to_lanlot(x, y)
     map_fig = folium.Map(
@@ -113,29 +118,23 @@ def plot_map(holes):
         "orange",
         "darkred",
         "lightred",
-        "beige",
         "darkblue",
         "darkgreen",
         "cadetblue",
         "darkpurple",
-        "white",
         "pink",
         "lightblue",
         "lightgreen",
-        "gray",
-        "black",
-        "lightgray",
     ]
     colors = cycle(colors)
-    clust_colors = {}
+    clust_icon_kwargs = {}
     for color, key in zip(colors, holes_filtered.value_counts().keys()):
         hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
             cluster, name=ABBREVIATIONS[key], show=True
         )
-        clust_colors[key] = color
+        clust_icon_kwargs[key] = dict(color=color, icon="")
         map_fig.add_child(hole_clusters[key])
 
-    icon = ""
     width = 300
     height = 300
     for i, hole in enumerate(holes_filtered):
@@ -147,10 +146,7 @@ def plot_map(holes):
             iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
             popup = folium.Popup(iframe, max_width=width)
             folium.Marker(
-                location=[x, y],
-                color="blue",
-                popup=popup,
-                icon=folium.Icon(color=clust_colors[key], icon=icon),
+                location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
             ).add_to(hole_clusters[key])
 
         except NotImplementedError:
@@ -158,7 +154,7 @@ def plot_map(holes):
                 location=[x, y],
                 color="red",
                 popup=ABBREVIATIONS[key] + " " + str(i),
-                icon=folium.Icon(color=clust_colors[key], icon=icon),
+                icon=folium.Icon(**clust_icon_kwargs[key]),
             ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
