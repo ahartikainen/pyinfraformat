@@ -93,10 +93,16 @@ def plot_map(holes):
                     raise NotImplementedError(msg)
     holes_filtered = Holes(holes_filtered)
 
-    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
+    x, y = np.mean(
+        [(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0
+    )
     x, y = to_lanlot(x, y)
     map_fig = folium.Map(
-        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
+        location=[x, y],
+        zoom_start=14,
+        max_zoom=19,
+        prefer_canvas=True,
+        control_scale=True,
     )
 
     cluster = MarkerCluster(
