@@ -112,6 +112,65 @@ def plot_pa(one_survey):
 
     return fig
 
+def plot_hp(one_survey):
+    """Plot a diagram of HP (Puristinheijarikairaus) with matlplotlib.
+
+    Parameters
+    ----------
+    one_survey : hole object
+
+    Returns
+    -------
+    figure : matlplotlib figure
+    """
+    df = pd.DataFrame(one_survey.survey.data)
+
+    fig, (ax_left, ax_right) = plt.subplots(
+        1,
+        2,
+        sharey=True,
+        figsize=(4, 4),
+        gridspec_kw={"wspace": 0, "width_ratios": [1, 3]},
+    )
+    fig.set_figwidth(4)
+    ax_left.plot(df["Torque (Nm)"], df["Depth (m)"], c="k")
+    ax_left.invert_yaxis()
+    ax_left.spines["top"].set_visible(False)
+    ax_left.spines["left"].set_visible(False)
+    ax_left.get_yaxis().set_visible(False)
+
+    plt.setp(ax_left.get_yticklabels(), visible=False)
+
+    ax_left.set_xlim([200, 0])
+    ax_left.set_xticks([200, 100, 0])
+    ax_right.barh(
+        [0]+list(df["Depth (m)"])[:-1],
+        df["Blows"],
+        align="edge",
+        fill=False,
+        height=df["Depth (m)"].diff(periods=1),
+        linewidth=1.5,
+    )
+    ax_right.plot(df["Pressure (MN/m^2)"] * 5, df["Depth (m)"], c="k")
+
+    ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
+    
+    ax_right.set_xlim([0, 110])
+    ax_right.set_xticks(list(range(0,120,20)))
+    locs = ax_right.get_xticks()
+    y_min, y_max = ax_right.get_ylim()
+    y = y_min + (y_max-y_min)*0.005
+    for x in locs[1:]:
+        ax_right.text(x, y, s="{:.0f}".format(x/5), ha='center', va='bottom')
+        
+    ax_right.spines["top"].set_visible(False)
+    ax_right.spines["right"].set_visible(False)
+    
+    ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
+    ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
+    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
+
+    return fig
 
 def plot_hole(one_survey, backend="mpld3"):
     """Plot a diagram of PA (Painokairaus) with matplotlib.
@@ -138,6 +197,13 @@ def plot_hole(one_survey, backend="mpld3"):
             raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     elif hole_type == "PA":
         fig = plot_pa(one_survey)
+        if backend == "matplotlib":
+            return fig
+        elif backend == "mpld3":
+            return fig_to_hmtl(fig)
+        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
+    elif hole_type == "HP":
+        fig = plot_hp(one_survey)
         if backend == "matplotlib":
             return fig
         elif backend == "mpld3":
