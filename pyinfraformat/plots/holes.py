@@ -167,7 +167,7 @@ def plot_hp(one_survey):
     if ymax < ymax_atleast:
         ymax = ymax_atleast
     ax_right.set_ylim(ymax, 0)
-    
+
     locs = ax_right.get_xticks()
     y_min, y_max = ax_right.get_ylim()
     y = y_min + (y_max - y_min) * 0.005
@@ -179,7 +179,6 @@ def plot_hp(one_survey):
 
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    
 
     return fig
 
