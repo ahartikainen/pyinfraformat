@@ -71,12 +71,14 @@ def to_lanlot(x, y, intput_epsg="EPSG:3067"):
     return x, y
 
 
-def plot_map(holes):
+def plot_map(holes, render_holes=True):
     """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
     ----------
     holes : holes object
+    render_holes : bool
+        Render popup diagrams for holes
 
     Returns
     -------
@@ -146,20 +148,27 @@ def plot_map(holes):
         y, x = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = to_lanlot(x, y)
         key = hole.header["TT"]["Survey abbreviation"]
-        try:
-            html = plot_hole(hole, backend="mpld3")
-            iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
-            popup = folium.Popup(iframe, max_width=width)
-            folium.Marker(
-                location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
-            ).add_to(hole_clusters[key])
+        if render_holes:
+            try:
+                html = plot_hole(hole, backend="mpld3")
+                iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
+                popup = folium.Popup(iframe, max_width=width)
+                folium.Marker(
+                    location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
+                ).add_to(hole_clusters[key])
 
-        except NotImplementedError:
+            except NotImplementedError:
+                folium.Marker(
+                    location=[x, y],
+                    popup=ABBREVIATIONS[key] + " " + str(i),
+                    icon=folium.Icon(**clust_icon_kwargs[key]),
+                ).add_to(hole_clusters[key])
+        else:
             folium.Marker(
-                location=[x, y],
-                popup=ABBREVIATIONS[key] + " " + str(i),
-                icon=folium.Icon(**clust_icon_kwargs[key]),
-            ).add_to(hole_clusters[key])
+                    location=[x, y],
+                    popup=ABBREVIATIONS[key] + " " + str(i),
+                    icon=folium.Icon(**clust_icon_kwargs[key]),
+                ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
     MeasureControl(
