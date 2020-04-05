@@ -235,8 +235,8 @@ def plot_si(one_survey):
     return fig
 
 
-def plot_hole(one_survey, backend="mpld3"):
-    """Plot a diagram of PA (Painokairaus) with matplotlib.
+def plot_hole(one_survey, backend="matplotlib"):
+    """Plot a diagram of a sounding with matplotlib.
 
     Parameters
     ----------
@@ -247,7 +247,7 @@ def plot_hole(one_survey, backend="mpld3"):
 
     Returns
     -------
-    axes : axes
+    figure : matplotlib figure or mpld3 html
     """
     hole_type = one_survey.header["TT"]["Survey abbreviation"]
     if hole_type == "PO":
