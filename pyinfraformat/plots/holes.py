@@ -120,6 +120,7 @@ def plot_pa(one_survey):
 
     return fig
 
+
 def plot_hp(one_survey):
     """Plot a diagram of HP (Puristinheijarikairaus) with matlplotlib.
 
@@ -134,11 +135,7 @@ def plot_hp(one_survey):
     df = pd.DataFrame(one_survey.survey.data)
 
     fig, (ax_left, ax_right) = plt.subplots(
-        1,
-        2,
-        sharey=True,
-        figsize=(4, 4),
-        gridspec_kw={"wspace": 0, "width_ratios": [1, 3]},
+        1, 2, sharey=True, figsize=(4, 4), gridspec_kw={"wspace": 0, "width_ratios": [1, 3]}
     )
     fig.set_figwidth(4)
     ax_left.plot(df["Torque (Nm)"], df["Depth (m)"], c="k")
@@ -152,7 +149,7 @@ def plot_hp(one_survey):
     ax_left.set_xlim([200, 0])
     ax_left.set_xticks([200, 100, 0])
     ax_right.barh(
-        [0]+list(df["Depth (m)"])[:-1],
+        [0] + list(df["Depth (m)"])[:-1],
         df["Blows"],
         align="edge",
         fill=False,
@@ -162,18 +159,18 @@ def plot_hp(one_survey):
     ax_right.plot(df["Pressure (MN/m^2)"] * 5, df["Depth (m)"], c="k")
 
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
-    
+
     ax_right.set_xlim([0, 110])
-    ax_right.set_xticks(list(range(0,120,20)))
+    ax_right.set_xticks(list(range(0, 120, 20)))
     locs = ax_right.get_xticks()
     y_min, y_max = ax_right.get_ylim()
-    y = y_min + (y_max-y_min)*0.005
+    y = y_min + (y_max - y_min) * 0.005
     for x in locs[1:]:
-        ax_right.text(x, y, s="{:.0f}".format(x/5), ha='center', va='bottom')
-        
+        ax_right.text(x, y, s="{:.0f}".format(x / 5), ha="center", va="bottom")
+
     ax_right.spines["top"].set_visible(False)
     ax_right.spines["right"].set_visible(False)
-    
+
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5
@@ -183,6 +180,7 @@ def plot_hp(one_survey):
     ax_right.set_ylim(ymax, 0)
 
     return fig
+
 
 def plot_si(one_survey):
     """Plot a diagram of SI (Siipikairaus) with matlplotlib.
@@ -206,25 +204,25 @@ def plot_si(one_survey):
     ax_left.spines["left"].set_visible(False)
     ax_left.get_yaxis().set_visible(False)
     ax_left.set_xticks([])
-    
+
     plt.setp(ax_left.get_yticklabels(), visible=False)
     ax_left.set_xlim([100, 0])
-    
-    for i in range(len(df)-1):
-        depth = list(df.iloc[[i, i+1]]['Depth (m)'])
+
+    for i in range(len(df) - 1):
+        depth = list(df.iloc[[i, i + 1]]["Depth (m)"])
         depth.insert(0, depth[0])
         depth.append(depth[-1])
-        strenght = list(df.iloc[[i, i+1]]['Shear strenght (kN/m^2)'])
+        strenght = list(df.iloc[[i, i + 1]]["Shear strenght (kN/m^2)"])
         strenght.insert(0, 0)
         strenght.append(0)
-        ax_right.plot(strenght,depth,c="k")
-    
-    ax_right.plot(df["Residual Shear strenght (kN/m^2)"], df["Depth (m)"], c="k", ls='--')
+        ax_right.plot(strenght, depth, c="k")
+
+    ax_right.plot(df["Residual Shear strenght (kN/m^2)"], df["Depth (m)"], c="k", ls="--")
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
     ax_right.spines["top"].set_visible(False)
     ax_right.spines["right"].set_visible(False)
     ax_right.set_xlim([0, 60])
-    ax_right.set_xticks(list(range(0,70,10)))
+    ax_right.set_xticks(list(range(0, 70, 10)))
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5
@@ -234,6 +232,7 @@ def plot_si(one_survey):
     ax_right.set_ylim(ymax, 0)
 
     return fig
+
 
 def plot_hole(one_survey, backend="mpld3"):
     """Plot a diagram of PA (Painokairaus) with matplotlib.
@@ -252,32 +251,18 @@ def plot_hole(one_survey, backend="mpld3"):
     hole_type = one_survey.header["TT"]["Survey abbreviation"]
     if hole_type == "PO":
         fig = plot_po(one_survey)
-        if backend == "matplotlib":
-            return fig
-        elif backend == "mpld3":
-            return fig_to_hmtl(fig)
-        else:
-            raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     elif hole_type == "PA":
         fig = plot_pa(one_survey)
-        if backend == "matplotlib":
-            return fig
-        elif backend == "mpld3":
-            return fig_to_hmtl(fig)
-        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     elif hole_type == "HP":
         fig = plot_hp(one_survey)
-        if backend == "matplotlib":
-            return fig
-        elif backend == "mpld3":
-            return fig_to_hmtl(fig)
-        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     elif hole_type == "SI":
         fig = plot_si(one_survey)
-        if backend == "matplotlib":
-            return fig
-        elif backend == "mpld3":
-            return fig_to_hmtl(fig)
-        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
     else:
         raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
+    
+    if backend == "matplotlib":
+        return fig
+    elif backend == "mpld3":
+        return fig_to_hmtl(fig)
+    else:
+        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
