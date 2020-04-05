@@ -165,10 +165,10 @@ def plot_map(holes, render_holes=True):
                 ).add_to(hole_clusters[key])
         else:
             folium.Marker(
-                    location=[x, y],
-                    popup=ABBREVIATIONS[key] + " " + str(i),
-                    icon=folium.Icon(**clust_icon_kwargs[key]),
-                ).add_to(hole_clusters[key])
+                location=[x, y],
+                popup=ABBREVIATIONS[key] + " " + str(i),
+                icon=folium.Icon(**clust_icon_kwargs[key]),
+            ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
     MeasureControl(

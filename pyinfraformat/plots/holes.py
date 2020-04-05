@@ -283,7 +283,7 @@ def plot_tr(one_survey):
             ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom")
     # for some reason not working
     last = df["Depth (m)"].iloc[-1]
-    ax_right.plot(0, last, marker='_', zorder=10, clip_on=False, ms=20, c='k')
+    ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
     ax_right.text(0.10, df["Depth (m)"].iloc[-1], s=one_survey.header["-1"]["Ending"], va="top")
 
     return fig
