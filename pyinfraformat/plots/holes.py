@@ -300,6 +300,7 @@ def plot_tr(one_survey):
 
     return fig
 
+
 def plot_he(one_survey):
     """Plot a diagram of HE (Heijarikairaus) with matlplotlib.
 
@@ -352,12 +353,13 @@ def plot_he(one_survey):
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
     ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
-    
+
     if soils is not None:
         for _, row in soils.iterrows():
             ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"])
-            
+
     return fig
+
 
 def plot_hole(one_survey, backend="matplotlib"):
     """Plot a diagram of a sounding with matplotlib.
