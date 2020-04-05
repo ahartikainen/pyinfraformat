@@ -273,7 +273,7 @@ def plot_tr(one_survey):
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5
-    ymax = ax_right.get_ylim()[0]
+    ymax = df["Depth (m)"].iloc[-1]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
     ax_right.set_ylim(ymax, 0)
@@ -282,8 +282,8 @@ def plot_tr(one_survey):
         for _, row in soils.iterrows():
             ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom")
     # for some reason not working
-    # last = df["Depth (m)"].iloc[-1]
-    # ax_right.scatter(0, last, marker='_', zorder=10, clip_on=False, s=350, c='k')
+    last = df["Depth (m)"].iloc[-1]
+    ax_right.plot(0, last, marker='_', zorder=10, clip_on=False, ms=20, c='k')
     ax_right.text(0.10, df["Depth (m)"].iloc[-1], s=one_survey.header["-1"]["Ending"], va="top")
 
     return fig
