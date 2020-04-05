@@ -259,7 +259,7 @@ def plot_hole(one_survey, backend="mpld3"):
         fig = plot_si(one_survey)
     else:
         raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
-    
+
     if backend == "matplotlib":
         return fig
     elif backend == "mpld3":
