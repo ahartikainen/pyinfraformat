@@ -235,6 +235,60 @@ def plot_si(one_survey):
     return fig
 
 
+def plot_tr(one_survey):
+    """Plot a diagram of TR (Tärykairaus) with matplotlib.
+
+    Parameters
+    ----------
+    one_survey : hole object
+
+    Returns
+    -------
+    figure : matlplotlib figure
+    """
+    df = pd.DataFrame(one_survey.survey.data)
+    if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
+        soils = df.dropna(subset=["Soil type"])
+    else:
+        soils = None
+
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, sharey=True, figsize=(4, 4), gridspec_kw={"wspace": 0, "width_ratios": [2, 2]}
+    )
+    fig.set_figwidth(4)
+    ax_left.invert_yaxis()
+    ax_left.spines["top"].set_visible(False)
+    ax_left.spines["left"].set_visible(False)
+    ax_left.spines["bottom"].set_visible(False)
+    ax_left.set_xticks([])
+    ax_left.get_yaxis().set_visible(False)
+    plt.setp(ax_left.get_yticklabels(), visible=False)
+
+    ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
+    ax_right.spines["top"].set_visible(False)
+    ax_right.spines["right"].set_visible(False)
+    ax_right.spines["bottom"].set_visible(False)
+    ax_right.set_xlim(0, 1)
+    ax_right.set_xticks([])
+    ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
+    ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
+    ymax_atleast = 5
+    ymax = ax_right.get_ylim()[0]
+    if ymax < ymax_atleast:
+        ymax = ymax_atleast
+    ax_right.set_ylim(ymax, 0)
+
+    if soils is not None:
+        for _, row in soils.iterrows():
+            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom")
+    # for some reason not working
+    # last = df["Depth (m)"].iloc[-1]
+    # ax_right.scatter(0, last, marker='_', zorder=10, clip_on=False, s=350, c='k')
+    ax_right.text(0.10, df["Depth (m)"].iloc[-1], s=one_survey.header["-1"]["Ending"], va="top")
+
+    return fig
+
+
 def plot_hole(one_survey, backend="matplotlib"):
     """Plot a diagram of a sounding with matplotlib.
 
@@ -250,7 +304,9 @@ def plot_hole(one_survey, backend="matplotlib"):
     figure : matplotlib figure or mpld3 html
     """
     hole_type = one_survey.header["TT"]["Survey abbreviation"]
-    if hole_type == "PO":
+    if len(one_survey.survey.data) == 0:
+        fig = plt.figure()
+    elif hole_type == "PO":
         fig = plot_po(one_survey)
     elif hole_type == "PA":
         fig = plot_pa(one_survey)
@@ -258,6 +314,8 @@ def plot_hole(one_survey, backend="matplotlib"):
         fig = plot_hp(one_survey)
     elif hole_type == "SI":
         fig = plot_si(one_survey)
+    elif hole_type == "TR":
+        fig = plot_tr(one_survey)
     else:
         raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
 
