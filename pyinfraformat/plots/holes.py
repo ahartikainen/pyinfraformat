@@ -65,7 +65,11 @@ def plot_po(one_survey):
     ax_right.set_xticks([])
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
+    ymax_atleast = 5
+    ymax = ax_right.get_ylim()[0]
+    if ymax < ymax_atleast:
+        ymax = ymax_atleast
+    ax_right.set_ylim(ymax, 0)
 
     if soils is not None:
         for _, row in soils.iterrows():
@@ -108,7 +112,11 @@ def plot_pa(one_survey):
     ax_right.set_xlim([0, 110])
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
+    ymax_atleast = 5
+    ymax = ax_right.get_ylim()[0]
+    if ymax < ymax_atleast:
+        ymax = ymax_atleast
+    ax_right.set_ylim(ymax, 0)
 
     return fig
 
@@ -168,7 +176,11 @@ def plot_hp(one_survey):
     
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ax_right.set_ylim(ax_right.get_ylim()[0], 0)
+    ymax_atleast = 5
+    ymax = ax_right.get_ylim()[0]
+    if ymax < ymax_atleast:
+        ymax = ymax_atleast
+    ax_right.set_ylim(ymax, 0)
 
     return fig
 
