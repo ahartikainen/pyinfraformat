@@ -177,7 +177,7 @@ def plot_map(holes, render_holes=True):
         if render_holes:
             try:
                 html = plot_hole(hole, backend="mpld3")
-                iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
+                iframe = branca.element.IFrame(html=html, width=width, height=height + 5)
                 popup = folium.Popup(iframe, max_width=width)
                 folium.Marker(
                     location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
