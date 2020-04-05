@@ -392,7 +392,7 @@ def plot_hole(one_survey, backend="matplotlib"):
         fig = plot_he(one_survey)
     else:
         raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
-
+    fig.tight_layout()
     if backend == "matplotlib":
         return fig
     elif backend == "mpld3":
