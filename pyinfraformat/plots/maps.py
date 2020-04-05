@@ -113,12 +113,20 @@ def plot_map(holes, render_holes=True):
     folium.TileLayer("Stamen Toner").add_to(map_fig)
     folium.TileLayer("Stamen Terrain").add_to(map_fig)
     folium.TileLayer("CartoDB positron").add_to(map_fig)
-    esri = (
+    esri_url = (
         "https://server.arcgisonline.com/ArcGIS/rest/services/"
         + "World_Imagery/MapServer/tile/{z}/{y}/{x}"
     )
     folium.TileLayer(
-        tiles=esri, attr="Esri", name="Esri Satellite", overlay=False, control=True
+        tiles=esri_url, attr="Esri", name="Esri Satellite", overlay=False, control=True
+    ).add_to(map_fig)
+    mml_url_perus = "http://tiles.kartat.kapsi.fi/peruskartta/{z}/{x}/{y}.jpg"
+    mml_url_orto = "http://tiles.kartat.kapsi.fi/ortokuva/{z}/{x}/{y}.jpg"
+    folium.TileLayer(
+        tiles=mml_url_perus, attr="MML", name="MML peruskartta", overlay=False, control=True
+    ).add_to(map_fig)
+    folium.TileLayer(
+        tiles=mml_url_orto, attr="MML", name="MML ilmakuva", overlay=False, control=True
     ).add_to(map_fig)
     sw_bounds = to_lanlot(min(x_all), min(y_all), input_epsg)
     ne_bounds = to_lanlot(max(x_all), max(y_all), input_epsg)
@@ -175,7 +183,7 @@ def plot_map(holes, render_holes=True):
                     location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
                 ).add_to(hole_clusters[key])
 
-            except NotImplementedError:
+            except (NotImplementedError, KeyError):
                 folium.Marker(
                     location=[x, y],
                     popup=ABBREVIATIONS[key] + " " + str(i),
