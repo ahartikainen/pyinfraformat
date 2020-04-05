@@ -75,6 +75,9 @@ def plot_po(one_survey):
         for _, row in soils.iterrows():
             ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"])
 
+    last = df["Depth (m)"].iloc[-1]
+    # ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
+    ax_right.text(0.03, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -118,6 +121,9 @@ def plot_pa(one_survey):
         ymax = ymax_atleast
     ax_right.set_ylim(ymax, 0)
 
+    last = df["Depth (m)"].iloc[-1]
+    ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -180,6 +186,9 @@ def plot_hp(one_survey):
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
 
+    last = df["Depth (m)"].iloc[-1]
+    ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -232,6 +241,9 @@ def plot_si(one_survey):
         ymax = ymax_atleast
     ax_right.set_ylim(ymax, 0)
 
+    last = df["Depth (m)"].iloc[-1]
+    ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -281,10 +293,10 @@ def plot_tr(one_survey):
     if soils is not None:
         for _, row in soils.iterrows():
             ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom")
-    # for some reason not working
+
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(0.10, df["Depth (m)"].iloc[-1], s=one_survey.header["-1"]["Ending"], va="top")
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
 
     return fig
 
