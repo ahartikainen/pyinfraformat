@@ -14,7 +14,7 @@ def fig_to_hmtl(fig, clear_memory=True):
 
     Returns
     -------
-    html : str
+    html
     """
     html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple")
     if len(fig.axes) == 2:  # remove left axes scale
@@ -38,7 +38,7 @@ def plot_po(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -90,7 +90,7 @@ def plot_pa(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     df.loc[df["Load (kN)"] >= 100, "Load (kN)"] = 0
@@ -136,7 +136,7 @@ def plot_hp(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
 
@@ -201,7 +201,7 @@ def plot_si(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
 
@@ -222,10 +222,10 @@ def plot_si(one_survey):
         depth = list(df.iloc[[i, i + 1]]["Depth (m)"])
         depth.insert(0, depth[0])
         depth.append(depth[-1])
-        strenght = list(df.iloc[[i, i + 1]]["Shear strenght (kN/m^2)"])
-        strenght.insert(0, 0)
-        strenght.append(0)
-        ax_right.plot(strenght, depth, c="k")
+        strength = list(df.iloc[[i, i + 1]]["Shear strenght (kN/m^2)"])
+        strength.insert(0, 0)
+        strength.append(0)
+        ax_right.plot(strength, depth, c="k")
 
     ax_right.plot(df["Residual Shear strenght (kN/m^2)"], df["Depth (m)"], c="k", ls="--")
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
@@ -256,7 +256,7 @@ def plot_tr(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -310,7 +310,7 @@ def plot_he(one_survey):
 
     Returns
     -------
-    figure : matlplotlib figure
+    figure : matplotlib figure
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
