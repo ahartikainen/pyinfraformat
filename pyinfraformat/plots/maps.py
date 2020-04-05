@@ -87,14 +87,19 @@ def plot_map(holes):
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
-                if hole.fileheader.KJ["Coordinate system"].upper() != "ETRS-TM35FIN":
+                coord_system = hole.fileheader.KJ["Coordinate system"].upper()
+                if coord_system == "ETRS-TM35FIN":
+                    input_epsg = "EPSG:3067"
+                elif coord_system == "ETRS-GK25":
+                    input_epsg = "EPSG:3879"
+                else:
                     msg = "Coordinate system {} not implemted"
-                    msg = msg.format(hole.fileheader.KJ["Coordinate system"])
+                    msg = msg.format(coord_system)
                     raise NotImplementedError(msg)
     holes_filtered = Holes(holes_filtered)
 
     x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
-    x, y = to_lanlot(x, y)
+    x, y = to_lanlot(x, y, input_epsg)
     map_fig = folium.Map(
         location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
     )
