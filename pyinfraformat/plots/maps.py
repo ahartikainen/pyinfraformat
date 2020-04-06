@@ -110,7 +110,6 @@ def plot_map(holes, render_holes=True):
     map_fig = folium.Map(
         location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
     )
-    folium.TileLayer("Stamen Toner").add_to(map_fig)
     folium.TileLayer("Stamen Terrain").add_to(map_fig)
     folium.TileLayer("CartoDB positron").add_to(map_fig)
     esri_url = (
