@@ -84,7 +84,7 @@ def plot_po(one_survey):
 
 
 def plot_pa(one_survey):
-    """Plot a diagram of PA (Painokairaus) with matlplotlib.
+    """Plot a diagram of PA (Painokairaus) with matplotlib.
 
     Parameters
     ----------
@@ -130,7 +130,7 @@ def plot_pa(one_survey):
 
 
 def plot_hp(one_survey):
-    """Plot a diagram of HP (Puristinheijarikairaus) with matlplotlib.
+    """Plot a diagram of HP (Puristinheijarikairaus) with matplotlib.
 
     Parameters
     ----------
@@ -195,7 +195,7 @@ def plot_hp(one_survey):
 
 
 def plot_si(one_survey):
-    """Plot a diagram of SI (Siipikairaus) with matlplotlib.
+    """Plot a diagram of SI (Siipikairaus) with matplotlib.
 
     Parameters
     ----------
@@ -304,7 +304,7 @@ def plot_tr(one_survey):
 
 
 def plot_he(one_survey):
-    """Plot a diagram of HE (Heijarikairaus) with matlplotlib.
+    """Plot a diagram of HE (Heijarikairaus) with matplotlib.
 
     Parameters
     ----------
