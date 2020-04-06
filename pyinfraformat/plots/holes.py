@@ -67,7 +67,7 @@ def plot_po(one_survey):
     ax_right.set_xticks([])
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = ax_right.get_ylim()[0]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
@@ -117,7 +117,7 @@ def plot_pa(one_survey):
     ax_right.set_xlim([0, 110])
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = ax_right.get_ylim()[0]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
@@ -170,7 +170,7 @@ def plot_hp(one_survey):
 
     ax_right.set_xlim([0, 110])
     ax_right.set_xticks(list(range(0, 120, 20)))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = ax_right.get_ylim()[0]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
@@ -237,7 +237,7 @@ def plot_si(one_survey):
     ax_right.set_xticks(list(range(0, 70, 10)))
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = ax_right.get_ylim()[0]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
@@ -286,7 +286,7 @@ def plot_tr(one_survey):
     ax_right.set_xticks([])
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = df["Depth (m)"].iloc[-1]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
@@ -340,7 +340,7 @@ def plot_he(one_survey):
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
     ax_right.set_xlim([0, 110])
     ax_right.set_xticks(list(range(0, 120, 20)))
-    ymax_atleast = 5
+    ymax_atleast = 5 #hard limit minimum for aestics
     ymax = ax_right.get_ylim()[0]
     if ymax < ymax_atleast:
         ymax = ymax_atleast
