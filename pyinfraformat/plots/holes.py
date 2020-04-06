@@ -4,8 +4,6 @@ import mpld3
 import pandas as pd
 import matplotlib.pyplot as plt
 
-BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
-
 
 def fig_to_hmtl(fig, clear_memory=True):
     """Transform matplotlib figure to html with mpld3.
@@ -75,11 +73,11 @@ def plot_po(one_survey):
 
     if soils is not None:
         for _, row in soils.iterrows():
-            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], bbox=BBOX)
+            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"])
 
     last = df["Depth (m)"].iloc[-1]
     # ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(0.03, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.03, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -125,7 +123,7 @@ def plot_pa(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -190,7 +188,7 @@ def plot_hp(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -245,7 +243,7 @@ def plot_si(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
     return fig
 
 
@@ -294,11 +292,11 @@ def plot_tr(one_survey):
 
     if soils is not None:
         for _, row in soils.iterrows():
-            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom", bbox=BBOX)
+            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"], va="bottom")
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
 
     return fig
 
@@ -354,11 +352,11 @@ def plot_he(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top")
 
     if soils is not None:
         for _, row in soils.iterrows():
-            ax_right.text(3, row["Depth (m)"], s=row["Soil type"], bbox=BBOX)
+            ax_right.text(0.03, row["Depth (m)"], s=row["Soil type"])
 
     return fig
 
