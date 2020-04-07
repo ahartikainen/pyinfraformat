@@ -72,7 +72,7 @@ def identifiers():
 
     # point specific
     header_identifiers = {
-        "OM": (["Owner"], [str], [False],),
+        "OM": (["Owner"], [str], [False]),
         "ML": (["Soil or rock classification"], [str], [False]),
         "OR": (["Research organization"], [str], [False]),
         "TY": (["Work number", "Work name"], [str, str], [True, False]),

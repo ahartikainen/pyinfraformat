@@ -2,12 +2,13 @@
 from itertools import cycle
 import folium
 import branca
-from folium.plugins import MarkerCluster
+from folium.plugins import MarkerCluster, MeasureControl
 from pyproj import Transformer
 import numpy as np
 
 from .holes import plot_hole
-from .. import core
+from ..core import Holes
+
 
 ABBREVIATIONS = {
     "CP": "CPT -kairaus",
@@ -70,12 +71,14 @@ def to_lanlot(x, y, intput_epsg="EPSG:3067"):
     return x, y
 
 
-def plot_map(holes):
+def plot_map(holes, render_holes=True):
     """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
     ----------
     holes : holes object
+    render_holes : bool
+        Render popup diagrams for holes
 
     Returns
     -------
@@ -86,10 +89,47 @@ def plot_map(holes):
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
-    holes_filtered = core.Holes(holes_filtered)
-    x, y = np.mean([(i.header["XY"]["Y"], (i.header["XY"]["X"])) for i in holes_filtered], 0)
-    x, y = to_lanlot(x, y)
-    map_fig = folium.Map(location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True)
+                coord_system = hole.fileheader.KJ["Coordinate system"].upper()
+                if coord_system == "ETRS-TM35FIN":
+                    input_epsg = "EPSG:3067"
+                elif coord_system == "ETRS-GK25":
+                    input_epsg = "EPSG:3879"
+                else:
+                    msg = "Coordinate system {} not implemted"
+                    msg = msg.format(coord_system)
+                    raise NotImplementedError(msg)
+    holes_filtered = Holes(holes_filtered)
+
+    x_all, y_all = [], []
+    for i in holes_filtered:
+        x_all.append(i.header["XY"]["Y"])
+        y_all.append(i.header["XY"]["X"])
+
+    x, y = np.mean(x_all), np.mean(y_all)
+    x, y = to_lanlot(x, y, input_epsg)
+    map_fig = folium.Map(
+        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
+    )
+    folium.TileLayer("Stamen Terrain").add_to(map_fig)
+    folium.TileLayer("CartoDB positron").add_to(map_fig)
+    esri_url = (
+        "https://server.arcgisonline.com/ArcGIS/rest/services/"
+        + "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    )
+    folium.TileLayer(
+        tiles=esri_url, attr="Esri", name="Esri Satellite", overlay=False, control=True
+    ).add_to(map_fig)
+    mml_url_perus = "http://tiles.kartat.kapsi.fi/peruskartta/{z}/{x}/{y}.jpg"
+    mml_url_orto = "http://tiles.kartat.kapsi.fi/ortokuva/{z}/{x}/{y}.jpg"
+    folium.TileLayer(
+        tiles=mml_url_perus, attr="MML", name="MML peruskartta", overlay=False, control=True
+    ).add_to(map_fig)
+    folium.TileLayer(
+        tiles=mml_url_orto, attr="MML", name="MML ilmakuva", overlay=False, control=True
+    ).add_to(map_fig)
+    sw_bounds = to_lanlot(min(x_all), min(y_all), input_epsg)
+    ne_bounds = to_lanlot(max(x_all), max(y_all), input_epsg)
+    map_fig.fit_bounds([sw_bounds, ne_bounds])
 
     cluster = MarkerCluster(
         control=False,
@@ -110,53 +150,57 @@ def plot_map(holes):
         "orange",
         "darkred",
         "lightred",
-        "beige",
         "darkblue",
         "darkgreen",
         "cadetblue",
         "darkpurple",
-        "white",
         "pink",
         "lightblue",
         "lightgreen",
-        "gray",
-        "black",
-        "lightgray",
     ]
     colors = cycle(colors)
-    clust_colors = {}
+    clust_icon_kwargs = {}
     for color, key in zip(colors, holes_filtered.value_counts().keys()):
         hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
             cluster, name=ABBREVIATIONS[key], show=True
         )
-        clust_colors[key] = color
+        clust_icon_kwargs[key] = dict(color=color, icon="")
         map_fig.add_child(hole_clusters[key])
 
-    icon = ""
     width = 300
     height = 300
-    for i, kairaus in enumerate(holes_filtered):
-        y, x = [kairaus.header.XY["X"], kairaus.header.XY["Y"]]
+    for i, hole in enumerate(holes_filtered):
+        y, x = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = to_lanlot(x, y)
-        key = kairaus.header["TT"]["Survey abbreviation"]
-        try:
-            html = plot_hole(kairaus, backend="mpld3")
-            iframe = branca.element.IFrame(html=html, width=width, height=height + 20)
-            popup = folium.Popup(iframe, max_width=width)
-            folium.Marker(
-                location=[x, y],
-                color="blue",
-                popup=popup,
-                icon=folium.Icon(color=clust_colors[key], icon=icon),
-            ).add_to(hole_clusters[key])
+        key = hole.header["TT"]["Survey abbreviation"]
+        if render_holes:
+            try:
+                html = plot_hole(hole, backend="mpld3")
+                iframe = branca.element.IFrame(html=html, width=width, height=height + 5)
+                popup = folium.Popup(iframe, max_width=width)
+                folium.Marker(
+                    location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
+                ).add_to(hole_clusters[key])
 
-        except NotImplementedError:
+            except (NotImplementedError, KeyError):
+                folium.Marker(
+                    location=[x, y],
+                    popup=ABBREVIATIONS[key] + " " + str(i),
+                    icon=folium.Icon(**clust_icon_kwargs[key]),
+                ).add_to(hole_clusters[key])
+        else:
             folium.Marker(
                 location=[x, y],
-                color="red",
                 popup=ABBREVIATIONS[key] + " " + str(i),
-                icon=folium.Icon(color=clust_colors[key], icon=icon),
+                icon=folium.Icon(**clust_icon_kwargs[key]),
             ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
+    MeasureControl(
+        secondary_length_unit="",
+        secondary_area_unit="",
+        activeColor="#aecfeb",
+        completedColor="#73b9f5",
+    ).add_to(map_fig)
+
     return map_fig
