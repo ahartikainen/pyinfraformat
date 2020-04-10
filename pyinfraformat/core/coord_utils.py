@@ -208,11 +208,10 @@ def project_holes(holes, output_epsg="EPSG:4326"):
         for hole in holes:
             try:
                 hole_copy = project_hole(hole, output_epsg=output_epsg)
-            except ValueError as e:
-                if str(e)=="Hole has no coordinate system":
+            except ValueError as error:
+                if str(error) == "Hole has no coordinate system":
                     continue
-                else:
-                    raise ValueError(e)
+                raise ValueError(error)
             proj_holes.append(hole_copy)
         return Holes(proj_holes)
     elif isinstance(holes, Hole):
