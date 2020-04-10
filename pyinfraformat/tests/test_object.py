@@ -81,4 +81,3 @@ def test_filter_by_coordinates():
 def test_coordinate_projection():
     holes = get_object()
     holes = project_holes(holes)
-    assert len(filtered_holes) <= len(holes)
