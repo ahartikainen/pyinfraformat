@@ -9,6 +9,8 @@ import numpy as np
 from .holes import plot_hole
 from ..core import Holes
 
+__all__ = ["plot_map"]
+
 
 ABBREVIATIONS = {
     "CP": "CPT -kairaus",

@@ -4,6 +4,8 @@ import mpld3
 import pandas as pd
 import matplotlib.pyplot as plt
 
+__all__ = ["plot_hole"]
+
 BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
 
 
