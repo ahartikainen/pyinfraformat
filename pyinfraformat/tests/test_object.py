@@ -77,6 +77,7 @@ def test_filter_by_coordinates():
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
     assert len(filtered_holes) <= len(holes)
 
+
 def test_coordinate_projection():
     holes = get_object()
     holes = project_holes(holes)
