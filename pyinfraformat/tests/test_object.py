@@ -2,6 +2,7 @@ from glob import glob
 import os
 from uuid import uuid4
 from pyinfraformat import from_infraformat, Holes, FileExtensionMissingError, PathNotFoundError
+from pyinfraformat import project_holes
 import pytest
 
 
@@ -74,4 +75,9 @@ def test_filter_by_hole_type():
 def test_filter_by_coordinates():
     holes = get_object()
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
+    assert len(filtered_holes) <= len(holes)
+
+def test_coordinate_projection():
+    holes = get_object()
+    holes = project_holes(holes)
     assert len(filtered_holes) <= len(holes)
