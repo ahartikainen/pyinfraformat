@@ -97,6 +97,33 @@ def get_epsg_systems():
     return epsg_systems
 
 
+def to_lanlot(x, y, input_epsg="EPSG:3067"):
+    """Transform coordinates to WGS84.
+
+    Parameters
+    ----------
+    x : list or float
+    x : list or float
+    intput_epsg : str
+
+    Returns
+    -------
+    x : list or float
+    y : list or float
+    """
+    output_epsg = "EPSG:4326"
+    if input_epsg == output_epsg:
+        return x, y
+    key = (input_epsg, output_epsg)
+    if key in TRANSFORMERS:
+        transf = TRANSFORMERS[key]
+    else:
+        transf = Transformer.from_crs(input_epsg, output_epsg)
+        TRANSFORMERS[key] = transf
+    x, y = transf.transform(x, y)
+    return x, y
+
+
 def project_hole(hole, output_epsg="EPSG:4326"):
     """Transform holes -objects coordinates.
 
