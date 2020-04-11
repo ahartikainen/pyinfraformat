@@ -124,6 +124,39 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     return x, y
 
 
+def check_hole(hole, bbox):
+    """Check if hole point is inside bbox.
+    Returns boolean.
+    """
+    if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
+        x, y = hole.header.XY["X"], hole.header.XY["Y"]
+        if bbox[0] < x and bbox[2] > x and bbox[1] < y and bbox[3] > y:
+            return True
+    return False
+
+
+def check_finland(holes, epsg="EPSG:4326"):
+    """Check if holes points are inside Finland bbox.
+    Returns boolean.
+    """
+    bbox = [19.0, 59.0, 32.0, 71.0]  # Check
+    if epsg != "EPSG:4326":
+        key = ("EPSG:4326", epsg)
+        if key in TRANSFORMERS:
+            transf = TRANSFORMERS[key]
+        else:
+            transf = Transformer.from_crs("EPSG:4326", epsg)
+            TRANSFORMERS[key] = transf
+        bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])  # check
+        bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
+    if isinstance(holes, Holes):
+        print(bbox)  #
+        return [check_hole(hole, bbox) for hole in holes]
+    elif isinstance(holes, Hole):
+        return check_hole(holes, bbox)
+    raise ValueError("holes -parameter is unkown input type")
+
+
 def project_hole(hole, output_epsg="EPSG:4326"):
     """Transform holes -objects coordinates.
 
@@ -190,7 +223,7 @@ def project_hole(hole, output_epsg="EPSG:4326"):
     return hole_copy
 
 
-def project_holes(holes, output_epsg="EPSG:4326"):
+def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
     """Transform holes -objects coordinates.
 
     Parameters
@@ -198,6 +231,9 @@ def project_holes(holes, output_epsg="EPSG:4326"):
     holes : holes -object
     output_epsg : str
         ESPG code, EPSG:XXXX
+    check : str
+        Check if points are inside area.
+        Possible values: 'Finland', False
 
     Returns
     -------
@@ -213,9 +249,15 @@ def project_holes(holes, output_epsg="EPSG:4326"):
                     continue
                 raise ValueError(error)
             proj_holes.append(hole_copy)
-        return Holes(proj_holes)
+        return_value = Holes(proj_holes)
     elif isinstance(holes, Hole):
         hole = deepcopy(holes)
-        return project_hole(hole, output_epsg=output_epsg)
+        return_value = project_hole(hole, output_epsg=output_epsg)
     else:
         raise ValueError("holes -parameter is unkown input type")
+
+    if check and check.upper() == "FINLAND":
+        if not check_finland(holes, output_epsg):
+            msg = "Holes are not inside Finland"
+            logger.critical(msg)
+    return return_value
