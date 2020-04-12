@@ -100,6 +100,6 @@ def test_proj_espoo(coords):
 )
 def test_proj_helsinki(coords):
     input_coords, correct = coords
-    *output_coords, epsg = proj_helsinki(input_coords)
+    *output_coords, epsg = proj_helsinki(*input_coords)
     assert abs(output_coords[0] - correct[0]) < 0.1
     assert abs(output_coords[1] - correct[1]) < 0.1
