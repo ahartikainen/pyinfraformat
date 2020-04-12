@@ -36,19 +36,19 @@ def change_x_to_y(holes):
 
 
 def proj_espoo(x, y):
-    """Project Espoo vvj coordinates into ETRS-GK25 (EPSG:3879).
+    """Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
 
     https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen
     /Kiinteiston_muodostus/Koordinaattiuudistus(19923)
     """
     # pylint: disable=invalid-name
-    output_epsg = "EPSG:3879"
-    a = 6600290.731951121200000
-    b = 25443205.726901203000000
-    c = 0.999869662254702
-    d = -0.015128383929030
-    e = 0.015134113397130
-    f = 0.999867560105837
+    output_epsg = "EPSG:3878"
+    a = 6599858.007479810200000
+    b = 24499824.978235636000000
+    c = 0.999998786628487
+    d = 0.000020762261526
+    e = -0.000014784506306
+    f = 0.999996546603269
     x, y = a + c * x + d * y, b + e * x + f * y
     return x, y, output_epsg
 
