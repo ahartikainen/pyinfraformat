@@ -139,7 +139,7 @@ def check_finland(holes, epsg="EPSG:4326"):
     """Check if holes points are inside Finland bbox.
     Returns boolean.
     """
-    bbox = [19.0, 59.0, 32.0, 71.0]  # Check
+    bbox = [19.0, 59.0, 32.0, 71.0]
     if epsg != "EPSG:4326":
         key = ("EPSG:4326", epsg)
         if key in TRANSFORMERS:
@@ -147,11 +147,10 @@ def check_finland(holes, epsg="EPSG:4326"):
         else:
             transf = Transformer.from_crs("EPSG:4326", epsg)
             TRANSFORMERS[key] = transf
-        bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])  # check
-        bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
+        bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0]) 
+        bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
     if isinstance(holes, Holes):
-        print(bbox)  #
-        return [check_hole(hole, bbox) for hole in holes]
+        return all([check_hole(hole, bbox) for hole in holes])
     elif isinstance(holes, Hole):
         return check_hole(holes, bbox)
     raise ValueError("holes -parameter is unkown input type")
@@ -168,7 +167,8 @@ def project_hole(hole, output_epsg="EPSG:4326"):
 
     Returns
     -------
-    hole : hole -object with coordinates transformed
+    hole : Hole -object 
+        Copy of hole with coordinates transformed
     """
     epsg_systems = get_epsg_systems()
     epsg_names = {epsg_systems[i]: i for i in epsg_systems}
@@ -237,9 +237,10 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
 
     Returns
     -------
-    holes : holes -object with coordinates transformed
+    holes : Holes -object 
+        Copy of holes with coordinates transformed
     """
-    if isinstance(holes, Holes) or len(holes) > 1:
+    if isinstance(holes, Holes):
         proj_holes = []
         for hole in holes:
             try:
@@ -257,7 +258,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         raise ValueError("holes -parameter is unkown input type")
 
     if check and check.upper() == "FINLAND":
-        if not check_finland(holes, output_epsg):
+        if not check_finland(return_value, output_epsg):
             msg = "Holes are not inside Finland"
             logger.critical(msg)
     return return_value
