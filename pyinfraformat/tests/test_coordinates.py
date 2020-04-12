@@ -7,6 +7,7 @@ from pyinfraformat.core.coord_utils import (
     coord_string_fix,
     change_x_to_y,
     project_holes,
+    project_hole,
     check_area,
     proj_espoo,
     proj_helsinki,
@@ -78,6 +79,15 @@ def test_holes_projection_errors():
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
     assert str(e_info.value) == "Hole has no coordinates"
+
+    holes = get_object()
+    del holes[0].header.XY["X"]
+    del holes[0].header.XY["Y"]
+    del holes[1].fileheader.KJ["Coordinate system"]
+    holes[2].header.XY["X"] = np.nan
+    holes[2].header.XY["Y"] = np.nan
+    holes2 = project_holes(holes)
+    assert len(holes) > len(holes2)
 
 
 @pytest.mark.parametrize(
