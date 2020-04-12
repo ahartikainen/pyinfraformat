@@ -126,6 +126,7 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
 
 def check_hole(hole, bbox):
     """Check if hole point is inside bbox.
+    
     Returns boolean.
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
@@ -137,6 +138,7 @@ def check_hole(hole, bbox):
 
 def check_finland(holes, epsg="EPSG:4326"):
     """Check if holes points are inside Finland bbox.
+    
     Returns boolean.
     """
     bbox = [19.0, 59.0, 32.0, 71.0]
