@@ -76,10 +76,3 @@ def test_filter_by_coordinates():
     holes = get_object()
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
     assert len(filtered_holes) <= len(holes)
-
-
-def test_coordinate_projection():
-    holes = get_object()
-    holes = project_holes(holes)
-    l = [hole.fileheader.KJ["Coordinate system"] for hole in holes]
-    assert all([l[0] == i for i in l])

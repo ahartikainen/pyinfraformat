@@ -15,10 +15,24 @@ TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output)
 
 def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
-    common_separators = r"[,. :\-]"
+    common_separators = r"[,. :\_-]"
     if len(input_string) <= 4:
         input_string = "ETRS-" + input_string
     return "-".join(re.split(common_separators, input_string.upper()))
+
+
+def change_x_to_y(holes):
+    """Change holes x to y and y to x."""
+    holes_copy = deepcopy(holes)
+    for hole in holes_copy:
+        if (
+            hasattr(hole, "header")
+            and hasattr(hole.header, "XY")
+            and "X" in hole.header.XY
+            and "Y" in hole.header.XY
+        ):
+            hole.header.XY["X"], hole.header.XY["Y"] = (hole.header.XY["Y"], hole.header.XY["X"])
+    return holes_copy
 
 
 def proj_espoo(x, y):
