@@ -1,6 +1,7 @@
 from glob import glob
 import os
 from uuid import uuid4
+import numpy as np
 from pyinfraformat import from_infraformat, Holes
 from pyinfraformat.core.coord_utils import (
     coord_string_fix,
@@ -36,20 +37,50 @@ def test_fix_coord_str(strings):
     assert output_str == correct
 
 
-def test_coordinate_projection_uniform():
+def test_holes_projection_uniform():
     holes = get_object()
     holes = project_holes(holes)
     l = [hole.fileheader.KJ["Coordinate system"] for hole in holes]
     assert all([l[0] == i for i in l])
 
 
-def test_coordinate_projection():
+def test_holes_coordinate_projection():
     holes = get_object()
     holes = change_x_to_y(holes)
     holes2 = project_holes(holes, output_epsg="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
+    hole = project_holes(holes[0], output_epsg="EPSG:3879", check="Finland")
+    hole = project_holes(hole, output_epsg="EPSG:3879", check="Finland")
     assert check_area(holes2, epsg="EPSG:4326", country="FI") == True
+    assert check_area(holes3, epsg="EPSG:3879", country="FI") == True
     assert check_area(holes3, epsg="EPSG:3879", country="EE") == False
+    
+    
+def test_holes_projection_errors():
+    holes = get_object()
+    with pytest.raises(Exception) as e_info:
+        project_holes("Wrong input")
+    assert str(e_info.value) == 'holes -parameter is unkown input type'
+    
+    with pytest.raises(Exception) as e_info:
+        project_hole(holes[0], output_epsg="EPSG:999999")
+    assert str(e_info.value) == 'Unkown or not implemented EPSG as output_epsg'
+    
+    hole = holes[0]
+    hole.header.XY["X"], hole.header.XY["Y"] = np.nan, 0.1
+    with pytest.raises(Exception) as e_info:
+        project_hole(hole, output_epsg="EPSG:4326")
+    assert str(e_info.value) == 'Coordinates are not finite'
+    
+    hole = holes[2]
+    del(hole.header.XY["X"])
+    del(hole.header.XY["Y"])
+    with pytest.raises(Exception) as e_info:
+        project_hole(hole, output_epsg="EPSG:4326")
+    assert str(e_info.value) == 'Hole has no coordinates'
+    
+    
+
 
 
 @pytest.mark.parametrize(
@@ -72,8 +103,8 @@ def test_coordinate_projection():
 def test_proj_espoo(coords):
     input_coords, correct = coords
     *output_coords, epsg = proj_espoo(*input_coords)
-    assert abs(output_coords[0] - correct[0]) < 0.3
-    assert abs(output_coords[1] - correct[1]) < 0.3
+    assert abs(output_coords[0] - correct[0]) < 0.1
+    assert abs(output_coords[1] - correct[1]) < 0.1
 
 
 @pytest.mark.parametrize(
