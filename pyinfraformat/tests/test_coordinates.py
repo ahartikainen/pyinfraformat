@@ -70,8 +70,8 @@ def test_coordinate_projection():
     ],
 )
 def test_proj_espoo(coords):
-    intput_coords, correct = coords
-    *output_coords, epsg = proj_espoo(intput_coords)
+    input_coords, correct = coords
+    *output_coords, epsg = proj_espoo(*input_coords)
     assert abs(output_coords[0] - correct[0]) < 0.3
     assert abs(output_coords[1] - correct[1]) < 0.3
 
@@ -99,7 +99,7 @@ def test_proj_espoo(coords):
     ],
 )
 def test_proj_helsinki(coords):
-    intput_coords, correct = coords
-    *output_coords, epsg = proj_helsinki(intput_coords)
+    input_coords, correct = coords
+    *output_coords, epsg = proj_helsinki(input_coords)
     assert abs(output_coords[0] - correct[0]) < 0.1
     assert abs(output_coords[1] - correct[1]) < 0.1
