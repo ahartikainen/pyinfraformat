@@ -2,7 +2,6 @@ from glob import glob
 import os
 from uuid import uuid4
 from pyinfraformat import from_infraformat, Holes, FileExtensionMissingError, PathNotFoundError
-from pyinfraformat import project_holes
 import pytest
 
 

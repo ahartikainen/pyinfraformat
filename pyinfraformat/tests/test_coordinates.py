@@ -2,7 +2,7 @@ from glob import glob
 import os
 from uuid import uuid4
 from pyinfraformat import from_infraformat, Holes
-from pyinfraformat.coord_utils import coord_string_fix, change_x_to_y, project_holes
+from pyinfraformat.core.coord_utils import coord_string_fix, change_x_to_y, project_holes
 import pytest
 
 
