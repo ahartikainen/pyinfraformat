@@ -130,7 +130,7 @@ def check_hole(hole, bbox):
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
-        if bbox[0] < x and bbox[2] > x and bbox[1] < y and bbox[3] > y:
+        if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
             return True
     return False
 
@@ -147,7 +147,7 @@ def check_finland(holes, epsg="EPSG:4326"):
         else:
             transf = Transformer.from_crs("EPSG:4326", epsg)
             TRANSFORMERS[key] = transf
-        bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0]) 
+        bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
         bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
     if isinstance(holes, Holes):
         return all([check_hole(hole, bbox) for hole in holes])
@@ -167,7 +167,7 @@ def project_hole(hole, output_epsg="EPSG:4326"):
 
     Returns
     -------
-    hole : Hole -object 
+    hole : Hole -object
         Copy of hole with coordinates transformed
     """
     epsg_systems = get_epsg_systems()
@@ -237,7 +237,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
 
     Returns
     -------
-    holes : Holes -object 
+    holes : Holes -object
         Copy of holes with coordinates transformed
     """
     if isinstance(holes, Holes):
