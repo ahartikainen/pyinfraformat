@@ -3,6 +3,7 @@ import logging
 import re
 from copy import deepcopy
 from pyproj import Transformer
+import numpy as np
 from .core import Holes, Hole
 
 __all__ = ["project_holes"]
@@ -126,7 +127,7 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
 
 def check_hole(hole, bbox):
     """Check if hole point is inside bbox.
-    
+
     Returns boolean.
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
@@ -136,12 +137,16 @@ def check_hole(hole, bbox):
     return False
 
 
-def check_finland(holes, epsg="EPSG:4326"):
-    """Check if holes points are inside Finland bbox.
-    
+def check_area(holes, epsg="EPSG:4326", country="FI"):
+    """Check if holes points are inside country bbox.
+
     Returns boolean.
     """
-    bbox = [19.0, 59.0, 32.0, 71.0]
+    country_bbox = {
+        "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
+        "EE": ("Estonia", [23.5, 57.0, 29, 59]),
+    }
+    bbox = country_bbox[country][1]
     if epsg != "EPSG:4326":
         key = ("EPSG:4326", epsg)
         if key in TRANSFORMERS:
@@ -201,6 +206,8 @@ def project_hole(hole, output_epsg="EPSG:4326"):
         and "Y" in hole_copy.header.XY
     ):
         y, x = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]  # Note x-y change
+        if not np.isfinite(x) or not np.isfinite(y):
+            raise ValueError("Coordinates are not finite")
     else:
         raise ValueError("Hole has no coordinates")
 
@@ -226,7 +233,7 @@ def project_hole(hole, output_epsg="EPSG:4326"):
 
 
 def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
-    """Transform holes -objects coordinates.
+    """Transform holes -objects coordinates, drops invalid holes.
 
     Parameters
     ----------
@@ -235,7 +242,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         ESPG code, EPSG:XXXX
     check : str
         Check if points are inside area.
-        Possible values: 'Finland', False
+        Possible values: 'Finland', 'Estonia' False
 
     Returns
     -------
@@ -250,6 +257,10 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
             except ValueError as error:
                 if str(error) == "Hole has no coordinate system":
                     continue
+                if str(error) == "Coordinates are not finite":
+                    continue
+                if str(error) == "Hole has no coordinates":
+                    continue
                 raise ValueError(error)
             proj_holes.append(hole_copy)
         return_value = Holes(proj_holes)
@@ -260,7 +271,11 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         raise ValueError("holes -parameter is unkown input type")
 
     if check and check.upper() == "FINLAND":
-        if not check_finland(return_value, output_epsg):
+        if not check_area(return_value, output_epsg, "FI"):
             msg = "Holes are not inside Finland"
+            logger.critical(msg)
+    if check and check.upper() == "ESTONIA":
+        if not check_area(return_value, output_epsg, "EE"):
+            msg = "Holes are not inside Estonia"
             logger.critical(msg)
     return return_value
