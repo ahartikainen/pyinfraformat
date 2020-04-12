@@ -18,16 +18,20 @@ def get_object():
     return object
 
 
-def test_fix_coord_str():
-    s = {
-        "GK25": "ETRS-GK25",
-        "GK26": "ETRS-GK26",
-        "WGS84": "WGS84",
-        "ETRS GK26": "ETRS-GK26",
-        "ETRS_GK26": "ETRS-GK26",
-    }
-    for i in s:
-        assert coord_string_fix(i) == s[i]
+@pytest.mark.parametrize(
+    "strings",
+    [
+        ("GK25", "ETRS-GK25"),
+        ("GK26", "ETRS-GK26"),
+        ("WGS84", "WGS84"),
+        ("ETRS GK26", "ETRS-GK26"),
+        ("ETRS_GK26", "ETRS-GK26"),
+    ],
+)
+def test_fix_coord_str(strings):
+    intput_str, correct = strings
+    output_str = coord_string_fix(intput_str)
+    assert output_str == correct
 
 
 def test_coordinate_projection_uniform():
