@@ -309,7 +309,7 @@ class Holes:
                 to_infraformat([hole], path_)
         else:
             to_infraformat(self.holes, path)
-        
+
     def plot_map(self, render_holes=True):
         """Plot a leaflet map from holes with popup hole plots.
 
@@ -323,6 +323,7 @@ class Holes:
         map_fig : folium map object
         """
         return plot_map(self, render_holes)
+
 
 class Hole:
     """Class to hold Hole information."""
@@ -405,7 +406,7 @@ class Hole:
                 self._dataframe.loc[:, "fileheader_{}_{}".format(key, key_)] = item
 
         return self._dataframe
-        
+
     def plot(self, backend="matplotlib"):
         """Plot a diagram of a sounding with matplotlib.
 
@@ -420,6 +421,7 @@ class Hole:
         figure : matplotlib figure or mpld3 html
         """
         return plot_hole(self, backend)
+
 
 class FileHeader:
     """Class to hold file header information."""
