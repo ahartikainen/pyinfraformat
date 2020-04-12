@@ -54,33 +54,30 @@ def test_holes_coordinate_projection():
     assert check_area(holes2, epsg="EPSG:4326", country="FI") == True
     assert check_area(holes3, epsg="EPSG:3879", country="FI") == True
     assert check_area(holes3, epsg="EPSG:3879", country="EE") == False
-    
-    
+
+
 def test_holes_projection_errors():
     holes = get_object()
     with pytest.raises(Exception) as e_info:
         project_holes("Wrong input")
-    assert str(e_info.value) == 'holes -parameter is unkown input type'
-    
+    assert str(e_info.value) == "holes -parameter is unkown input type"
+
     with pytest.raises(Exception) as e_info:
         project_hole(holes[0], output_epsg="EPSG:999999")
-    assert str(e_info.value) == 'Unkown or not implemented EPSG as output_epsg'
-    
+    assert str(e_info.value) == "Unkown or not implemented EPSG as output_epsg"
+
     hole = holes[0]
     hole.header.XY["X"], hole.header.XY["Y"] = np.nan, 0.1
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
-    assert str(e_info.value) == 'Coordinates are not finite'
-    
+    assert str(e_info.value) == "Coordinates are not finite"
+
     hole = holes[2]
-    del(hole.header.XY["X"])
-    del(hole.header.XY["Y"])
+    del hole.header.XY["X"]
+    del hole.header.XY["Y"]
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
-    assert str(e_info.value) == 'Hole has no coordinates'
-    
-    
-
+    assert str(e_info.value) == "Hole has no coordinates"
 
 
 @pytest.mark.parametrize(
