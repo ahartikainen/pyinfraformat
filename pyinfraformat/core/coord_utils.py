@@ -162,6 +162,8 @@ def check_area(holes, country="FI"):
             raise ValueError("Input not in uniform coordinate system")
     elif isinstance(holes, Hole):
         input_str = holes.fileheader.KJ["Coordinate system"]
+    else:
+        raise ValueError("holes -parameter is unkown input type")
     input_str = coord_string_fix(input_str)
     epsg_systems = get_epsg_systems()
     input_epsg = epsg_systems[input_str]
@@ -184,7 +186,6 @@ def check_area(holes, country="FI"):
         return all([check_hole(hole, bbox) for hole in holes])
     elif isinstance(holes, Hole):
         return check_hole(holes, bbox)
-    raise ValueError("holes -parameter is unkown input type")
 
 
 def project_hole(hole, output_epsg="EPSG:4326"):
