@@ -30,6 +30,7 @@ def get_object():
         ("WGS84", "WGS84"),
         ("ETRS GK26", "ETRS-GK26"),
         ("ETRS_GK26", "ETRS-GK26"),
+        ("Helsinki", "HELSINKI"),
     ],
 )
 def test_fix_coord_str(strings):
@@ -73,6 +74,7 @@ def test_holes_projection_errors():
         project_hole(hole, output_epsg="EPSG:4326")
     assert str(e_info.value) == "Coordinates are not finite"
 
+
 def test_holes_projection_errors2():
     holes = get_object()
     hole = holes[2]
@@ -87,17 +89,18 @@ def test_holes_projection_errors2():
     del holes[0].header.XY["Y"]
     holes2 = project_holes(holes)
     assert len(holes) > len(holes2)
-    
+
     holes = get_object()
     del holes[1].fileheader.KJ["Coordinate system"]
     holes2 = project_holes(holes)
     assert len(holes) > len(holes2)
-    
+
     holes = get_object()
     holes[2].header.XY["X"] = np.nan
     holes[2].header.XY["Y"] = np.nan
     holes2 = project_holes(holes)
     assert len(holes) > len(holes2)
+
 
 def test_holes_projection_errors3():
     holes = get_object()
@@ -106,6 +109,7 @@ def test_holes_projection_errors3():
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
     assert "Unkown or not implemented EPSG" in str(e_info.value)
+
 
 @pytest.mark.parametrize(
     "coords",
