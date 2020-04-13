@@ -104,8 +104,9 @@ def test_holes_projection_errors2():
     assert len(holes) > len(holes2)
 
     holes = get_object()
-    del holes[1].fileheader.KJ["Coordinate system"]
+    del holes[1].fileheader.KJ["Coordinate system"]  # del all pointers
     holes2 = project_holes(holes)
+    # holes2 is empty
     assert len(holes) > len(holes2)
 
     holes = get_object()
