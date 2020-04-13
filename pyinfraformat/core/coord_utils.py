@@ -1,4 +1,4 @@
-"""Utilites to handle coordinates and transformations."""
+"""Utilities to handle coordinates and transformations."""
 import logging
 import re
 from copy import deepcopy
