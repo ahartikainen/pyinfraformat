@@ -12,6 +12,7 @@ from pyinfraformat.core.coord_utils import (
     proj_espoo,
     proj_helsinki,
     proj_porvoo,
+    to_lanlot,
 )
 import pytest
 
@@ -66,7 +67,7 @@ def test_hole_coordinate_projection():
     hole.header.XY["X"] = 28837.457
     hole.header.XY["Y"] = 47640.142
     hole.fileheader.KJ["Coordinate system"] = "Helsinki"
-    hole = proj_hole(hole, epsg="EPSG:3879")
+    hole = project_hole(hole, epsg="EPSG:3879")
     assert check_area(hole, epsg="EPSG:3879", country="FI")
 
 
@@ -129,7 +130,7 @@ def test_holes_projection_errors4():
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         check_area("These are not holes")
-    assert "holes -parameter is unkown type" == str(e_info.value)
+    assert "holes -parameter is unkown input type" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
@@ -199,8 +200,8 @@ def test_proj_helsinki(coords):
     assert abs(output_coords[1] - correct[1]) < 0.1
 
 
-def test_proj_porvoo(coords):
-    input_coords, correct = coords
+def test_proj_porvoo():
+    input_coords = (0, 0)
     *output_coords, epsg = proj_porvoo(*input_coords)
     assert type(output_coords[0]) == float
     assert type(output_coords[1]) == float
