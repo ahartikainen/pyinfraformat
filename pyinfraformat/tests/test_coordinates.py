@@ -52,12 +52,13 @@ def test_holes_coordinate_projection():
     holes = change_x_to_y(holes)
     holes2 = project_holes(holes, output_epsg="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
-    holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia") # logger warning
+    holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia")  # logger warning
     hole = project_holes(holes[0], output_epsg="EPSG:3879", check="Finland")
     hole = project_holes(hole, output_epsg="EPSG:3879", check="Finland")
     assert check_area(holes2, epsg="EPSG:4326", country="FI") == True
     assert check_area(holes3, epsg="EPSG:3879", country="FI") == True
     assert check_area(holes3, epsg="EPSG:3879", country="EE") == False
+
 
 def test_hole_coordinate_projection():
     holes = get_object()
@@ -66,9 +67,9 @@ def test_hole_coordinate_projection():
     hole.header.XY["Y"] = 47640.142
     hole.fileheader.KJ["Coordinate system"] = "Helsinki"
     hole = proj_hole(hole, epsg="EPSG:3879")
-    assert check_area(hole, epsg="EPSG:3879", country='FI')
-    
-    
+    assert check_area(hole, epsg="EPSG:3879", country="FI")
+
+
 def test_holes_projection_errors():
     holes = get_object()
     with pytest.raises(Exception) as e_info:
@@ -121,6 +122,7 @@ def test_holes_projection_errors3():
         project_hole(hole, output_epsg="EPSG:4326")
     assert "Unkown or not implemented EPSG" in str(e_info.value)
 
+
 def test_holes_projection_errors4():
     holes = get_object()
     hole = holes[5]
@@ -131,8 +133,8 @@ def test_holes_projection_errors4():
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
-    
-    
+
+
 def test_lanlot():
     x, y = 6.1, 7.1
     x2, y2 = to_lanlot(x, y, "EPSG:4326")
@@ -142,7 +144,8 @@ def test_lanlot():
     x2, y2 = to_lanlot(x, y, "EPSG:3047")
     assert x != x2
     assert x != x2
-    
+
+
 @pytest.mark.parametrize(
     "coords",
     [
@@ -199,6 +202,6 @@ def test_proj_helsinki(coords):
 def test_proj_porvoo(coords):
     input_coords, correct = coords
     *output_coords, epsg = proj_porvoo(*input_coords)
-    assert type(output_coords[0])==float
-    assert type(output_coords[1])==float
-    assert type(epsg)==str
+    assert type(output_coords[0]) == float
+    assert type(output_coords[1]) == float
+    assert type(epsg) == str
