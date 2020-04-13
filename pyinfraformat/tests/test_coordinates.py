@@ -56,9 +56,9 @@ def test_holes_coordinate_projection():
     holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia")  # logger warning
     hole = project_holes(holes[0], output_epsg="EPSG:3879", check="Finland")
     hole = project_holes(hole, output_epsg="EPSG:3879", check="Finland")
-    assert check_area(holes2, epsg="EPSG:4326", country="FI") == True
-    assert check_area(holes3, epsg="EPSG:3879", country="FI") == True
-    assert check_area(holes3, epsg="EPSG:3879", country="EE") == False
+    assert check_area(holes2, country="FI")
+    assert check_area(holes3, country="FI")
+    assert check_area(holes3, country="EE") == False
 
 
 def test_hole_coordinate_projection():
@@ -67,8 +67,8 @@ def test_hole_coordinate_projection():
     hole.header.XY["X"] = 28837.457
     hole.header.XY["Y"] = 47640.142
     hole.fileheader.KJ["Coordinate system"] = "Helsinki"
-    hole = project_hole(hole, epsg="EPSG:3879")
-    assert check_area(hole, epsg="EPSG:3879", country="FI")
+    hole = project_hole(hole, output_epsg="EPSG:3879")
+    assert check_area(hole, country="FI")
 
 
 def test_holes_projection_errors():

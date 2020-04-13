@@ -151,22 +151,28 @@ def check_hole(hole, bbox):
     return False
 
 
-def check_area(holes, epsg="EPSG:4326", country="FI"):
-    """Check if holes points are inside country bbox.
+def check_area(holes, country="FI"):
+    """Check if holes or hole points are inside country bbox.
 
     Returns boolean.
     """
+    input_str = holes[0].fileheader.KJ["Coordinate system"]
+    if all([hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes]):
+        raise ValueError("Input not in uniform coordinate system")
+    input_str = coord_string_fix(input_str)
+    input_epsg = epsg_systems[input_str]
+
     country_bbox = {
         "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
         "EE": ("Estonia", [23.5, 57.0, 29, 59]),
     }
     bbox = country_bbox[country][1]
-    if epsg != "EPSG:4326":
-        key = ("EPSG:4326", epsg)
+    if input_epsg != "EPSG:4326":
+        key = ("EPSG:4326", input_epsg)
         if key in TRANSFORMERS:
             transf = TRANSFORMERS[key]
         else:
-            transf = Transformer.from_crs("EPSG:4326", epsg)
+            transf = Transformer.from_crs("EPSG:4326", input_epsg)
             TRANSFORMERS[key] = transf
         bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
         bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
@@ -287,11 +293,11 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         raise ValueError("holes -parameter is unkown input type")
 
     if check and check.upper() == "FINLAND":
-        if not check_area(return_value, output_epsg, "FI"):
+        if not check_area(return_value, "FI"):
             msg = "Holes are not inside Finland"
             logger.critical(msg)
     if check and check.upper() == "ESTONIA":
-        if not check_area(return_value, output_epsg, "EE"):
+        if not check_area(return_value, "EE"):
             msg = "Holes are not inside Estonia"
             logger.critical(msg)
     return return_value
