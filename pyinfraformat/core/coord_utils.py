@@ -294,7 +294,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
                 hole_copy = project_hole(hole, output_epsg=output_epsg)
             except ValueError as error:
                 error_str = str(error)
-                if  error_str == "Hole has no coordinate system":
+                if error_str == "Hole has no coordinate system":
                     logger.warning(error_str)
                     continue
                 if str(error) == "Coordinates are not finite":
