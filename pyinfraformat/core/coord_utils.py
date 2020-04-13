@@ -265,7 +265,7 @@ def project_hole(hole, output_epsg="EPSG:4326"):
 
 def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
     """Transform holes -objects coordinates.
-    
+
     Creates deepcopy of holes and drops invalid holes. Warns into logger.
 
     Parameters
@@ -281,7 +281,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
     -------
     holes : Holes -object
         Copy of holes with coordinates transformed
-        
+
     Examples
     --------
     holes_gk25 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
