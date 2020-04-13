@@ -157,7 +157,7 @@ def check_area(holes, country="FI"):
     Returns boolean.
     """
     input_str = holes[0].fileheader.KJ["Coordinate system"]
-    if all([hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes]):
+    if not all([hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes]):
         raise ValueError("Input not in uniform coordinate system")
     input_str = coord_string_fix(input_str)
     input_epsg = epsg_systems[input_str]
