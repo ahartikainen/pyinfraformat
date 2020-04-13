@@ -22,7 +22,7 @@ def coord_string_fix(input_string):
 
 
 def change_x_to_y(holes):
-    """Change holes x to y and y to x."""
+    """Change holes x to y and y to x. Creates a deepcopy."""
     holes_copy = deepcopy(holes)
     for hole in holes_copy:
         if (
@@ -172,7 +172,7 @@ def check_area(holes, country="FI"):
 
     country_bbox = {
         "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
-        "EE": ("Estonia", [23.5, 57.0, 29, 59]),
+        "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
     }
     bbox = country_bbox[country][1]
     if input_epsg != "EPSG:4326":
@@ -264,21 +264,28 @@ def project_hole(hole, output_epsg="EPSG:4326"):
 
 
 def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
-    """Transform holes -objects coordinates, drops invalid holes.
+    """Transform holes -objects coordinates.
+    
+    Creates deepcopy of holes and drops invalid holes. Warns into logger.
 
     Parameters
     ----------
-    holes : holes -object
+    holes : holes or hole -object
     output_epsg : str
         ESPG code, EPSG:XXXX
     check : str
-        Check if points are inside area.
-        Possible values: 'Finland', 'Estonia' False
+        Check if points are inside area. Raises warning into logger.
+        Possible values: 'Finland', 'Estonia', False
 
     Returns
     -------
     holes : Holes -object
         Copy of holes with coordinates transformed
+        
+    Examples
+    --------
+    holes_gk25 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
+    one_hole_gk24 = project_holes(one_hole, output_epsg="EPSG:3878", check="Estonia")
     """
     if isinstance(holes, Holes):
         proj_holes = []
@@ -286,11 +293,15 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
             try:
                 hole_copy = project_hole(hole, output_epsg=output_epsg)
             except ValueError as error:
-                if str(error) == "Hole has no coordinate system":
+                error_str = str(error)
+                if  error_str == "Hole has no coordinate system":
+                    logger.warning(error_str)
                     continue
                 if str(error) == "Coordinates are not finite":
+                    logger.warning(error_str)
                     continue
                 if str(error) == "Hole has no coordinates":
+                    logger.warning(error_str)
                     continue
                 raise ValueError(error)
             proj_holes.append(hole_copy)
