@@ -101,7 +101,8 @@ def test_holes_projection_errors2():
 
 def test_holes_projection_errors3():
     holes = get_object()
-    holes[1].fileheader.KJ["Coordinate system"] = "UnknownString"
+    hole = holes[5]
+    hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
     assert "Unkown or not implemented EPSG" in str(e_info.value)
