@@ -200,6 +200,8 @@ def project_hole(hole, output_epsg="EPSG:4326"):
     }  # Common finnish systems. Helsinki, espoo...
 
     hole_copy = deepcopy(hole)
+    if not isinstance(hole, Hole):
+        raise ValueError("hole -parameter invalid")
     if output_epsg not in epsg_names:
         raise ValueError("Unkown or not implemented EPSG as output_epsg")
     if (
