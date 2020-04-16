@@ -6,6 +6,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from ..plots.holes import plot_hole
+from ..plots.maps import plot_map
 from ..exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
@@ -308,6 +310,20 @@ class Holes:
         else:
             to_infraformat(self.holes, path)
 
+    def plot_map(self, render_holes=True):
+        """Plot a leaflet map from holes with popup hole plots.
+
+        Parameters
+        ----------
+        render_holes : bool
+            Render popup diagrams for holes
+
+        Returns
+        -------
+        map_fig : folium map object
+        """
+        return plot_map(self, render_holes)
+
 
 class Hole:
     """Class to hold Hole information."""
@@ -390,6 +406,21 @@ class Hole:
                 self._dataframe.loc[:, "fileheader_{}_{}".format(key, key_)] = item
 
         return self._dataframe
+
+    def plot(self, backend="matplotlib"):
+        """Plot a diagram of a sounding with matplotlib.
+
+        Parameters
+        ----------
+        backend : str
+            Backend to plot with
+            possible values 'mpld3' and 'matplotlib'
+
+        Returns
+        -------
+        figure : matplotlib figure or mpld3 html
+        """
+        return plot_hole(self, backend)
 
 
 class FileHeader:
