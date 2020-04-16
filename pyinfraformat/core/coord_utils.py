@@ -235,7 +235,7 @@ def height_systems_diff(point, input_system, output_system):
     Possible systems: N43, N60, N2000
 
     Returns
-    ------
+    -------
     float
         height difference
     """
