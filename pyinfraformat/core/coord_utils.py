@@ -3,7 +3,9 @@ import logging
 import re
 from copy import deepcopy
 from pyproj import Transformer
+from scipy.spatial import distance
 import numpy as np
+import pandas as pd
 from .core import Holes, Hole
 
 __all__ = ["project_holes"]
@@ -192,7 +194,67 @@ def check_area(holes, country="FI"):
         raise ValueError("holes -parameter is unkown input type")
 
 
-def project_hole(hole, output_epsg="EPSG:4326"):
+def get_n43_n60_points():
+    """Get MML reference points for height systems n43-n60."""
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationVertices.txt"
+    df = pd.read_csv(url, delim_whitespace=True, header=None)
+    df.columns = ["Point", "X", "Y", "diff", "Karttalehden numero"]
+    df = df.loc[:, ["X", "Y", "diff"]]
+    return df
+
+
+def get_n60_n2000_points():
+    """Get MML reference points for height systems n60-n2000."""
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationVertices.txt"
+    df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
+    df.columns = ["Point", "X", "Y", "N60", "N2000"]
+    df["diff"] = df["N2000"] - df["N60"]
+    df = df.loc[:, ["X", "Y", "diff"]]
+    return df
+
+
+def get_closest(df, point):
+    """Get closest row in df for point (x, y)."""
+    point = np.array(point)[:,None].T
+    dists = distance.cdist(point, df.loc[:, ["X", "Y"]])    
+    if dists.min() > 20000:
+        print(dists.min())
+        raise Exception("Height reference point too far")
+    return df.iloc[dists.argmin()]
+
+
+def height_systems_diff(point, input_system, output_system):
+    """Returns difference between systems at point.
+    point: (x,y) in KKJ (EPSG:2393) ?.
+    Possible systems: N43, N60, N2000"""
+    input_system = input_system.upper()
+    output_system = output_system.upper()
+    if input_system == output_system:
+        return 0
+    if input_system == "N43" and output_system == "N2000":
+        diff = height_systems_diff(point, "N43", "N60")
+        diff += height_systems_diff(point, "N60", "N2000")
+        return diff
+    elif output_system == "N43" and input_system == "N2000":
+        diff = -height_systems_diff(point, "N43", "N60")
+        diff -= height_systems_diff(point, "N60", "N2000")
+        return diff
+    if input_system == "N43" and output_system == "N60":
+        df = get_n43_n60_points()
+        return get_closest(df, point)["diff"]
+    if input_system == "N60" and output_system == "N43":
+        df = get_n43_n60_points()
+        return -get_closest(df, point)["diff"]
+    if input_system == "N60" and output_system == "N2000":
+        df = get_n60_n2000_points()
+        return get_closest(df, point)["diff"]
+    if input_system == "N2000" and output_system == "N60":
+        df = get_n60_n2000_points()
+        return -get_closest(df, point)["diff"]
+    raise ValueError("input_system or output_system invalid. Possible values N43, N60, N2000")
+
+
+def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     """Transform hole -objects coordinates.
 
     Parameters
@@ -200,6 +262,9 @@ def project_hole(hole, output_epsg="EPSG:4326"):
     hole : hole -object
     output_epsg : str
         ESPG code, EPSG:XXXX
+    output_height : str
+        output height system. Possible values N43, N60, N2000 and False.
+        False for no height system change or checks.
 
     Returns
     -------
@@ -260,10 +325,30 @@ def project_hole(hole, output_epsg="EPSG:4326"):
     x, y = transf.transform(x, y)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x
     hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
+    
+    if not output_height:
+        return hole_copy
+        
+    key = (output_epsg, "EPSG:2393")
+    if key in TRANSFORMERS:
+        transf = TRANSFORMERS[key]
+    else:
+        transf = Transformer.from_crs(output_epsg, "EPSG:2393")
+        TRANSFORMERS[key] = transf
+    point = transf.transform(x, y)
+    try:
+        input_system = hole.fileheader['KJ']['Height reference']
+    except KeyError:
+        raise ValueError("Hole has no height system")
+    if input_system not in ["N43", "N60", "N2000"]:
+        raise ValueError("Hole has no unknown heigth system:", input_system)
+        
+    diff = height_systems_diff(point, input_system, output_height)
+    hole_copy.header.XY["Z-start"] -= diff
     return hole_copy
 
 
-def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
+def project_holes(holes, output_epsg="EPSG:4326", check="Finland", output_height=False):
     """Transform holes -objects coordinates.
 
     Creates deepcopy of holes and drops invalid holes. Warns into logger.
@@ -276,6 +361,9 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
     check : str
         Check if points are inside area. Raises warning into logger.
         Possible values: 'Finland', 'Estonia', False
+    output_height : str
+        output height system. Possible values N43, N60, N2000 and False.
+        False for no height system change or checks.
 
     Returns
     -------
@@ -291,7 +379,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         proj_holes = []
         for hole in holes:
             try:
-                hole_copy = project_hole(hole, output_epsg=output_epsg)
+                hole_copy = project_hole(hole, output_epsg, output_height)
             except ValueError as error:
                 error_str = str(error)
                 if error_str == "Hole has no coordinate system":
@@ -308,7 +396,7 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland"):
         return_value = Holes(proj_holes)
     elif isinstance(holes, Hole):
         hole = deepcopy(holes)
-        return_value = project_hole(hole, output_epsg=output_epsg)
+        return_value = project_hole(hole, output_epsg, output_height)
     else:
         raise ValueError("holes -parameter is unkown input type")
 
