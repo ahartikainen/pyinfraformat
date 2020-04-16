@@ -224,15 +224,21 @@ def get_closest(df, point):
     point = np.array(point)[:, None].T
     dists = distance.cdist(point, df.loc[:, ["X", "Y"]])
     if dists.min() > 20000:
-        print(dists.min())
         raise Exception("Height reference point too far")
-    return df.iloc[dists.argmin()]
+    return df.iloc[dists.argmin()]["diff"]
 
 
 def height_systems_diff(point, input_system, output_system):
-    """Returns difference between systems at point.
+    """Get difference between systems at certain point.
+
     point: (x,y) in KKJ (EPSG:2393) ?.
-    Possible systems: N43, N60, N2000"""
+    Possible systems: N43, N60, N2000
+
+    Returns
+    ------
+    float
+        height difference
+    """
     input_system = input_system.upper()
     output_system = output_system.upper()
     if input_system == output_system:
@@ -246,16 +252,16 @@ def height_systems_diff(point, input_system, output_system):
         return diff
     if input_system == "N43" and output_system == "N60":
         df = get_n43_n60_points()
-        return get_closest(df, point)["diff"]
+        return get_closest(df, point)
     if input_system == "N60" and output_system == "N43":
         df = get_n43_n60_points()
-        return -get_closest(df, point)["diff"]
+        return -get_closest(df, point)
     if input_system == "N60" and output_system == "N2000":
         df = get_n60_n2000_points()
-        return get_closest(df, point)["diff"]
+        return get_closest(df, point)
     if input_system == "N2000" and output_system == "N60":
         df = get_n60_n2000_points()
-        return -get_closest(df, point)["diff"]
+        return -get_closest(df, point)
     raise ValueError("input_system or output_system invalid. Possible values N43, N60, N2000")
 
 
