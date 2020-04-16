@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 
 from ..plots.holes import plot_hole
-from ..plots.maps import plot_map as _plot_map
 from ..exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
@@ -312,16 +311,19 @@ class Holes:
 
     def plot_map(self, render_holes=True):
         """Plot a leaflet map from holes with popup hole plots.
-    
+
         Parameters
         ----------
         render_holes : bool
             Render popup diagrams for holes
-    
+
         Returns
         -------
         map_fig : folium map object
         """
+
+        from ..plots.maps import plot_map as _plot_map
+
         return _plot_map(self, render_holes)
 
 
