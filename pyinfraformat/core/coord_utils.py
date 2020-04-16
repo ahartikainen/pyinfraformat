@@ -196,7 +196,10 @@ def check_area(holes, country="FI"):
 
 def get_n43_n60_points():
     """Get MML reference points for height systems n43-n60."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationVertices.txt"
+    url = (
+        r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019"
+        + r"/02/n43n60triangulationVertices.txt"
+    )
     df = pd.read_csv(url, delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "diff", "Karttalehden numero"]
     df = df.loc[:, ["X", "Y", "diff"]]
@@ -205,7 +208,10 @@ def get_n43_n60_points():
 
 def get_n60_n2000_points():
     """Get MML reference points for height systems n60-n2000."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationVertices.txt"
+    url = (
+        r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019"
+        + r"/02/n60n2000triangulationVertices.txt"
+    )
     df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "N60", "N2000"]
     df["diff"] = df["N2000"] - df["N60"]
@@ -215,8 +221,8 @@ def get_n60_n2000_points():
 
 def get_closest(df, point):
     """Get closest row in df for point (x, y)."""
-    point = np.array(point)[:,None].T
-    dists = distance.cdist(point, df.loc[:, ["X", "Y"]])    
+    point = np.array(point)[:, None].T
+    dists = distance.cdist(point, df.loc[:, ["X", "Y"]])
     if dists.min() > 20000:
         print(dists.min())
         raise Exception("Height reference point too far")
@@ -234,7 +240,6 @@ def height_systems_diff(point, input_system, output_system):
     if input_system == "N43" and output_system == "N2000":
         diff = height_systems_diff(point, "N43", "N60")
         diff += height_systems_diff(point, "N60", "N2000")
-        return diff
     elif output_system == "N43" and input_system == "N2000":
         diff = -height_systems_diff(point, "N43", "N60")
         diff -= height_systems_diff(point, "N60", "N2000")
@@ -325,10 +330,10 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     x, y = transf.transform(x, y)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x
     hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
-    
+
     if not output_height:
         return hole_copy
-        
+
     key = (output_epsg, "EPSG:2393")
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
@@ -337,12 +342,12 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         TRANSFORMERS[key] = transf
     point = transf.transform(x, y)
     try:
-        input_system = hole.fileheader['KJ']['Height reference']
+        input_system = hole.fileheader["KJ"]["Height reference"]
     except KeyError:
         raise ValueError("Hole has no height system")
     if input_system not in ["N43", "N60", "N2000"]:
         raise ValueError("Hole has no unknown heigth system:", input_system)
-        
+
     diff = height_systems_diff(point, input_system, output_height)
     hole_copy.header.XY["Z-start"] -= diff
     return hole_copy
