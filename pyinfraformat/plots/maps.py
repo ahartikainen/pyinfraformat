@@ -2,12 +2,14 @@
 from itertools import cycle
 import folium
 import branca
-from folium.plugins import MarkerCluster, MeasureControl
-from pyproj import Transformer
+from folium.plugins import MarkerCluster, MeasureControl, MousePosition
 import numpy as np
 
 from .holes import plot_hole
 from ..core import Holes
+from ..core.coord_utils import to_lanlot, get_epsg_systems, coord_string_fix
+
+__all__ = ["plot_map"]
 
 
 ABBREVIATIONS = {
@@ -52,25 +54,6 @@ ABBREVIATIONS = {
 }
 
 
-def to_lanlot(x, y, intput_epsg="EPSG:3067"):
-    """Transform coordinates to WGS84.
-
-    Parameters
-    ----------
-    x : list or float
-    x : list or float
-    intput_epsg : str
-
-    Returns
-    -------
-    x : list or float
-    y : list or float
-    """
-    transformer = Transformer.from_crs(intput_epsg, "EPSG:4326")
-    x, y = transformer.transform(x, y)
-    return x, y
-
-
 def plot_map(holes, render_holes=True):
     """Plot a leaflet map from holes with popup hole plots.
 
@@ -85,25 +68,31 @@ def plot_map(holes, render_holes=True):
     map_fig : folium map object
     """
     holes_filtered = []
+    first_system = False
     for hole in holes:
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
-                coord_system = hole.fileheader.KJ["Coordinate system"].upper()
-                if coord_system == "ETRS-TM35FIN":
-                    input_epsg = "EPSG:3067"
-                elif coord_system == "ETRS-GK25":
-                    input_epsg = "EPSG:3879"
+                coord_system = hole.fileheader.KJ["Coordinate system"]
+                coord_system = coord_string_fix(coord_system)
+                epsg_systems = get_epsg_systems()
+                if coord_system in epsg_systems:
+                    input_epsg = epsg_systems[coord_system][0]
                 else:
                     msg = "Coordinate system {} not implemted"
                     msg = msg.format(coord_system)
                     raise NotImplementedError(msg)
+                if not first_system:
+                    first_system = coord_system
+                else:
+                    if not first_system == coord_system:
+                        raise ValueError("Coordinate system is not uniform in holes -object")
     holes_filtered = Holes(holes_filtered)
 
     x_all, y_all = [], []
     for i in holes_filtered:
-        x_all.append(i.header["XY"]["Y"])
-        y_all.append(i.header["XY"]["X"])
+        x_all.append(i.header["XY"]["X"])
+        y_all.append(i.header["XY"]["Y"])
 
     x, y = np.mean(x_all), np.mean(y_all)
     x, y = to_lanlot(x, y, input_epsg)
@@ -194,7 +183,7 @@ def plot_map(holes, render_holes=True):
     width = 300
     height = 300
     for i, hole in enumerate(holes_filtered):
-        y, x = [hole.header.XY["X"], hole.header.XY["Y"]]
+        x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = to_lanlot(x, y, input_epsg)
         key = hole.header["TT"]["Survey abbreviation"]
         if render_holes:
@@ -226,5 +215,12 @@ def plot_map(holes, render_holes=True):
         activeColor="#aecfeb",
         completedColor="#73b9f5",
     ).add_to(map_fig)
-
+    fmtr = "function(num) {return L.Util.formatNum(num, 7) + ' º ';};"
+    MousePosition(
+        position="topright",
+        separator=" | ",
+        prefix="WGS84 ",
+        lat_formatter=fmtr,
+        lng_formatter=fmtr,
+    ).add_to(map_fig)
     return map_fig

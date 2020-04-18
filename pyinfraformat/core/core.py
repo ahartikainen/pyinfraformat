@@ -326,6 +326,36 @@ class Holes:
 
         return _plot_map(self, render_holes)
 
+    def project(self, output="EPSG:4326", check="Finland", output_height=False):
+        """Transform holes -objects coordinates.
+
+        Creates deepcopy of holes and drops invalid holes. Warns into logger.
+
+        Parameters
+        ----------
+        output : str
+            ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check get_epsg_systems()
+            for possible values.
+        check : str
+            Check if points are inside area. Raises warning into logger.
+            Possible values: 'Finland', 'Estonia', False
+        output_height : str
+            output height system. Possible values N43, N60, N2000 and False.
+            False for no height system change or checks.
+
+        Returns
+        -------
+        holes : Holes -object
+            Copy of holes with coordinates and height transformed
+
+        Examples
+        --------
+        holes_gk25 = holes.project(output="GK25", check="Finland", output_height="N2000")
+        """
+        from ..core.coord_utils import project_holes
+
+        return project_holes(self, output, check, output_height)
+
 
 class Hole:
     """Class to hold Hole information."""
