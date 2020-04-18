@@ -22,10 +22,9 @@ INTERPOLATORS = {}  # LinearTriInterpolator for heightsystems. Functions add int
 
 def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
-    abbreviations = {"HKI" : "HELSINKI"}
+    abbreviations = {"HKI": "HELSINKI"}
     input_string = input_string.upper()
-    if input_string in abbreviations:
-        input_string = abbreviations[input_string]
+    input_string = abbreviations.get("input_string", default=input_string)
     common_separators = r"[,. :\_-]"
     if len(input_string) <= 4:
         input_string = "ETRS-" + input_string
@@ -43,19 +42,26 @@ def change_x_to_y(holes):
                 and "X" in hole.header.XY
                 and "Y" in hole.header.XY
             ):
-                hole.header.XY["X"], hole.header.XY["Y"] = (hole.header.XY["Y"], hole.header.XY["X"])
+                hole.header.XY["X"], hole.header.XY["Y"] = (
+                    hole.header.XY["Y"],
+                    hole.header.XY["X"],
+                )
         return holes_copy
     if isinstance(holes, Hole):
         hole_copy = deepcopy(holes)
         if (
             hasattr(hole_copy, "header")
-            and hasattr(hole.header, "XY")
-            and "X" in hole.header.XY
-            and "Y" in hole.header.XY
+            and hasattr(hole_copy.header, "XY")
+            and "X" in hole_copy.header.XY
+            and "Y" in hole_copy.header.XY
         ):
-            hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = (hole_copy.header.XY["Y"], hole_copy.header.XY["X"])
+            hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = (
+                hole_copy.header.XY["Y"],
+                hole_copy.header.XY["X"],
+            )
         return hole_copy
     raise ValueError("Inappropriate argument.")
+
 
 def proj_espoo(x, y):
     """Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
@@ -426,6 +432,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
 
     diff = height_systems_diff(point, input_system, output_height)
     hole_copy.header.XY["Z-start"] += round(float(diff), 3)
+    hole_copy.fileheader["KJ"]["Height reference"] = output_height
     return hole_copy
 
 
