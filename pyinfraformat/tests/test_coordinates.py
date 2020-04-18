@@ -36,6 +36,7 @@ def get_object():
         ("ETRS_GK26", "ETRS-GK26"),
         ("Helsinki", "HELSINKI"),
         ("Hki", "HELSINKI"),
+        ("ykj", "KKJ3"),
     ],
 )
 def test_fix_coord_str(strings):
@@ -55,11 +56,11 @@ def test_holes_coordinate_projection():
     holes = get_object()
     holes = change_x_to_y(holes)
     holes = change_x_to_y(holes)
-    holes2 = project_holes(holes, output_epsg="EPSG:4326", check="Finland")
-    holes3 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
-    holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia")  # logger warning
-    hole = project_holes(holes[0], output_epsg="EPSG:3879", check="Finland")
-    hole = project_holes(hole, output_epsg="EPSG:3879", check="Finland")
+    holes2 = project_holes(holes, output="EPSG:4326", check="Finland")
+    holes3 = project_holes(holes, output="EPSG:3879", check="Finland")
+    holes4 = project_holes(holes, output="EPSG:4326", check="Estonia")  # logger warning
+    hole = project_holes(holes[0], output="EPSG:3879", check="Finland")
+    hole = project_holes(hole, output="EPSG:3879", check="Finland")
     assert check_area(holes2, country="FI")
     assert check_area(holes3, country="FI")
     assert check_area(holes3, country="EE") == False

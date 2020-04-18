@@ -22,11 +22,11 @@ INTERPOLATORS = {}  # LinearTriInterpolator for heightsystems. Functions add int
 
 def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
-    abbreviations = {"HKI": "HELSINKI"}
+    abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3"}
     input_string = input_string.upper()
     input_string = abbreviations.get(input_string, input_string)
     common_separators = r"[,. :\_-]"
-    if len(input_string) <= 4:
+    if ("GK" in input_string or "TM" in input_string) and len(input_string) <= 4:
         input_string = "ETRS-" + input_string
     return "-".join(re.split(common_separators, input_string))
 
@@ -134,6 +134,10 @@ def get_epsg_systems():
         "ETRS-TM34": ("EPSG:25834", True),
         "ETRS-TM35": ("EPSG:25835", True),
         "ETRS-TM36": ("EPSG:25836", True),
+        "KKJ1": ("EPSG:2391", True),
+        "KKJ2": ("EPSG:2392", True),
+        "KKJ3": ("EPSG:2393", True),
+        "KKJ4": ("EPSG:2394", True),
     }
     return epsg_systems
 
@@ -458,16 +462,17 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     return hole_copy
 
 
-def project_holes(holes, output_epsg="EPSG:4326", check="Finland", output_height=False):
+def project_holes(holes, output="EPSG:4326", check="Finland", output_height=False):
     """Transform holes -objects coordinates.
 
-    Creates deepcopy of holes and drops invalid holes. Warns into logger.
+    Transform holes coordinates, drops invalid holes. Warns into logger.
 
     Parameters
     ----------
     holes : holes or hole -object
-    output_epsg : str
-        ESPG code, EPSG:XXXX
+    output : str
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
+        pyinfraformat.coord_utils.get_epsg_systems() for possible values.
     check : str
         Check if points are inside area. Raises warning into logger.
         Possible values: 'Finland', 'Estonia', False
@@ -485,6 +490,20 @@ def project_holes(holes, output_epsg="EPSG:4326", check="Finland", output_height
     holes_gk25 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
     one_hole_gk24 = project_holes(one_hole, output_epsg="EPSG:3878", check="Estonia")
     """
+    output = output.upper()
+    if "EPSG" in output:
+        output_epsg = output
+    else:
+        epsg_systems = get_epsg_systems()
+        name = coord_string_fix(output)
+        if name in epsg_systems:
+            output_epsg = epsg_systems[name][0]
+        else:
+            raise ValueError(
+                "Ivalid output parameter {}, possible systems: {}".format(
+                    name, list(epsg_systems.keys())
+                )
+            )
     if isinstance(holes, Holes):
         proj_holes = []
         for hole in holes:
