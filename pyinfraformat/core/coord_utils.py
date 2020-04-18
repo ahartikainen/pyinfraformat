@@ -234,10 +234,8 @@ def check_area(holes, country="FI"):
         raise ValueError("Input has to be in known epsg system.")
     if isinstance(holes, Holes):
         return all([check_hole(hole, bbox, xy_order) for hole in holes])
-    elif isinstance(holes, Hole):
+    else: # isinstance(holes, Hole):
         return check_hole(holes, bbox, xy_order)
-    else:
-        raise ValueError("holes -parameter is unkown input type")
 
 
 def get_n43_n60_points():
