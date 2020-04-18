@@ -208,6 +208,7 @@ def test_proj_porvoo():
     assert type(output_coords[1]) == float
     assert type(epsg) == str
 
+
 @pytest.mark.parametrize(
     "coords",
     [
@@ -225,7 +226,7 @@ def test_proj_porvoo():
         [[7112026.51, 3531025.46], [0.4272]],
         [[6798161.35, 3343554.26], [0.3948]],
         [[6859323.18, 3340179.39], [0.4357]],
-        [[7210437.96, 3466288.18], [0.5015]]
+        [[7210437.96, 3466288.18], [0.5015]],
     ],
 )
 def test_height_systems(coords):

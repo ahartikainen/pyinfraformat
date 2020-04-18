@@ -173,7 +173,7 @@ def check_area(holes, country="FI"):
         raise ValueError("holes -parameter is unkown input type")
     epsg_systems = get_epsg_systems()
     input_str = coord_string_fix(input_str)
-    
+
     if input_str in epsg_systems:
         input_epsg = epsg_systems[input_str]
 
@@ -185,11 +185,11 @@ def check_area(holes, country="FI"):
             else:
                 transf = Transformer.from_crs("EPSG:4326", input_epsg)
                 TRANSFORMERS[key] = transf
-            
+
             bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
             bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
     else:
-        raise ValueError("Input has to be in known epsg system.") 
+        raise ValueError("Input has to be in known epsg system.")
     print(bbox)
     if isinstance(holes, Holes):
         return all([check_hole(hole, bbox) for hole in holes])
@@ -261,13 +261,13 @@ def get_n60_n2000_interpolator():
 
 def height_systems_diff(points, input_system, output_system):
     """Get difference between systems at certain point.
-    
+
     Calculates the difference for height systems at points based on MML reference points
     and triangulation. Coordinate system is KKJ3 (EPSG:2393).
-    
+
     Parameters
     ----------
-    points: array_like of shape (n, 2) 
+    points: array_like of shape (n, 2)
         points where to calculate the difference. Points in KKJ3.
     input_system: str
         height system as input. Possible values: N43, N60, N2000
@@ -343,11 +343,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     """
     epsg_systems = get_epsg_systems()
     epsg_names = {epsg_systems[i]: i for i in epsg_systems}
-    other_systems = {
-        "HELSINKI": proj_helsinki,
-        "ESPOO": proj_espoo,
-        "PORVOO": proj_porvoo,
-    }
+    other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
 
     hole_copy = deepcopy(hole)
     if not isinstance(hole, Hole):
