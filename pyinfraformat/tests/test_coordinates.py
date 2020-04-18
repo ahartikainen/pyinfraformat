@@ -241,12 +241,12 @@ def test_height_systems(coords):
     output_height2 = height_systems_diff(input_coords, "N2000", "N43")
     assert abs(float(output_height) - correct[0]) < 0.01
     assert output_height == -output_height2
-    
-    
+
+
 def test_height_holes():
     holes = get_object()
     hole = holes[7]
-    hole.fileheader.KJ["Height reference"] = "N43" #pointer to all holes
-    holes2 = project_holes(holes, output_height='N2000')
+    hole.fileheader.KJ["Height reference"] = "N43"  # pointer to all holes
+    holes2 = project_holes(holes, output_height="N2000")
     hole2 = holes2[5]
     assert hole2.fileheader.KJ["Height reference"] == "N2000"
