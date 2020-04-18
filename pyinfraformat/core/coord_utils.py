@@ -419,6 +419,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     elif input_str in other_systems:
         func = other_systems[input_str]
         x, y, input_epsg = func(x, y)
+        xy_order = True
     else:
         msg = "Unkown or not implemented EPSG in holes {}".format(input_str)
         raise ValueError(msg)
