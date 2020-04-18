@@ -157,7 +157,7 @@ def check_hole(hole, bbox):
 
 
 def check_area(holes, country="FI"):
-    """Check if holes or hole points are inside country bbox.
+    """Check if holes or hole points are inside country bbox. Has to be in some system with EPSG.
 
     Returns boolean.
     """
@@ -173,18 +173,24 @@ def check_area(holes, country="FI"):
         raise ValueError("holes -parameter is unkown input type")
     epsg_systems = get_epsg_systems()
     input_str = coord_string_fix(input_str)
-    input_epsg = epsg_systems[input_str]
+    
+    if input_str in epsg_systems:
+        input_epsg = epsg_systems[input_str]
 
-    bbox = COUNTRY_BBOX[country][1]
-    if input_epsg != "EPSG:4326":
-        key = ("EPSG:4326", input_epsg)
-        if key in TRANSFORMERS:
-            transf = TRANSFORMERS[key]
-        else:
-            transf = Transformer.from_crs("EPSG:4326", input_epsg)
-            TRANSFORMERS[key] = transf
-        bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
-        bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
+        bbox = COUNTRY_BBOX[country][1].copy()
+        if input_epsg != "EPSG:4326":
+            key = ("EPSG:4326", input_epsg)
+            if key in TRANSFORMERS:
+                transf = TRANSFORMERS[key]
+            else:
+                transf = Transformer.from_crs("EPSG:4326", input_epsg)
+                TRANSFORMERS[key] = transf
+            
+            bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
+            bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
+    else:
+        raise ValueError("Input has to be in known epsg system.") 
+    print(bbox)
     if isinstance(holes, Holes):
         return all([check_hole(hole, bbox) for hole in holes])
     elif isinstance(holes, Hole):
@@ -341,7 +347,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         "HELSINKI": proj_helsinki,
         "ESPOO": proj_espoo,
         "PORVOO": proj_porvoo,
-    }  # Common finnish systems. Helsinki, espoo...
+    }
 
     hole_copy = deepcopy(hole)
     if not isinstance(hole, Hole):
