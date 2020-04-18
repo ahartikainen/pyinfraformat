@@ -69,7 +69,6 @@ def test_holes_coordinate_projection():
     assert check_area(holes3, country="FI")
     assert check_area(holes3, country="EE") == False
 
-    
 
 def test_hole_coordinate_projection():
     holes = get_object()
@@ -98,14 +97,14 @@ def test_holes_projection_errors():
     assert str(e_info.value) == "Coordinates are not finite"
     with pytest.raises(Exception) as e_info:
         change_x_to_y("Wrong input")
-        
+
     holes2 = get_object()
-    holes_all = holes + holes2.project('Ykj')
+    holes_all = holes + holes2.project("Ykj")
     with pytest.raises(Exception) as e_info:
-        check_area(holes_all, 'FI')
+        check_area(holes_all, "FI")
     assert "uniform" in str(e_info.value)
-    
-    check_area(holes2.project('WGS84'), 'FI')
+
+    check_area(holes2.project("WGS84"), "FI")
 
 
 def test_holes_projection_errors2():
@@ -258,11 +257,13 @@ def test_height_systems(coords):
     assert abs(float(output_height) - correct[0]) < 0.01
     assert output_height == -output_height2
 
+
 def test_height_system_errors():
     with pytest.raises(Exception) as e_info:
-        height_systems_diff(np.array([[1,2,3]]).T, "N2000", "N43")
+        height_systems_diff(np.array([[1, 2, 3]]).T, "N2000", "N43")
     assert "array" in str(e_info.value)
-    height_systems_diff(np.array([1,2]), "N2000", "N2000")
+    height_systems_diff(np.array([1, 2]), "N2000", "N2000")
+
 
 def test_height_holes():
     holes = get_object()
