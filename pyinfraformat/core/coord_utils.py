@@ -24,7 +24,7 @@ def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
     abbreviations = {"HKI": "HELSINKI"}
     input_string = input_string.upper()
-    input_string = abbreviations.get("input_string", input_string)
+    input_string = abbreviations.get(input_string, input_string)
     common_separators = r"[,. :\_-]"
     if len(input_string) <= 4:
         input_string = "ETRS-" + input_string
@@ -167,7 +167,6 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
-        print(input_epsg, output_epsg)
         transf = Transformer.from_crs(input_epsg, output_epsg)
         TRANSFORMERS[key] = transf
     x, y = transf.transform(x, y)
@@ -427,7 +426,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     else:
         hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
-    hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
+    hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg][0]
 
     if not output_height:
         return hole_copy
