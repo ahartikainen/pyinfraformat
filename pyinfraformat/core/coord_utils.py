@@ -24,7 +24,7 @@ def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
     abbreviations = {"HKI": "HELSINKI"}
     input_string = input_string.upper()
-    input_string = abbreviations.get("input_string", default=input_string)
+    input_string = abbreviations.get("input_string", input_string)
     common_separators = r"[,. :\_-]"
     if len(input_string) <= 4:
         input_string = "ETRS-" + input_string
@@ -113,27 +113,27 @@ def proj_porvoo(x, y):
 
 
 def get_epsg_systems():
-    """Get dict of epsg systems, {name: epsg code}."""
+    """Get dict of epsg systems {name: (epsg code, XY order}. XY order True for XY, False for YX."""
     epsg_systems = {
-        "WGS84": "EPSG:4326",
-        "ETRS-TM35FIN": "EPSG:3067",
-        "ETRS89": "EPSG:4258",
-        "ETRS-GK19": "EPSG:3873",
-        "ETRS-GK20": "EPSG:3874",
-        "ETRS-GK21": "EPSG:3875",
-        "ETRS-GK22": "EPSG:3876",
-        "ETRS-GK23": "EPSG:3877",
-        "ETRS-GK24": "EPSG:3878",
-        "ETRS-GK25": "EPSG:3879",
-        "ETRS-GK26": "EPSG:3880",
-        "ETRS-GK27": "EPSG:3881",
-        "ETRS-GK28": "EPSG:3882",
-        "ETRS-GK29": "EPSG:3883",
-        "ETRS-GK30": "EPSG:3884",
-        "ETRS-GK31": "EPSG:3885",
-        "ETRS-TM34": "EPSG:3046",
-        "ETRS-TM35": "EPSG:3047",
-        "ETRS-TM36": "EPSG:3048",
+        "WGS84": ("EPSG:4326", False),
+        "ETRS-TM35FIN": ("EPSG:3067", False),
+        "ETRS89": ("EPSG:4258", True),
+        "ETRS-GK19": ("EPSG:3873", True),
+        "ETRS-GK20": ("EPSG:3874", True),
+        "ETRS-GK21": ("EPSG:3875", True),
+        "ETRS-GK22": ("EPSG:3876", True),
+        "ETRS-GK23": ("EPSG:3877", True),
+        "ETRS-GK24": ("EPSG:3878", True),
+        "ETRS-GK25": ("EPSG:3879", True),
+        "ETRS-GK26": ("EPSG:3880", True),
+        "ETRS-GK27": ("EPSG:3881", True),
+        "ETRS-GK28": ("EPSG:3882", True),
+        "ETRS-GK29": ("EPSG:3883", True),
+        "ETRS-GK30": ("EPSG:3884", True),
+        "ETRS-GK31": ("EPSG:3885", True),
+        "ETRS-TM34": ("EPSG:25834", True),
+        "ETRS-TM35": ("EPSG:25835", True),
+        "ETRS-TM36": ("EPSG:25836", True),
     }
     return epsg_systems
 
@@ -152,6 +152,14 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     x : list or float
     y : list or float
     """
+    epsgs = get_epsg_systems()
+    xy_order = True
+    for i in epsgs:
+        if epsgs[i][0] == input_epsg:
+            xy_order = epsgs[i][1]
+            break
+    if not xy_order:
+        x, y = y, x
     output_epsg = "EPSG:4326"
     if input_epsg == output_epsg:
         return x, y
@@ -159,6 +167,7 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
+        print(input_epsg, output_epsg)
         transf = Transformer.from_crs(input_epsg, output_epsg)
         TRANSFORMERS[key] = transf
     x, y = transf.transform(x, y)
@@ -196,7 +205,7 @@ def check_area(holes, country="FI"):
     input_str = coord_string_fix(input_str)
 
     if input_str in epsg_systems:
-        input_epsg = epsg_systems[input_str]
+        input_epsg = epsg_systems[input_str][0]
 
         bbox = COUNTRY_BBOX[country][1].copy()
         if input_epsg != "EPSG:4326":
@@ -363,7 +372,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         Copy of hole with coordinates transformed
     """
     epsg_systems = get_epsg_systems()
-    epsg_names = {epsg_systems[i]: i for i in epsg_systems}
+    epsg_names = {epsg_systems[i][0]: (i, epsg_systems[i][1]) for i in epsg_systems}
     other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
 
     hole_copy = deepcopy(hole)
@@ -388,14 +397,17 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         and "X" in hole_copy.header.XY
         and "Y" in hole_copy.header.XY
     ):
-        y, x = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]  # Note x-y change
+        x, y = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]  # Note x-y change
         if not np.isfinite(x) or not np.isfinite(y):
             raise ValueError("Coordinates are not finite")
     else:
         raise ValueError("Hole has no coordinates")
 
     if input_str in epsg_systems:
-        input_epsg = epsg_systems[input_str]
+        input_epsg = epsg_systems[input_str][0]
+        xy_order = epsg_systems[input_str][1]
+        if not xy_order:
+            x, y = y, x
     elif input_str in other_systems:
         func = other_systems[input_str]
         x, y, input_epsg = func(x, y)
@@ -410,7 +422,11 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         transf = Transformer.from_crs(input_epsg, output_epsg)
         TRANSFORMERS[key] = transf
     x, y = transf.transform(x, y)
-    hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x
+    if xy_order:
+        hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x  # Note x-y change
+    else:
+        hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
+
     hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
 
     if not output_height:

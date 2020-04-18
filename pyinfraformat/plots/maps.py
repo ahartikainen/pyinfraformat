@@ -77,7 +77,7 @@ def plot_map(holes, render_holes=True):
                 coord_system = coord_string_fix(coord_system)
                 epsg_systems = get_epsg_systems()
                 if coord_system in epsg_systems:
-                    input_epsg = epsg_systems[coord_system]
+                    input_epsg = epsg_systems[coord_system][0]
                 else:
                     msg = "Coordinate system {} not implemted"
                     msg = msg.format(coord_system)
@@ -91,8 +91,8 @@ def plot_map(holes, render_holes=True):
 
     x_all, y_all = [], []
     for i in holes_filtered:
-        x_all.append(i.header["XY"]["Y"])
-        y_all.append(i.header["XY"]["X"])
+        x_all.append(i.header["XY"]["X"])
+        y_all.append(i.header["XY"]["Y"])
 
     x, y = np.mean(x_all), np.mean(y_all)
     x, y = to_lanlot(x, y, input_epsg)
@@ -159,7 +159,7 @@ def plot_map(holes, render_holes=True):
     width = 300
     height = 300
     for i, hole in enumerate(holes_filtered):
-        y, x = [hole.header.XY["X"], hole.header.XY["Y"]]
+        x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = to_lanlot(x, y, input_epsg)
         key = hole.header["TT"]["Survey abbreviation"]
         if render_holes:
