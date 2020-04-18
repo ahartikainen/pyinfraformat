@@ -34,17 +34,28 @@ def coord_string_fix(input_string):
 
 def change_x_to_y(holes):
     """Change holes x to y and y to x. Creates a deepcopy."""
-    holes_copy = deepcopy(holes)
-    for hole in holes_copy:
+    if isinstance(holes, Holes):
+        holes_copy = deepcopy(holes)
+        for hole in holes_copy:
+            if (
+                hasattr(hole, "header")
+                and hasattr(hole.header, "XY")
+                and "X" in hole.header.XY
+                and "Y" in hole.header.XY
+            ):
+                hole.header.XY["X"], hole.header.XY["Y"] = (hole.header.XY["Y"], hole.header.XY["X"])
+        return holes_copy
+    if isinstance(holes, Hole):
+        hole_copy = deepcopy(holes)
         if (
-            hasattr(hole, "header")
+            hasattr(hole_copy, "header")
             and hasattr(hole.header, "XY")
             and "X" in hole.header.XY
             and "Y" in hole.header.XY
         ):
-            hole.header.XY["X"], hole.header.XY["Y"] = (hole.header.XY["Y"], hole.header.XY["X"])
-    return holes_copy
-
+            hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = (hole_copy.header.XY["Y"], hole_copy.header.XY["X"])
+        return hole_copy
+    raise ValueError("Inappropriate argument.")
 
 def proj_espoo(x, y):
     """Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
