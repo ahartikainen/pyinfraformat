@@ -2,6 +2,7 @@ from glob import glob
 import os
 from uuid import uuid4
 import numpy as np
+from copy import deepcopy
 from pyinfraformat import from_infraformat, Holes
 from pyinfraformat.core.coord_utils import (
     coord_string_fix,
@@ -52,6 +53,8 @@ def test_holes_projection_uniform():
 
 def test_holes_coordinate_projection():
     holes = get_object()
+    holes = change_x_to_y(holes)
+    holes = change_x_to_y(holes)
     holes2 = project_holes(holes, output_epsg="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
     holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia")  # logger warning
@@ -135,6 +138,9 @@ def test_holes_projection_errors4():
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
+    with pytest.raises(Exception) as e_info:
+        check_area("This is not a hole")
+    assert "input" in str(e_info.value)
 
 
 def test_lanlot():
@@ -232,4 +238,15 @@ def test_proj_porvoo():
 def test_height_systems(coords):
     input_coords, correct = coords
     output_height = height_systems_diff(input_coords, "N43", "N2000")
+    output_height2 = height_systems_diff(input_coords, "N2000", "N43")
     assert abs(float(output_height) - correct[0]) < 0.01
+    assert output_height == -output_height2
+    
+    
+def test_height_holes():
+    holes = get_object()
+    hole = holes[7]
+    hole.fileheader.KJ["Height reference"] = "N43" #pointer to all holes
+    holes2 = project_holes(holes, output_height='N2000')
+    hole2 = holes2[5]
+    assert hole2.fileheader.KJ["Height reference"] == "N2000"
