@@ -13,6 +13,7 @@ from pyinfraformat.core.coord_utils import (
     proj_helsinki,
     proj_porvoo,
     to_lanlot,
+    height_systems_diff,
 )
 import pytest
 
@@ -206,3 +207,28 @@ def test_proj_porvoo():
     assert type(output_coords[0]) == float
     assert type(output_coords[1]) == float
     assert type(epsg) == str
+
+@pytest.mark.parametrize(
+    "coords",
+    [
+        [[7179609.81, 3394211.43], [0.5551]],
+        [[7234010.15, 3442347.31], [0.5296]],
+        [[6908518.63, 3616919.04], [0.2882]],
+        [[7003877.59, 3499226.6], [0.4005]],
+        [[6800180.47, 3505475.49], [0.3156]],
+        [[7053589.08, 3464391.9], [0.4334]],
+        [[6829200.25, 3450289.82], [0.3572]],
+        [[6728116.17, 3260951.05], [0.3945]],
+        [[6828057.3, 3320271.94], [0.4211]],
+        [[7001324.44, 3570398.91], [0.3453]],
+        [[7310589.81, 3546761.5], [0.4372]],
+        [[7112026.51, 3531025.46], [0.4272]],
+        [[6798161.35, 3343554.26], [0.3948]],
+        [[6859323.18, 3340179.39], [0.4357]],
+        [[7210437.96, 3466288.18], [0.5015]]
+    ],
+)
+def test_height_systems(coords):
+    input_coords, correct = coords
+    output_height = height_systems_diff(input_coords, "N43", "N2000")
+    assert abs(float(output_height) - correct[0]) < 0.01
