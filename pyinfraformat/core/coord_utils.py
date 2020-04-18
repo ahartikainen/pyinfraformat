@@ -225,11 +225,10 @@ def check_area(holes, country="FI"):
             else:
                 bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
                 bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
-            
+
     else:
         raise ValueError("Input has to be in known epsg system.")
     if isinstance(holes, Holes):
-        print(bbox)
         return all([check_hole(hole, bbox, xy_order) for hole in holes])
     elif isinstance(holes, Hole):
         return check_hole(holes, bbox, xy_order)
@@ -405,7 +404,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         and "X" in hole_copy.header.XY
         and "Y" in hole_copy.header.XY
     ):
-        x, y = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]  # Note x-y change
+        x, y = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]
         if not np.isfinite(x) or not np.isfinite(y):
             raise ValueError("Coordinates are not finite")
     else:
@@ -413,13 +412,11 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
 
     if input_str in epsg_systems:
         input_epsg = epsg_systems[input_str][0]
-        xy_order = epsg_systems[input_str][1]
-        if not xy_order:
+        if not epsg_systems[input_str][1]:
             x, y = y, x
     elif input_str in other_systems:
         func = other_systems[input_str]
         x, y, input_epsg = func(x, y)
-        xy_order = True
     else:
         msg = "Unkown or not implemented EPSG in holes {}".format(input_str)
         raise ValueError(msg)
@@ -431,7 +428,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         transf = Transformer.from_crs(input_epsg, output_epsg)
         TRANSFORMERS[key] = transf
     x, y = transf.transform(x, y)
-    if xy_order:
+    if not epsg_names[output_epsg][1]:
         hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x  # Note x-y change
     else:
         hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y

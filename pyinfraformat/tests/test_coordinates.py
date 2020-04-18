@@ -52,7 +52,6 @@ def test_holes_projection_uniform():
 
 def test_holes_coordinate_projection():
     holes = get_object()
-    holes = change_x_to_y(holes)
     holes2 = project_holes(holes, output_epsg="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
     holes4 = project_holes(holes, output_epsg="EPSG:4326", check="Estonia")  # logger warning
@@ -140,11 +139,11 @@ def test_holes_projection_errors4():
 
 def test_lanlot():
     y, x = 6.1, 7.1
-    x2, y2 = to_lanlot(x, y, "EPSG:4326")
+    y2, x2 = to_lanlot(x, y, "EPSG:4326")
     assert x == x2
     assert y == y2
     y, x = 6.1, 7.1
-    x2, y2 = to_lanlot(x, y, "EPSG:25835")
+    y2, x2 = to_lanlot(x, y, "EPSG:25835")
     assert x != x2
     assert x != x2
 
