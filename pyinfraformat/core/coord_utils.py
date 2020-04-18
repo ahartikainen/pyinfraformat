@@ -3,7 +3,7 @@ import logging
 import re
 from copy import deepcopy
 from pyproj import Transformer
-from scipy.spatial import distance
+from matplotlib.tri import Triangulation, LinearTriInterpolator
 import numpy as np
 import pandas as pd
 from .core import Holes, Hole
@@ -13,6 +13,11 @@ __all__ = ["project_holes"]
 logger = logging.getLogger("pyinfraformat")
 
 TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output)
+COUNTRY_BBOX = {
+    "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
+    "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
+}
+INTERPOLATORS = {}
 
 
 def coord_string_fix(input_string):
@@ -40,8 +45,7 @@ def change_x_to_y(holes):
 def proj_espoo(x, y):
     """Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
 
-    https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen
-    /Kiinteiston_muodostus/Koordinaattiuudistus(19923)
+    https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen/Kiinteiston_muodostus/Koordinaattiuudistus(19923)  # pylint: disable=line-too-long
     """
     # pylint: disable=invalid-name
     output_epsg = "EPSG:3878"
@@ -58,8 +62,7 @@ def proj_espoo(x, y):
 def proj_helsinki(x, y):
     """Project Helsinki coordinates into ETRS-GK25 (EPSG:3879).
 
-    https://www.hel.fi/helsinki/fi/kartat-ja-liikenne/kartat-ja-paikkatieto
-    /paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat
+    https://www.hel.fi/helsinki/fi/kartat-ja-liikenne/kartat-ja-paikkatieto/paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat # pylint: disable=line-too-long
     """
     # pylint: disable=invalid-name
     output_epsg = "EPSG:3879"
@@ -172,11 +175,7 @@ def check_area(holes, country="FI"):
     input_str = coord_string_fix(input_str)
     input_epsg = epsg_systems[input_str]
 
-    country_bbox = {
-        "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
-        "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
-    }
-    bbox = country_bbox[country][1]
+    bbox = COUNTRY_BBOX[country][1]
     if input_epsg != "EPSG:4326":
         key = ("EPSG:4326", input_epsg)
         if key in TRANSFORMERS:
@@ -196,73 +195,127 @@ def check_area(holes, country="FI"):
 
 def get_n43_n60_points():
     """Get MML reference points for height systems n43-n60."""
-    url = (
-        r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019"
-        + r"/02/n43n60triangulationVertices.txt"
-    )
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationVertices.txt"  # pylint: disable=line-too-long
     df = pd.read_csv(url, delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "diff", "Karttalehden numero"]
+    df.index = df.iloc[:, 0]
     df = df.loc[:, ["X", "Y", "diff"]]
+    df["diff"] = df["diff"] * 0.001
     return df
+
+
+def get_n43_n60_triangulation():
+    """Get MML triangles for height systems n43-n60."""
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationNetwork.txt"  # pylint: disable=line-too-long
+    df = pd.read_csv(url, delim_whitespace=True, header=None)
+    return df
+
+
+def get_n43_n60_interpolator():
+    """Get interpolator for N43 to N60 height system change, data from MML."""
+    df_points = get_n43_n60_points()
+    df_tri = get_n43_n60_triangulation()
+    triangles = df_tri.replace(
+        df_points.index.values, np.arange(df_points.shape[0], dtype=int)
+    ).values
+    interpolator_ = Triangulation(df_points["X"], df_points["Y"], triangles)
+    interpolator = LinearTriInterpolator(interpolator_, df_points["diff"])
+    return interpolator
 
 
 def get_n60_n2000_points():
     """Get MML reference points for height systems n60-n2000."""
-    url = (
-        r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019"
-        + r"/02/n60n2000triangulationVertices.txt"
-    )
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationVertices.txt"  # pylint: disable=line-too-long
     df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "N60", "N2000"]
+    df.index = df.iloc[:, 0]
     df["diff"] = df["N2000"] - df["N60"]
     df = df.loc[:, ["X", "Y", "diff"]]
     return df
 
 
-def get_closest(df, point):
-    """Get closest row in df for point (x, y)."""
-    point = np.array(point)[:, None].T
-    dists = distance.cdist(point, df.loc[:, ["X", "Y"]])
-    if dists.min() > 20000:
-        raise Exception("Height reference point too far")
-    return df.iloc[dists.argmin()]["diff"]
+def get_n60_n2000_triangulation():
+    """Get MML triangles for height systems n60-n2000."""
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationNetwork.txt"  # pylint: disable=line-too-long
+    df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
+    return df
 
 
-def height_systems_diff(point, input_system, output_system):
+def get_n60_n2000_interpolator():
+    """Get interpolator for N60 to N2000 height system change, data from MML."""
+    df_points = get_n60_n2000_points()
+    df_tri = get_n60_n2000_triangulation()
+    triangles = df_tri.replace(
+        df_points.index.values, np.arange(df_points.shape[0], dtype=int)
+    ).values
+    interpolator_ = Triangulation(df_points["X"], df_points["Y"], triangles)
+    interpolator = LinearTriInterpolator(interpolator_, df_points["diff"])
+    return interpolator
+
+
+def height_systems_diff(points, input_system, output_system):
     """Get difference between systems at certain point.
-
-    point: (x,y) in KKJ (EPSG:2393) ?.
-    Possible systems: N43, N60, N2000
+    
+    Calculates the difference for height systems at points based on MML reference points
+    and triangulation. Coordinate system is KKJ3 (EPSG:2393).
+    
+    Parameters
+    ----------
+    points: array_like of shape (n, 2) 
+        points where to calculate the difference. Points in KKJ3.
+    input_system: str
+        height system as input. Possible values: N43, N60, N2000
+    output_system: str
+        height system as output. Possible values: N43, N60, N2000
 
     Returns
     -------
-    float
-        height difference
+    ndarray
+        list of height differences (mm). Nan for points outside triangulation.
     """
+    points = np.array(points)
+    if len(points.shape) == 1 and len(points) == 2:
+        points = points[:, None].T
+    if points.shape[1] != 2:
+        raise ValueError("Points has to be 2D -array with (n, 2) shape")
     input_system = input_system.upper()
     output_system = output_system.upper()
     if input_system == output_system:
-        return 0
+        return 0.0
     if input_system == "N43" and output_system == "N2000":
-        diff = height_systems_diff(point, "N43", "N60")
-        diff += height_systems_diff(point, "N60", "N2000")
-    elif output_system == "N43" and input_system == "N2000":
-        diff = -height_systems_diff(point, "N43", "N60")
-        diff -= height_systems_diff(point, "N60", "N2000")
+        diff = height_systems_diff(points, "N43", "N60")
+        diff += height_systems_diff(points, "N60", "N2000")
         return diff
+    elif output_system == "N43" and input_system == "N2000":
+        diff = -height_systems_diff(points, "N43", "N60")
+        diff -= height_systems_diff(points, "N60", "N2000")
+        return diff
+
     if input_system == "N43" and output_system == "N60":
-        df = get_n43_n60_points()
-        return get_closest(df, point)
-    if input_system == "N60" and output_system == "N43":
-        df = get_n43_n60_points()
-        return -get_closest(df, point)
-    if input_system == "N60" and output_system == "N2000":
-        df = get_n60_n2000_points()
-        return get_closest(df, point)
-    if input_system == "N2000" and output_system == "N60":
-        df = get_n60_n2000_points()
-        return -get_closest(df, point)
-    raise ValueError("input_system or output_system invalid. Possible values N43, N60, N2000")
+        key = (input_system, output_system)
+        if key not in INTERPOLATORS:
+            INTERPOLATORS[key] = get_n43_n60_interpolator()
+        diff = INTERPOLATORS[key](*points.T).data
+    elif input_system == "N60" and output_system == "N43":
+        key = (output_system, input_system)
+        if key not in INTERPOLATORS:
+            INTERPOLATORS[key] = get_n43_n60_interpolator()
+        diff = -INTERPOLATORS[key](*points.T).data
+    elif input_system == "N60" and output_system == "N2000":
+        key = (input_system, output_system)
+        if key not in INTERPOLATORS:
+            INTERPOLATORS[key] = get_n60_n2000_interpolator()
+        diff = INTERPOLATORS[key](*points.T).data
+    elif input_system == "N2000" and output_system == "N60":
+        key = (output_system, input_system)
+        if key not in INTERPOLATORS:
+            INTERPOLATORS[key] = get_n60_n2000_interpolator()
+        diff = -INTERPOLATORS[key](*points.T).data
+    else:
+        raise ValueError(
+            "input_system or output_system invalid. Possible values are N43, N60, N2000."
+        )
+    return diff
 
 
 def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
@@ -355,7 +408,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         raise ValueError("Hole has no unknown heigth system:", input_system)
 
     diff = height_systems_diff(point, input_system, output_height)
-    hole_copy.header.XY["Z-start"] -= diff
+    hole_copy.header.XY["Z-start"] += round(float(diff), 3)
     return hole_copy
 
 
