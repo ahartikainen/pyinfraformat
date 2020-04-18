@@ -34,6 +34,7 @@ def get_object():
         ("ETRS GK26", "ETRS-GK26"),
         ("ETRS_GK26", "ETRS-GK26"),
         ("Helsinki", "HELSINKI"),
+        ("Hki", "HELSINKI"),
     ],
 )
 def test_fix_coord_str(strings):

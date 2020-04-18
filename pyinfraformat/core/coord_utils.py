@@ -22,10 +22,14 @@ INTERPOLATORS = {}  # LinearTriInterpolator for heightsystems. Functions add int
 
 def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
+    abbreviations = {"HKI" : "HELSINKI"}
+    input_string = input_string.upper()
+    if input_string in abbreviations:
+        input_string = abbreviations[input_string]
     common_separators = r"[,. :\_-]"
     if len(input_string) <= 4:
         input_string = "ETRS-" + input_string
-    return "-".join(re.split(common_separators, input_string.upper()))
+    return "-".join(re.split(common_separators, input_string))
 
 
 def change_x_to_y(holes):
