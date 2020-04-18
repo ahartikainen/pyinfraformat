@@ -173,15 +173,19 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     return x, y
 
 
-def check_hole(hole, bbox):
+def check_hole(hole, bbox, xy_order=True):
     """Check if hole point is inside bbox.
 
     Returns boolean.
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
-        if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
-            return True
+        if not xy_order:
+            if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
+                return True
+        else:
+            if bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]:
+                return True
     return False
 
 
@@ -205,6 +209,7 @@ def check_area(holes, country="FI"):
 
     if input_str in epsg_systems:
         input_epsg = epsg_systems[input_str][0]
+        xy_order = epsg_systems[input_str][1]
 
         bbox = COUNTRY_BBOX[country][1].copy()
         if input_epsg != "EPSG:4326":
@@ -214,16 +219,20 @@ def check_area(holes, country="FI"):
             else:
                 transf = Transformer.from_crs("EPSG:4326", input_epsg)
                 TRANSFORMERS[key] = transf
-
-            bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
-            bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
+            if xy_order:
+                bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
+                bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
+            else:
+                bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
+                bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
+            
     else:
         raise ValueError("Input has to be in known epsg system.")
-    print(bbox)
     if isinstance(holes, Holes):
-        return all([check_hole(hole, bbox) for hole in holes])
+        print(bbox)
+        return all([check_hole(hole, bbox, xy_order) for hole in holes])
     elif isinstance(holes, Hole):
-        return check_hole(holes, bbox)
+        return check_hole(holes, bbox, xy_order)
     else:
         raise ValueError("holes -parameter is unkown input type")
 
