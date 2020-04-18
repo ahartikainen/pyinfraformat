@@ -12,12 +12,12 @@ __all__ = ["project_holes"]
 
 logger = logging.getLogger("pyinfraformat")
 
-TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output)
+TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output). Funtctions add transformers.
 COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
-INTERPOLATORS = {}
+INTERPOLATORS = {}  # LinearTriInterpolator for heightsystems. Functions add interpolators.
 
 
 def coord_string_fix(input_string):

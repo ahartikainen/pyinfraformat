@@ -5,4 +5,3 @@ matplotlib
 mpld3
 pandas
 pyproj
-scipy
