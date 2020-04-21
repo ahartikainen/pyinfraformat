@@ -17,7 +17,7 @@ COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
-INTERPOLATORS = {}  # LinearTriInterpolator for heightsystems. Functions add interpolators.
+INTERPOLATORS = {}  # LinearTriInterpolator for height systems. Functions add interpolators.
 
 
 def coord_string_fix(input_string):
