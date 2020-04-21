@@ -116,6 +116,30 @@ def plot_map(holes, render_holes=True):
     folium.TileLayer(
         tiles=mml_url_orto, attr="MML", name="MML ilmakuva", overlay=False, control=True
     ).add_to(map_fig)
+
+    gtk_url = (
+        "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Maapera_WMS/MapServer/WMSServer?"
+    )
+    folium.WmsTileLayer(
+        name="GTK Maaperäkartta",
+        url=gtk_url,
+        fmt="image/png",
+        layers=["maapera_100k_kerrostumat_ja_muodostumat"],  # "maapera_200k_maalajit"
+        show=False,
+        transparent=True,
+        opacity=0.5,
+    ).add_to(map_fig)
+
+    folium.WmsTileLayer(
+        name="GTK Sulfaattimaat",
+        url=gtk_url,
+        fmt="image/png",
+        layers=["happamat_sulfaattimaat_250k_alueet"],
+        show=False,
+        transparent=True,
+        opacity=0.5,
+    ).add_to(map_fig)
+
     sw_bounds = to_lanlot(min(x_all), min(y_all), input_epsg)
     ne_bounds = to_lanlot(max(x_all), max(y_all), input_epsg)
     map_fig.fit_bounds([sw_bounds, ne_bounds])
