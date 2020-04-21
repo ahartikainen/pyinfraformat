@@ -13,11 +13,36 @@ __all__ = ["project_holes"]
 logger = logging.getLogger("pyinfraformat")
 
 TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output). Functions add transformers.
+INTERPOLATORS = {}  # LinearTriInterpolator for height systems. Functions add interpolators.
 COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
-INTERPOLATORS = {}  # LinearTriInterpolator for height systems. Functions add interpolators.
+EPSG_SYSTEMS = {  # System name : (EPSG code : str, xy_order : bool)
+    "WGS84": ("EPSG:4326", False),
+    "ETRS-TM35FIN": ("EPSG:3067", False),
+    "ETRS89": ("EPSG:4258", True),
+    "ETRS-GK19": ("EPSG:3873", True),
+    "ETRS-GK20": ("EPSG:3874", True),
+    "ETRS-GK21": ("EPSG:3875", True),
+    "ETRS-GK22": ("EPSG:3876", True),
+    "ETRS-GK23": ("EPSG:3877", True),
+    "ETRS-GK24": ("EPSG:3878", True),
+    "ETRS-GK25": ("EPSG:3879", True),
+    "ETRS-GK26": ("EPSG:3880", True),
+    "ETRS-GK27": ("EPSG:3881", True),
+    "ETRS-GK28": ("EPSG:3882", True),
+    "ETRS-GK29": ("EPSG:3883", True),
+    "ETRS-GK30": ("EPSG:3884", True),
+    "ETRS-GK31": ("EPSG:3885", True),
+    "ETRS-TM34": ("EPSG:25834", True),
+    "ETRS-TM35": ("EPSG:25835", True),
+    "ETRS-TM36": ("EPSG:25836", True),
+    "KKJ1": ("EPSG:2391", True),
+    "KKJ2": ("EPSG:2392", True),
+    "KKJ3": ("EPSG:2393", True),
+    "KKJ4": ("EPSG:2394", True),
+}
 
 
 def coord_string_fix(input_string):
@@ -112,36 +137,6 @@ def proj_porvoo(x, y):
     return x, y, output_epsg
 
 
-def get_epsg_systems():
-    """Get dict of epsg systems {name: (epsg code, XY order}. XY order True for XY, False for YX."""
-    epsg_systems = {
-        "WGS84": ("EPSG:4326", False),
-        "ETRS-TM35FIN": ("EPSG:3067", False),
-        "ETRS89": ("EPSG:4258", True),
-        "ETRS-GK19": ("EPSG:3873", True),
-        "ETRS-GK20": ("EPSG:3874", True),
-        "ETRS-GK21": ("EPSG:3875", True),
-        "ETRS-GK22": ("EPSG:3876", True),
-        "ETRS-GK23": ("EPSG:3877", True),
-        "ETRS-GK24": ("EPSG:3878", True),
-        "ETRS-GK25": ("EPSG:3879", True),
-        "ETRS-GK26": ("EPSG:3880", True),
-        "ETRS-GK27": ("EPSG:3881", True),
-        "ETRS-GK28": ("EPSG:3882", True),
-        "ETRS-GK29": ("EPSG:3883", True),
-        "ETRS-GK30": ("EPSG:3884", True),
-        "ETRS-GK31": ("EPSG:3885", True),
-        "ETRS-TM34": ("EPSG:25834", True),
-        "ETRS-TM35": ("EPSG:25835", True),
-        "ETRS-TM36": ("EPSG:25836", True),
-        "KKJ1": ("EPSG:2391", True),
-        "KKJ2": ("EPSG:2392", True),
-        "KKJ3": ("EPSG:2393", True),
-        "KKJ4": ("EPSG:2394", True),
-    }
-    return epsg_systems
-
-
 def to_lanlot(x, y, input_epsg="EPSG:3067"):
     """Transform coordinates to WGS84.
 
@@ -156,11 +151,10 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     x : list or float
     y : list or float
     """
-    epsgs = get_epsg_systems()
     xy_order = True
-    for i in epsgs:
-        if epsgs[i][0] == input_epsg:
-            xy_order = epsgs[i][1]
+    for i in EPSG_SYSTEMS:
+        if EPSG_SYSTEMS[i][0] == input_epsg:
+            xy_order = EPSG_SYSTEMS[i][1]
             break
     if not xy_order:
         x, y = y, x
@@ -205,12 +199,11 @@ def check_area(holes, country="FI"):
         input_str = holes.fileheader.KJ["Coordinate system"]
     else:
         raise ValueError("holes -parameter is unkown input type")
-    epsg_systems = get_epsg_systems()
     input_str = coord_string_fix(input_str)
 
-    if input_str in epsg_systems:
-        input_epsg = epsg_systems[input_str][0]
-        xy_order = epsg_systems[input_str][1]
+    if input_str in EPSG_SYSTEMS:
+        input_epsg = EPSG_SYSTEMS[input_str][0]
+        xy_order = EPSG_SYSTEMS[input_str][1]
 
         bbox = COUNTRY_BBOX[country][1].copy()
         if input_epsg != "EPSG:4326":
@@ -377,8 +370,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     hole : Hole -object
         Copy of hole with coordinates transformed
     """
-    epsg_systems = get_epsg_systems()
-    epsg_names = {epsg_systems[i][0]: (i, epsg_systems[i][1]) for i in epsg_systems}
+    epsg_names = {EPSG_SYSTEMS[i][0]: (i, EPSG_SYSTEMS[i][1]) for i in EPSG_SYSTEMS}
     other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
 
     hole_copy = deepcopy(hole)
@@ -409,9 +401,9 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     else:
         raise ValueError("Hole has no coordinates")
 
-    if input_str in epsg_systems:
-        input_epsg = epsg_systems[input_str][0]
-        if not epsg_systems[input_str][1]:
+    if input_str in EPSG_SYSTEMS:
+        input_epsg = EPSG_SYSTEMS[input_str][0]
+        if not EPSG_SYSTEMS[input_str][1]:
             x, y = y, x
     elif input_str in other_systems:
         func = other_systems[input_str]
@@ -467,7 +459,7 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     holes : holes or hole -object
     output : str
         ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
-        pyinfraformat.coord_utils.get_epsg_systems() for possible values.
+        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
     check : str
         Check if points are inside area. Raises warning into logger.
         Possible values: 'Finland', 'Estonia', False
@@ -489,14 +481,13 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     if "EPSG" in output:
         output_epsg = output
     else:
-        epsg_systems = get_epsg_systems()
         name = coord_string_fix(output)
-        if name in epsg_systems:
-            output_epsg = epsg_systems[name][0]
+        if name in EPSG_SYSTEMS:
+            output_epsg = EPSG_SYSTEMS[name][0]
         else:
             raise ValueError(
                 "Ivalid output parameter {}, possible systems: {}".format(
-                    name, list(epsg_systems.keys())
+                    name, list(EPSG_SYSTEMS.keys())
                 )
             )
     if isinstance(holes, Holes):
