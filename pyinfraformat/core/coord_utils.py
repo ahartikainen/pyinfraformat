@@ -185,11 +185,8 @@ def check_hole(hole, bbox, xy_order=True):
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
         if not xy_order:
-            if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
-                return True
-        else:
-            if bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]:
-                return True
+            return bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
+        return bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]:
     return False
 
 
