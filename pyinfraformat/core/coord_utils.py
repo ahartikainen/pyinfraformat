@@ -12,7 +12,7 @@ __all__ = ["project_holes"]
 
 logger = logging.getLogger("pyinfraformat")
 
-TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output). Funtctions add transformers.
+TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output). Functions add transformers.
 COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
