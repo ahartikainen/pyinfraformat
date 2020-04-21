@@ -321,7 +321,6 @@ class Holes:
         -------
         map_fig : folium map object
         """
-
         from ..plots.maps import plot_map as _plot_map
 
         return _plot_map(self, render_holes)
