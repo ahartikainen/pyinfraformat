@@ -334,8 +334,8 @@ class Holes:
         Parameters
         ----------
         output : str
-            ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check get_epsg_systems()
-            for possible values.
+            ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
+            pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
         check : str
             Check if points are inside area. Raises warning into logger.
             Possible values: 'Finland', 'Estonia', False
