@@ -185,8 +185,8 @@ def check_hole(hole, bbox, xy_order=True):
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
         if not xy_order:
-            return bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]:
-        return bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]:
+            return bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]
+        return bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]
     return False
 
 
@@ -199,7 +199,7 @@ def check_area(holes, country="FI"):
         if len(holes) == 0:
             return True
         input_str = holes[0].fileheader.KJ["Coordinate system"]
-        if not all([hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes]):
+        if not all(hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes):
             raise ValueError("Input not in uniform coordinate system")
     elif isinstance(holes, Hole):
         input_str = holes.fileheader.KJ["Coordinate system"]
