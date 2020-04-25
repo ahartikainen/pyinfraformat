@@ -160,7 +160,7 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     else:
         transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
         TRANSFORMERS[key] = transf
-    x, y = transf.transform(x, y)
+    y, x = transf.transform(y, x)
     return x, y
 
 
@@ -207,8 +207,8 @@ def check_area(holes, country="FI"):
                 transf = Transformer.from_crs("EPSG:4326", input_epsg, always_xy=True)
                 TRANSFORMERS[key] = transf
             #if True:
-            #    bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
-            #    bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
+            #bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
+            #bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
             
             bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
             bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
@@ -410,7 +410,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     else:
         transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
         TRANSFORMERS[key] = transf
-    x, y = transf.transform(x, y)
+    y, x = transf.transform(y, x)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
     hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
@@ -424,7 +424,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     else:
         transf = Transformer.from_crs(output_epsg, "EPSG:2393", always_xy=True)
         TRANSFORMERS[key] = transf
-    point = transf.transform(x, y)
+    point = transf.transform(y, x)
     try:
         input_system = hole.fileheader["KJ"]["Height reference"]
     except KeyError:
