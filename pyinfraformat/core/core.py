@@ -452,7 +452,9 @@ class Hole:
         figure : matplotlib figure or mpld3 html
         """
         return plot_hole(self, backend)
-
+    
+    def _repr_html_(self):
+        return plot_hole(self, backend='mpld3')
 
 class FileHeader:
     """Class to hold file header information."""

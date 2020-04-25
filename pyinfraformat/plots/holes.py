@@ -2,6 +2,7 @@
 import gc
 import mpld3
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import json
 
@@ -9,7 +10,18 @@ __all__ = ["plot_hole"]
 
 BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
 
-
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+            np.int16, np.int32, np.int64, np.uint8,
+            np.uint16,np.uint32, np.uint64)):
+            return int(obj)
+        elif isinstance(obj, (np.float_, np.float16, np.float32, 
+            np.float64)):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+        
 def fig_to_hmtl(fig, clear_memory=True):
     """Transform matplotlib figure to html with mpld3.
 
@@ -32,10 +44,8 @@ def fig_to_hmtl(fig, clear_memory=True):
     
     left, right = figure_dict['axes']
     del left["axes"][1]
-    #figure_dict['axes'] = left, right
-    #figure_dict['plugins'][2]['button'] = False
     
-    figure_json = json.dumps(figure_dict, ) #
+    figure_json = json.dumps(figure_dict, cls=NumpyEncoder)
 
     if clear_memory:
         fig.clear()
