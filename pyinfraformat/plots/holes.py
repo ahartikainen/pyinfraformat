@@ -1,27 +1,40 @@
 """Plot diagrams for a single hole."""
 import gc
+import json
 import mpld3
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import json
 
 __all__ = ["plot_hole"]
 
 BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
 
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
-    def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-            np.int16, np.int32, np.int64, np.uint8,
-            np.uint16,np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32, 
-            np.float64)):
-            return float(obj)
-        return json.JSONEncoder.default(self, obj)
-        
+
+def convert_numpy(obj):
+    """Convert numpy float or int to python."""
+    if isinstance(
+        obj,
+        (
+            np.int_,
+            np.intc,
+            np.intp,
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.uint8,
+            np.uint16,
+            np.uint32,
+            np.uint64,
+        ),
+    ):
+        return int(obj)
+    elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+        return float(obj)
+    return json.JSONEncoder().default(obj)
+
+
 def fig_to_hmtl(fig, clear_memory=True):
     """Transform matplotlib figure to html with mpld3.
 
@@ -33,19 +46,21 @@ def fig_to_hmtl(fig, clear_memory=True):
     -------
     html
     """
-    #mpld3.plugins.clear(fig)
-    html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple", d3_url=r"https://d3js.org/d3.v3.min.js")
+    # mpld3.plugins.clear(fig)
+    html = mpld3.fig_to_html(
+        fig, no_extras=True, template_type="simple", d3_url=r"https://d3js.org/d3.v3.min.js"
+    )
     emtpy_html = (
         html[: html.find("{", html.find("{") + 1)]
         + "{replace}"
         + html[html.rfind("}", 0, html.rfind("}") - 1) + 1 :]
     )
     figure_dict = mpld3.fig_to_dict(fig)
-    
-    left, right = figure_dict['axes']
+
+    left, _ = figure_dict["axes"]
     del left["axes"][1]
-    
-    figure_json = json.dumps(figure_dict, cls=NumpyEncoder)
+
+    figure_json = json.dumps(figure_dict, default=convert_numpy)
 
     if clear_memory:
         fig.clear()
