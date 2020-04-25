@@ -3,6 +3,7 @@ import gc
 import mpld3
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
 
 __all__ = ["plot_hole"]
 
@@ -20,17 +21,28 @@ def fig_to_hmtl(fig, clear_memory=True):
     -------
     html
     """
-    html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple")
-    if len(fig.axes) == 2:  # remove left axes scale
-        html = (
-            html[0 : html.find(', {"position": "left",')]
-            + html[html.find(', "visible": false}') + 19 :]
-        )
+    #mpld3.plugins.clear(fig)
+    html = mpld3.fig_to_html(fig, no_extras=True, template_type="simple", d3_url=r"https://d3js.org/d3.v3.min.js")
+    emtpy_html = (
+        html[: html.find("{", html.find("{") + 1)]
+        + "{replace}"
+        + html[html.rfind("}", 0, html.rfind("}") - 1) + 1 :]
+    )
+    figure_dict = mpld3.fig_to_dict(fig)
+    
+    left, right = figure_dict['axes']
+    del left["axes"][1]
+    #figure_dict['axes'] = left, right
+    #figure_dict['plugins'][2]['button'] = False
+    
+    figure_json = json.dumps(figure_dict, ) #
+
     if clear_memory:
         fig.clear()
         plt.close()
         gc.collect()
-    return html
+
+    return emtpy_html.replace("{replace}", figure_json)
 
 
 def plot_po(one_survey):
