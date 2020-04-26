@@ -164,15 +164,13 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     return x, y
 
 
-def check_hole(hole, bbox, xy_order=True):
+def check_hole(hole, bbox):
     """Check if hole point is inside bbox.
 
     Returns boolean.
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
-        #if not xy_order:
-        #return bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]
         return bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]
     return False
 
@@ -196,7 +194,6 @@ def check_area(holes, country="FI"):
 
     if input_str in EPSG_SYSTEMS:
         input_epsg = EPSG_SYSTEMS[input_str]
-        #xy_order = EPSG_SYSTEMS[input_str][1]
 
         bbox = COUNTRY_BBOX[country][1].copy()
         if input_epsg != "EPSG:4326":
@@ -206,10 +203,6 @@ def check_area(holes, country="FI"):
             else:
                 transf = Transformer.from_crs("EPSG:4326", input_epsg, always_xy=True)
                 TRANSFORMERS[key] = transf
-            #if True:
-            #bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
-            #bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
-            
             bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
             bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 

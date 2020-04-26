@@ -160,11 +160,11 @@ def test_holes_projection_errors4():
 
 def test_lanlot():
     x, y = 6.1, 7.1
-    x2,y2 = to_lanlot(x, y, "EPSG:4326")
+    x2, y2 = to_lanlot(x, y, "EPSG:4326")
     assert x == x2
     assert y == y2
     x, y = 6.1, 7.1
-    x2,y2 = to_lanlot(x, y, "EPSG:25835")
+    x2, y2 = to_lanlot(x, y, "EPSG:25835")
     assert x != x2
     assert x != x2
 
