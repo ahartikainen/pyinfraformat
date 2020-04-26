@@ -1,7 +1,7 @@
 from glob import glob
 import os
 from uuid import uuid4
-from pyinfraformat import from_infraformat, Holes, FileExtensionMissingError, PathNotFoundError
+from pyinfraformat import from_infraformat, Holes, FileExtensionMissingError, PathNotFoundError, from_gtk_wfs
 import pytest
 
 
@@ -56,6 +56,11 @@ def test_reading_empty():
     holes = from_infraformat("")
     assert isinstance(holes, Holes)
 
+
+def test_gtk_wfs():
+    bbox = (60.2, 24.8, 60.215, 24.83)
+    holes = pif.from_gtk_wfs(bbox, input_epsg = "EPSG:4326",maxholes= 500)
+    assert isinstance(holes, Holes)
 
 def test_output():
     for path in get_datafiles("good"):
