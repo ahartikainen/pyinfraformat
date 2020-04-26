@@ -4,13 +4,16 @@ from collections import Counter
 from glob import glob
 import logging
 import os
+import xmltodict
+from owslib.wfs import WebFeatureService
 from .core import Holes, Hole
 from ..exceptions import PathNotFoundError
 from .utils import identifiers, is_number
+from .coord_utils import EPSG_SYSTEMS
 
 logger = logging.getLogger("pyinfraformat")
 
-__all__ = ["from_infraformat"]
+__all__ = ["from_infraformat", "from_gtk_wfs"]
 
 # pylint: disable=redefined-argument-from-local
 def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
@@ -98,6 +101,49 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
                 hole_list.extend(holes)
 
     return Holes(hole_list)
+
+
+def from_gtk_wfs(bbox=(380000.0030000003, 6685100.068999999, 380100.9030000003, 6685300.868999999), robust=True):
+    epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
+    url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"
+    wfs = WebFeatureService(url)
+
+    wfs_io = wfs.getfeature(
+        typename=["Pohjatutkimukset"], maxfeatures=500, srsname="EPSG:3067", bbox=bbox
+    )
+
+    data = wfs_io.read()
+    data_dict = xmltodict.parse(data)
+
+    results = []
+    for i in data_dict["wfs:FeatureCollection"]["gml:featureMember"]:
+        line = dict(
+            **i["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"][
+                "Rajapinnat_GTK_Pohjatutkimukset_WFS:Shape"
+            ]["gml:Point"],
+            **i["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"]
+        )
+        results.append(line)
+
+    holes = []
+    for i in range(len(results)):
+        hole_str = results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
+        hole = parse_hole(enumerate(hole_str), robust=robust)
+        hole.add_header("OM", results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"])
+
+        y, x = results[i]["gml:coordinates"].split(",")
+        y, x = round(float(y), 4), round(float(x), 4)
+        hole.header.XY["X"], hole.header.XY["Y"] = x, y
+        file_fo = {"Format version": "?", "Software": "GTK_WFS"}
+        hole.add_fileheader("FO", file_fo)
+        file_kj = {
+            "Coordinate system": epsg_names[results[i]["@srsName"]],
+            "Height reference": results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
+        }
+        hole.add_fileheader("KJ", file_kj)
+        holes.append(hole)
+    holes = Holes(holes)
+    return holes
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
