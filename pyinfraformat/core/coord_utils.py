@@ -137,21 +137,21 @@ def proj_porvoo(x, y):
     return x, y, output_epsg
 
 
-def to_lanlot(x, y, input_epsg="EPSG:3067"):
-    """Transform coordinates to WGS84.
+def project_points(x, y, input_epsg="EPSG:3067", output_epsg="EPSG:4326"):
+    """Transform coordinate points from input to output, default output WGS84.
 
     Parameters
     ----------
     x : list or float
     x : list or float
     intput_epsg : str
+    output_epsg : str
 
     Returns
     -------
     x : list or float
     y : list or float
     """
-    output_epsg = "EPSG:4326"
     if input_epsg == output_epsg:
         return x, y
     key = (input_epsg, output_epsg)
