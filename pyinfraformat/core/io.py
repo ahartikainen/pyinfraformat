@@ -103,21 +103,21 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes = 1000):
-    '''Get holes from GTK WFS.
+def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
+    """Get holes from GTK WFS.
 
     Paramaters
     ----------
     bbox : tuple
-        bbox to get data from. 
+        bbox to get data from.
         Is form (x1, y1, x2, y2).
-    input_epsg : str 
+    input_epsg : str
         bbox epsg
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     maxholes : int, optional, default 1000
         Maximum number of points to get from wfs.
-        
+
 
     Returns
     -------
@@ -127,13 +127,14 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes = 1000):
     --------
     bbox = (60, 24, 61, 25)
     holes = from_gtk_wfs(bbox, input_epsg="EPSG:4326", robust=True)
-    '''
+    """
+    # pylint: disable=invalid-name
     epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
-    url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"
+    url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
     wfs = WebFeatureService(url)
 
-    x1, y1 = project_points(bbox[0], bbox[1], "EPSG:4326", "EPSG:3067")
-    x2, y2 = project_points(bbox[2], bbox[3], "EPSG:4326", "EPSG:3067")
+    x1, y1 = project_points(bbox[0], bbox[1], input_epsg, "EPSG:3067")
+    x2, y2 = project_points(bbox[2], bbox[3], input_epsg, "EPSG:3067")
 
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
@@ -157,19 +158,19 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes = 1000):
         results.append(line)
 
     holes = []
-    for i in range(len(results)):
-        hole_str = results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
+    for line in results:
+        hole_str = line["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
         hole = parse_hole(enumerate(hole_str), robust=robust)
-        hole.add_header("OM", results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"])
+        hole.add_header("OM", line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"])
 
-        y, x = results[i]["gml:coordinates"].split(",")
+        y, x = line["gml:coordinates"].split(",")
         y, x = round(float(y), 4), round(float(x), 4)
-        hole.header.XY["X"], hole.header.XY["Y"] = x, y
+        hole.header.XY["X"], hole.header.XY["Y"] = x, y  # pylint: disable=E1101
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
-            "Coordinate system": epsg_names[results[i]["@srsName"]],
-            "Height reference": results[i]["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
+            "Coordinate system": epsg_names[line["@srsName"]],
+            "Height reference": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)
         holes.append(hole)
