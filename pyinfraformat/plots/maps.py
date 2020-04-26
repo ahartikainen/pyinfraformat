@@ -76,7 +76,7 @@ def plot_map(holes, render_holes=True):
                 coord_system = hole.fileheader.KJ["Coordinate system"]
                 coord_system = coord_string_fix(coord_system)
                 if coord_system in EPSG_SYSTEMS:
-                    input_epsg = EPSG_SYSTEMS[coord_system][0]
+                    input_epsg = EPSG_SYSTEMS[coord_system]
                 else:
                     msg = "Coordinate system {} not implemted"
                     msg = msg.format(coord_system)

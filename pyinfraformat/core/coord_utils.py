@@ -18,30 +18,30 @@ COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
-EPSG_SYSTEMS = {  # System name : (EPSG code : str, xy_order : bool)
-    "WGS84": ("EPSG:4326", False),
-    "ETRS-TM35FIN": ("EPSG:3067", False),
-    "ETRS89": ("EPSG:4258", True),
-    "ETRS-GK19": ("EPSG:3873", True),
-    "ETRS-GK20": ("EPSG:3874", True),
-    "ETRS-GK21": ("EPSG:3875", True),
-    "ETRS-GK22": ("EPSG:3876", True),
-    "ETRS-GK23": ("EPSG:3877", True),
-    "ETRS-GK24": ("EPSG:3878", True),
-    "ETRS-GK25": ("EPSG:3879", True),
-    "ETRS-GK26": ("EPSG:3880", True),
-    "ETRS-GK27": ("EPSG:3881", True),
-    "ETRS-GK28": ("EPSG:3882", True),
-    "ETRS-GK29": ("EPSG:3883", True),
-    "ETRS-GK30": ("EPSG:3884", True),
-    "ETRS-GK31": ("EPSG:3885", True),
-    "ETRS-TM34": ("EPSG:25834", True),
-    "ETRS-TM35": ("EPSG:25835", True),
-    "ETRS-TM36": ("EPSG:25836", True),
-    "KKJ1": ("EPSG:2391", True),
-    "KKJ2": ("EPSG:2392", True),
-    "KKJ3": ("EPSG:2393", True),
-    "KKJ4": ("EPSG:2394", True),
+EPSG_SYSTEMS = {  # System name : EPSG code
+    "WGS84": "EPSG:4326",
+    "ETRS-TM35FIN": "EPSG:3067",
+    "ETRS89": "EPSG:4258",
+    "ETRS-GK19": "EPSG:3873",
+    "ETRS-GK20": "EPSG:3874",
+    "ETRS-GK21": "EPSG:3875",
+    "ETRS-GK22": "EPSG:3876",
+    "ETRS-GK23": "EPSG:3877",
+    "ETRS-GK24": "EPSG:3878",
+    "ETRS-GK25": "EPSG:3879",
+    "ETRS-GK26": "EPSG:3880",
+    "ETRS-GK27": "EPSG:3881",
+    "ETRS-GK28": "EPSG:3882",
+    "ETRS-GK29": "EPSG:3883",
+    "ETRS-GK30": "EPSG:3884",
+    "ETRS-GK31": "EPSG:3885",
+    "ETRS-TM34": "EPSG:25834",
+    "ETRS-TM35": "EPSG:25835",
+    "ETRS-TM36": "EPSG:25836",
+    "KKJ1": "EPSG:2391",
+    "KKJ2": "EPSG:2392",
+    "KKJ3": "EPSG:2393",
+    "KKJ4": "EPSG:2394",
 }
 
 
@@ -151,13 +151,6 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     x : list or float
     y : list or float
     """
-    xy_order = True
-    for i in EPSG_SYSTEMS:
-        if EPSG_SYSTEMS[i][0] == input_epsg:
-            xy_order = EPSG_SYSTEMS[i][1]
-            break
-    if not xy_order:
-        x, y = y, x
     output_epsg = "EPSG:4326"
     if input_epsg == output_epsg:
         return x, y
@@ -165,21 +158,19 @@ def to_lanlot(x, y, input_epsg="EPSG:3067"):
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
-        transf = Transformer.from_crs(input_epsg, output_epsg)
+        transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
         TRANSFORMERS[key] = transf
-    x, y = transf.transform(x, y)
+    y, x = transf.transform(y, x)
     return x, y
 
 
-def check_hole(hole, bbox, xy_order=True):
+def check_hole(hole, bbox):
     """Check if hole point is inside bbox.
 
     Returns boolean.
     """
     if hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY:
         x, y = hole.header.XY["X"], hole.header.XY["Y"]
-        if not xy_order:
-            return bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]
         return bbox[1] < x < bbox[3] and bbox[0] < y < bbox[2]
     return False
 
@@ -202,8 +193,7 @@ def check_area(holes, country="FI"):
     input_str = coord_string_fix(input_str)
 
     if input_str in EPSG_SYSTEMS:
-        input_epsg = EPSG_SYSTEMS[input_str][0]
-        xy_order = EPSG_SYSTEMS[input_str][1]
+        input_epsg = EPSG_SYSTEMS[input_str]
 
         bbox = COUNTRY_BBOX[country][1].copy()
         if input_epsg != "EPSG:4326":
@@ -211,21 +201,17 @@ def check_area(holes, country="FI"):
             if key in TRANSFORMERS:
                 transf = TRANSFORMERS[key]
             else:
-                transf = Transformer.from_crs("EPSG:4326", input_epsg)
+                transf = Transformer.from_crs("EPSG:4326", input_epsg, always_xy=True)
                 TRANSFORMERS[key] = transf
-            if xy_order:
-                bbox[1], bbox[0] = transf.transform(bbox[1], bbox[0])
-                bbox[3], bbox[2] = transf.transform(bbox[3], bbox[2])
-            else:
-                bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
-                bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
+            bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
+            bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
     else:
-        raise ValueError("Input has to be in known epsg system.")
+        raise ValueError("Input has to be in known epsg system.", input_str)
     if isinstance(holes, Holes):
-        return all(check_hole(hole, bbox, xy_order) for hole in holes)
-    else:  # isinstance(holes, Hole):
-        return check_hole(holes, bbox, xy_order)
+        return all(check_hole(hole, bbox) for hole in holes)
+    else:
+        return check_hole(holes, bbox)
 
 
 def get_n43_n60_points():
@@ -370,7 +356,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     hole : Hole -object
         Copy of hole with coordinates transformed
     """
-    epsg_names = {EPSG_SYSTEMS[i][0]: (i, EPSG_SYSTEMS[i][1]) for i in EPSG_SYSTEMS}
+    epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
     other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
 
     hole_copy = deepcopy(hole)
@@ -402,9 +388,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         raise ValueError("Hole has no coordinates")
 
     if input_str in EPSG_SYSTEMS:
-        input_epsg = EPSG_SYSTEMS[input_str][0]
-        if not EPSG_SYSTEMS[input_str][1]:
-            x, y = y, x
+        input_epsg = EPSG_SYSTEMS[input_str]
     elif input_str in other_systems:
         func = other_systems[input_str]
         x, y, input_epsg = func(x, y)
@@ -416,15 +400,12 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
-        transf = Transformer.from_crs(input_epsg, output_epsg)
+        transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
         TRANSFORMERS[key] = transf
-    x, y = transf.transform(x, y)
-    if not epsg_names[output_epsg][1]:
-        hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = y, x  # Note x-y change
-    else:
-        hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
+    y, x = transf.transform(y, x)
+    hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
-    hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg][0]
+    hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
 
     if not output_height:
         return hole_copy
@@ -433,9 +414,9 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
-        transf = Transformer.from_crs(output_epsg, "EPSG:2393")
+        transf = Transformer.from_crs(output_epsg, "EPSG:2393", always_xy=True)
         TRANSFORMERS[key] = transf
-    point = transf.transform(x, y)
+    point = transf.transform(y, x)
     try:
         input_system = hole.fileheader["KJ"]["Height reference"]
     except KeyError:
@@ -483,7 +464,7 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     else:
         name = coord_string_fix(output)
         if name in EPSG_SYSTEMS:
-            output_epsg = EPSG_SYSTEMS[name][0]
+            output_epsg = EPSG_SYSTEMS[name]
         else:
             raise ValueError(
                 "Ivalid output parameter {}, possible systems: {}".format(
