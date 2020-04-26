@@ -207,11 +207,10 @@ def check_area(holes, country="FI"):
             bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
     else:
-        print(input_str)
         raise ValueError("Input has to be in known epsg system.", input_str)
     if isinstance(holes, Holes):
         return all(check_hole(hole, bbox) for hole in holes)
-    else:  # isinstance(holes, Hole):
+    else:
         return check_hole(holes, bbox)
 
 
