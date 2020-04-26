@@ -13,7 +13,7 @@ from pyinfraformat.core.coord_utils import (
     proj_espoo,
     proj_helsinki,
     proj_porvoo,
-    to_lanlot,
+    project_points,
     height_systems_diff,
 )
 import pytest
@@ -160,11 +160,11 @@ def test_holes_projection_errors4():
 
 def test_lanlot():
     x, y = 6.1, 7.1
-    x2, y2 = to_lanlot(x, y, "EPSG:4326")
+    x2, y2 = project_points(x, y, input_epsg="EPSG:4326")
     assert x == x2
     assert y == y2
     x, y = 6.1, 7.1
-    x2, y2 = to_lanlot(x, y, "EPSG:25835")
+    x2, y2 = project_points(x, y, input_epsg="EPSG:25835")
     assert x != x2
     assert x != x2
 

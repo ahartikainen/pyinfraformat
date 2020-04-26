@@ -7,7 +7,7 @@ import numpy as np
 
 from .holes import plot_hole
 from ..core import Holes
-from ..core.coord_utils import to_lanlot, EPSG_SYSTEMS, coord_string_fix
+from ..core.coord_utils import project_points, EPSG_SYSTEMS, coord_string_fix
 
 __all__ = ["plot_map"]
 
@@ -94,7 +94,7 @@ def plot_map(holes, render_holes=True):
         y_all.append(i.header["XY"]["Y"])
 
     x, y = np.mean(x_all), np.mean(y_all)
-    x, y = to_lanlot(x, y, input_epsg)
+    x, y = project_points(x, y, input_epsg=input_epsg)
     map_fig = folium.Map(
         location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
     )
@@ -139,8 +139,9 @@ def plot_map(holes, render_holes=True):
         opacity=0.5,
     ).add_to(map_fig)
 
-    sw_bounds = to_lanlot(min(x_all), min(y_all), input_epsg)
-    ne_bounds = to_lanlot(max(x_all), max(y_all), input_epsg)
+    sw_bounds = project_points(min(x_all), min(y_all), input_epsg)
+    ne_bounds = project_points(max(x_all), max(y_all), input_epsg)
+
     map_fig.fit_bounds([sw_bounds, ne_bounds])
 
     cluster = MarkerCluster(
@@ -183,7 +184,7 @@ def plot_map(holes, render_holes=True):
     height = 300
     for i, hole in enumerate(holes_filtered):
         x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
-        x, y = to_lanlot(x, y, input_epsg)
+        x, y = project_points(x, y, input_epsg)
         key = hole.header["TT"]["Survey abbreviation"]
         if render_holes:
             try:
