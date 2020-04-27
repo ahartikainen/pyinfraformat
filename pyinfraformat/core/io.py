@@ -5,6 +5,7 @@ from glob import glob
 import logging
 import os
 import xmltodict
+import numpy as np
 from owslib.wfs import WebFeatureService
 from .core import Holes, Hole
 from ..exceptions import PathNotFoundError
@@ -103,7 +104,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
+def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=False):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -116,7 +117,7 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     maxholes : int, optional, default 1000
-        Maximum number of points to get from wfs.
+        Maximum number of points to get from wfs. False to fetch all.
 
 
     Returns
@@ -129,24 +130,52 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     holes = from_gtk_wfs(bbox, input_epsg="EPSG:4326", robust=True)
     """
     # pylint: disable=invalid-name
+    if maxholes == False:
+        maxholes = 10000
     epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
     wfs = WebFeatureService(url)
 
-    x1, y1 = project_points(bbox[0], bbox[1], input_epsg, "EPSG:3067")
-    x2, y2 = project_points(bbox[2], bbox[3], input_epsg, "EPSG:3067")
-
+    if input_epsg != "EPSG:3067":
+        x1, y1 = project_points(bbox[0], bbox[1], input_epsg, "EPSG:3067")
+        x2, y2 = project_points(bbox[2], bbox[3], input_epsg, "EPSG:3067")
+    else:
+        x1, y1 = bbox[0], bbox[1]
+        x2, y2 = bbox[2], bbox[3]
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
-    bbox = [y1, x1, y2, x2]
-
+    bbox = np.array([y1, x1, y2, x2])
+ 
+    l = 50000
+    distance = np.linalg.norm(bbox[:2] - bbox[2:])
+    if distance > l:
+        n = int(distance// l)
+        
+        x_list = np.linspace(bbox[0], bbox[2], n+2)
+        y_list = np.linspace(bbox[1], bbox[3], n+2)
+        holes_list = []
+        for i in range(len(x_list) - 1):
+            for j in range(len(y_list) - 1):
+                x1_, x2_ = x_list[i], x_list[i + 1]
+                y1_, y2_ = y_list[j], y_list[j + 1]
+                bbox_rec = np.array([y1_, x1_, y2_, x2_])
+                holes = from_gtk_wfs(bbox_rec, input_epsg="EPSG:3067", robust=True, maxholes=maxholes)
+                #return holes
+                holes_list.extend(holes)
+                if len(holes_list)>maxholes:
+                    return Holes(holes_list)
+        return Holes(holes_list)
+    
     wfs_io = wfs.getfeature(
-        typename=["Pohjatutkimukset"], maxfeatures=maxholes, srsname="EPSG:3067", bbox=bbox
+        typename=["Pohjatutkimukset"], maxfeatures=maxholes, srsname="EPSG:3067", bbox=list(bbox)
     )
 
     data = wfs_io.read()
     data_dict = xmltodict.parse(data)
-
+    #return data_dict
+    if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
+        return Holes()
+        
     results = []
     for i in data_dict["wfs:FeatureCollection"]["gml:featureMember"]:
         line = dict(
