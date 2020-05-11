@@ -3,7 +3,6 @@ from datetime import datetime
 from gc import collect
 import logging
 import os
-import numpy as np
 import pandas as pd
 
 from ..plots.holes import plot_hole
@@ -426,8 +425,6 @@ class Hole:
             return pd.DataFrame()
         self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
         self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
-        if not self._dataframe.empty:
-            self._dataframe.loc[0, self._dataframe.columns] = np.nan
         for key in self.header.keys:
             self._dataframe.loc[:, "Date"] = self.header.date
             for key_, item in getattr(self.header, key).items():
