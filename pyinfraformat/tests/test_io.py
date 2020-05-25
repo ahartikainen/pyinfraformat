@@ -66,6 +66,7 @@ def test_reading_empty():
 def test_gtk_wfs():
     bbox = (60.2, 24.8, 60.215, 24.83)
     holes = from_gtk_wfs(bbox, "EPSG:4326", maxholes=500)
+    Holes(holes[:10]).dataframe
     assert isinstance(holes, Holes)
 
 
