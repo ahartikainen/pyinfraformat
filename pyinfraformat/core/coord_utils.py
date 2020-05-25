@@ -137,21 +137,53 @@ def proj_porvoo(x, y):
     return x, y, output_epsg
 
 
-def project_points(x, y, input_epsg="EPSG:3067", output_epsg="EPSG:4326"):
+def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     """Transform coordinate points from input to output, default output WGS84.
 
     Parameters
     ----------
     x : list or float
     x : list or float
-    intput_epsg : str
-    output_epsg : str
+    input_system : str
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
+        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
+    output_system : str
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
+        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
 
     Returns
     -------
     x : list or float
     y : list or float
     """
+
+    input_system = input_system.upper()
+    if "EPSG" in input_system:
+        input_epsg = input_system
+    else:
+        name = coord_string_fix(input_system)
+        if name in EPSG_SYSTEMS:
+            input_epsg = EPSG_SYSTEMS[name]
+        else:
+            raise ValueError(
+                "Ivalid input_system parameter {}, possible systems: {}".format(
+                    name, list(EPSG_SYSTEMS.keys())
+                )
+            )
+    output_system = output_system.upper()
+    if "EPSG" in output_system:
+        output_epsg = output_system
+    else:
+        name = coord_string_fix(output_system)
+        if name in EPSG_SYSTEMS:
+            output_epsg = EPSG_SYSTEMS[name]
+        else:
+            raise ValueError(
+                "Ivalid output_system parameter {}, possible systems: {}".format(
+                    name, list(EPSG_SYSTEMS.keys())
+                )
+            )
+
     if input_epsg == output_epsg:
         return x, y
     key = (input_epsg, output_epsg)

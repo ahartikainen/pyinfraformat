@@ -69,6 +69,8 @@ def plot_map(holes, render_holes=True):
     """
     holes_filtered = []
     first_system = False
+    if len(holes) == 0:
+        raise ValueError("Can't plot empty holes -object.")
     for hole in holes:
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
@@ -94,7 +96,7 @@ def plot_map(holes, render_holes=True):
         y_all.append(i.header["XY"]["Y"])
 
     x, y = np.mean(x_all), np.mean(y_all)
-    x, y = project_points(x, y, input_epsg=input_epsg)
+    x, y = project_points(x, y, input_epsg)
     map_fig = folium.Map(
         location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
     )
