@@ -498,6 +498,8 @@ class Header:
                     date = pd.to_datetime(values["Date"])
             except ValueError:
                 date = pd.NaT
+            if date.year<1900:
+                date = pd.NaT
             self.date = date
         setattr(self, key, values)
         self.keys.add(key)
