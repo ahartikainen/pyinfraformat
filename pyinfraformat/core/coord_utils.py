@@ -156,7 +156,6 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     x : list or float
     y : list or float
     """
-
     input_system = input_system.upper()
     if "EPSG" in input_system:
         input_epsg = input_system
