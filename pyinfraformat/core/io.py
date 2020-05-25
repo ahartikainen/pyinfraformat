@@ -147,6 +147,9 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     data = wfs_io.read()
     data_dict = xmltodict.parse(data)
 
+    if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
+        return Holes()
+
     results = []
     for i in data_dict["wfs:FeatureCollection"]["gml:featureMember"]:
         line = dict(
@@ -161,7 +164,7 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     for line in results:
         hole_str = line["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
         hole = parse_hole(enumerate(hole_str), robust=robust)
-        hole.add_header("OM", line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"])
+        hole.add_header("OM", {"Owner": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"]})
 
         y, x = line["gml:coordinates"].split(",")
         y, x = round(float(y), 4), round(float(x), 4)
