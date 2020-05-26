@@ -127,7 +127,7 @@ class Holes:
             filtered_holes = self._filter_coordinates(filtered_holes, bbox, **kwargs)
         if hole_type is not None:
             filtered_holes = self._filter_type(filtered_holes, hole_type, **kwargs)
-        if start is not None and end is not None:
+        if start is not None or end is not None:
             filtered_holes = self._filter_date(filtered_holes, start, end, fmt=fmt, **kwargs)
         return filtered_holes
 
