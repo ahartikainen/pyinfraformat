@@ -103,7 +103,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
+def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -111,8 +111,9 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     bbox : tuple
         bbox to get data from.
         Is form (x1, y1, x2, y2).
-    input_epsg : str
-        bbox epsg
+    coord_system : str
+        ESPG code of bbox, 'EPSG:XXXX' or name of the coordinate system.
+        Check pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     maxholes : int, optional, default 1000
@@ -126,15 +127,15 @@ def from_gtk_wfs(bbox, input_epsg, robust=True, maxholes=1000):
     Examples
     --------
     bbox = (60, 24, 61, 25)
-    holes = from_gtk_wfs(bbox, input_epsg="EPSG:4326", robust=True)
+    holes = from_gtk_wfs(bbox, coord_system="EPSG:4326", robust=True)
     """
     # pylint: disable=invalid-name
     epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
     wfs = WebFeatureService(url)
 
-    x1, y1 = project_points(bbox[0], bbox[1], input_epsg, "EPSG:3067")
-    x2, y2 = project_points(bbox[2], bbox[3], input_epsg, "EPSG:3067")
+    x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:3067")
+    x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:3067")
 
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
