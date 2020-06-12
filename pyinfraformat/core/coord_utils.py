@@ -2,11 +2,13 @@
 import logging
 import re
 from copy import deepcopy
-from pyproj import Transformer
-from matplotlib.tri import Triangulation, LinearTriInterpolator
+
 import numpy as np
 import pandas as pd
-from .core import Holes, Hole
+from matplotlib.tri import LinearTriInterpolator, Triangulation
+from pyproj import Transformer
+
+from .core import Hole, Holes
 
 __all__ = ["project_holes"]
 
@@ -47,7 +49,7 @@ EPSG_SYSTEMS = {  # System name : EPSG code
 
 def coord_string_fix(input_string):
     """Try to fix coordinate systems string into machine readable."""
-    abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3"}
+    abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3", "KKJ": "KKJ3"}
     input_string = input_string.upper()
     input_string = abbreviations.get(input_string, input_string)
     common_separators = r"[,. :\_-]"
@@ -56,8 +58,8 @@ def coord_string_fix(input_string):
     return "-".join(re.split(common_separators, input_string))
 
 
-def change_x_to_y(holes):
-    """Change holes x to y and y to x. Creates a deepcopy."""
+def flip_xy(holes):
+    """Change holes x,y to y,x."""
     if isinstance(holes, Holes):
         holes_copy = deepcopy(holes)
         for hole in holes_copy:
@@ -165,7 +167,7 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
             input_epsg = EPSG_SYSTEMS[name]
         else:
             raise ValueError(
-                "Ivalid input_system parameter {}, possible systems: {}".format(
+                "Invalid input_system parameter {}, possible systems: {}".format(
                     name, list(EPSG_SYSTEMS.keys())
                 )
             )
@@ -178,7 +180,7 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
             output_epsg = EPSG_SYSTEMS[name]
         else:
             raise ValueError(
-                "Ivalid output_system parameter {}, possible systems: {}".format(
+                "Invalid output_system parameter {}, possible systems: {}".format(
                     name, list(EPSG_SYSTEMS.keys())
                 )
             )
@@ -195,7 +197,7 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     return x, y
 
 
-def check_hole(hole, bbox):
+def check_hole_inside_bbox(hole, bbox):
     """Check if hole point is inside bbox.
 
     Returns boolean.
@@ -206,7 +208,7 @@ def check_hole(hole, bbox):
     return False
 
 
-def check_area(holes, country="FI"):
+def check_hole_in_country(holes, country="FI"):
     """Check if holes or hole points are inside country bbox. Has to be in some system with EPSG.
 
     Returns boolean.
@@ -220,7 +222,7 @@ def check_area(holes, country="FI"):
     elif isinstance(holes, Hole):
         input_str = holes.fileheader.KJ["Coordinate system"]
     else:
-        raise ValueError("holes -parameter is unkown input type")
+        raise ValueError("holes -parameter is unknown input type")
     input_str = coord_string_fix(input_str)
 
     if input_str in EPSG_SYSTEMS:
@@ -240,9 +242,9 @@ def check_area(holes, country="FI"):
     else:
         raise ValueError("Input has to be in known epsg system.", input_str)
     if isinstance(holes, Holes):
-        return all(check_hole(hole, bbox) for hole in holes)
+        return all(check_hole_inside_bbox(hole, bbox) for hole in holes)
     else:
-        return check_hole(holes, bbox)
+        return check_hole_inside_bbox(holes, bbox)
 
 
 def get_n43_n60_points():
@@ -325,11 +327,11 @@ def height_systems_diff(points, input_system, output_system):
     ndarray
         list of height differences (mm). Nan for points outside triangulation.
     """
-    points = np.array(points)
+    points = np.asarray(points)
     if len(points.shape) == 1 and len(points) == 2:
-        points = points[:, None].T
+        points = points[None, :]
     if points.shape[1] != 2:
-        raise ValueError("Points has to be 2D -array with (n, 2) shape")
+        raise ValueError("Points has to be 2D -array with shape=(n, 2)")
     input_system = input_system.upper()
     output_system = output_system.upper()
     if input_system == output_system:
@@ -365,7 +367,9 @@ def height_systems_diff(points, input_system, output_system):
         diff = -INTERPOLATORS[key](*points.T).data
     else:
         raise ValueError(
-            "input_system or output_system invalid. Possible values are N43, N60, N2000."
+            "input_system ({}) or output_system ({}) invalid. Possible values are N43, N60, N2000.".format(
+                input_system, output_system
+            )
         )
     return diff
 
@@ -387,7 +391,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     hole : Hole -object
         Copy of hole with coordinates transformed
     """
-    epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
+    epsg_names = {key: value for value, key in EPSG_SYSTEMS.items()}
     other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
 
     hole_copy = deepcopy(hole)
@@ -453,7 +457,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     except KeyError:
         raise ValueError("Hole has no height system")
     if input_system not in ["N43", "N60", "N2000"]:
-        raise ValueError("Hole has no unknown heigth system:", input_system)
+        raise ValueError("Hole has unknown heigth system:", input_system)
 
     diff = height_systems_diff(point, input_system, output_height)
     hole_copy.header.XY["Z-start"] += round(float(diff), 3)
@@ -464,7 +468,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
 def project_holes(holes, output="EPSG:4326", check="Finland", output_height=False):
     """Transform holes -objects coordinates.
 
-    Transform holes coordinates, drops invalid holes. Warns into logger.
+    Transform holes coordinates, drops invalid holes.
 
     Parameters
     ----------
@@ -528,11 +532,11 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
         raise ValueError("holes -parameter is unkown input type")
 
     if check and check.upper() == "FINLAND":
-        if not check_area(return_value, "FI"):
+        if not check_hole_in_country(return_value, "FI"):
             msg = "Holes are not inside Finland"
             logger.critical(msg)
     if check and check.upper() == "ESTONIA":
-        if not check_area(return_value, "EE"):
+        if not check_hole_in_country(return_value, "EE"):
             msg = "Holes are not inside Estonia"
             logger.critical(msg)
     return return_value

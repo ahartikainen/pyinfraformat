@@ -1,22 +1,17 @@
-from glob import glob
 import os
-from uuid import uuid4
-import numpy as np
 from copy import deepcopy
-from pyinfraformat import from_infraformat, Holes
-from pyinfraformat.core.coord_utils import (
-    coord_string_fix,
-    change_x_to_y,
-    project_holes,
-    project_hole,
-    check_area,
-    proj_espoo,
-    proj_helsinki,
-    proj_porvoo,
-    project_points,
-    height_systems_diff,
-)
+from glob import glob
+from uuid import uuid4
+
+import numpy as np
 import pytest
+
+from pyinfraformat import Holes, from_infraformat
+from pyinfraformat.core.coord_utils import (check_area, coord_string_fix,
+                                            flip_xy, height_systems_diff,
+                                            proj_espoo, proj_helsinki,
+                                            proj_porvoo, project_hole,
+                                            project_holes, project_points)
 
 
 def get_object():
@@ -54,11 +49,11 @@ def test_holes_projection_uniform():
 
 def test_holes_coordinate_projection():
     holes = get_object()
-    holes = change_x_to_y(holes)
-    holes = change_x_to_y(holes)
+    holes = flip_xy(holes)
+    holes = flip_xy(holes)
     hole = holes[0]
-    hole = change_x_to_y(hole)
-    hole = change_x_to_y(hole)
+    hole = flip_xy(hole)
+    hole = flip_xy(hole)
     holes2 = project_holes(holes, output="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output="EPSG:3879", check="Finland")
     holes4 = project_holes(holes, output="EPSG:4326", check="Estonia")  # logger warning
@@ -96,7 +91,7 @@ def test_holes_projection_errors():
         project_hole(hole, output_epsg="EPSG:4326")
     assert str(e_info.value) == "Coordinates are not finite"
     with pytest.raises(Exception) as e_info:
-        change_x_to_y("Wrong input")
+        flip_xy("Wrong input")
 
     holes2 = get_object()
     holes_all = holes + holes2.project("Ykj")
