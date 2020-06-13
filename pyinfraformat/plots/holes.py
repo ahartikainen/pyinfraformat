@@ -1,10 +1,12 @@
 """Plot diagrams for a single hole."""
 import gc
 import json
-import mpld3
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+import mpld3
 
 __all__ = ["plot_hole"]
 

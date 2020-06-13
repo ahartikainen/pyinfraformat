@@ -1,11 +1,11 @@
 """Core function for pyinfraformat."""
-from datetime import datetime
-from gc import collect
 import logging
 import os
+from datetime import datetime
+from gc import collect
+
 import pandas as pd
 
-from ..plots.holes import plot_hole
 from ..exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
@@ -448,10 +448,12 @@ class Hole:
         -------
         figure : matplotlib figure or mpld3 html
         """
+        from ..plots.holes import plot_hole
+
         return plot_hole(self, backend)
 
     def _repr_html_(self):
-        return plot_hole(self, backend="mpld3")
+        return self.plot(backend="mpld3")
 
 
 class FileHeader:

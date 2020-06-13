@@ -1,22 +1,24 @@
-from glob import glob
 import os
-from uuid import uuid4
-import numpy as np
 from copy import deepcopy
-from pyinfraformat import from_infraformat, Holes
+from glob import glob
+from uuid import uuid4
+
+import numpy as np
+import pytest
+
+from pyinfraformat import Holes, from_infraformat
 from pyinfraformat.core.coord_utils import (
+    check_hole_in_country,
     coord_string_fix,
-    change_x_to_y,
-    project_holes,
-    project_hole,
-    check_area,
+    flip_xy,
+    height_systems_diff,
     proj_espoo,
     proj_helsinki,
     proj_porvoo,
+    project_hole,
+    project_holes,
     project_points,
-    height_systems_diff,
 )
-import pytest
 
 
 def get_object():
@@ -54,20 +56,20 @@ def test_holes_projection_uniform():
 
 def test_holes_coordinate_projection():
     holes = get_object()
-    holes = change_x_to_y(holes)
-    holes = change_x_to_y(holes)
+    holes = flip_xy(holes)
+    holes = flip_xy(holes)
     hole = holes[0]
-    hole = change_x_to_y(hole)
-    hole = change_x_to_y(hole)
+    hole = flip_xy(hole)
+    hole = flip_xy(hole)
     holes2 = project_holes(holes, output="EPSG:4326", check="Finland")
     holes3 = project_holes(holes, output="EPSG:3879", check="Finland")
     holes4 = project_holes(holes, output="EPSG:4326", check="Estonia")  # logger warning
     holes5 = holes.project("ykj")
     hole = project_holes(holes[0], output="EPSG:3879", check="Finland")
     hole = project_holes(hole, output="EPSG:3879", check="Finland")
-    assert check_area(holes2, country="FI")
-    assert check_area(holes3, country="FI")
-    assert check_area(holes3, country="EE") == False
+    assert check_hole_in_country(holes2, country="FI")
+    assert check_hole_in_country(holes3, country="FI")
+    assert check_hole_in_country(holes3, country="EE") == False
 
 
 def test_hole_coordinate_projection():
@@ -77,18 +79,18 @@ def test_hole_coordinate_projection():
     hole.header.XY["Y"] = 47640.142
     hole.fileheader.KJ["Coordinate system"] = "Helsinki"
     hole = project_hole(hole, output_epsg="EPSG:3879")
-    assert check_area(hole, country="FI")
+    assert check_hole_in_country(hole, country="FI")
 
 
 def test_holes_projection_errors():
     holes = get_object()
     with pytest.raises(Exception) as e_info:
         project_holes("Wrong input")
-    assert str(e_info.value) == "holes -parameter is unkown input type"
+    assert str(e_info.value) == "holes -parameter is unknown input type"
 
     with pytest.raises(Exception) as e_info:
         project_hole(holes[0], output_epsg="EPSG:999999")
-    assert str(e_info.value) == "Unkown or not implemented EPSG as output_epsg"
+    assert str(e_info.value) == "Unknown or not implemented EPSG as output_epsg"
 
     hole = holes[0]
     hole.header.XY["X"], hole.header.XY["Y"] = np.nan, 0.1
@@ -96,15 +98,15 @@ def test_holes_projection_errors():
         project_hole(hole, output_epsg="EPSG:4326")
     assert str(e_info.value) == "Coordinates are not finite"
     with pytest.raises(Exception) as e_info:
-        change_x_to_y("Wrong input")
+        flip_xy("Wrong input")
 
     holes2 = get_object()
     holes_all = holes + holes2.project("Ykj")
     with pytest.raises(Exception) as e_info:
-        check_area(holes_all, "FI")
+        check_hole_in_country(holes_all, "FI")
     assert "uniform" in str(e_info.value)
 
-    check_area(holes2.project("WGS84"), "FI")
+    check_hole_in_country(holes2.project("WGS84"), "FI")
 
 
 def test_holes_projection_errors2():
@@ -140,7 +142,7 @@ def test_holes_projection_errors3():
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
-    assert "Unkown or not implemented EPSG" in str(e_info.value)
+    assert "Unknown or not implemented EPSG" in str(e_info.value)
 
 
 def test_holes_projection_errors4():
@@ -148,13 +150,13 @@ def test_holes_projection_errors4():
     hole = holes[5]
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
-        check_area("These are not holes")
-    assert "holes -parameter is unkown input type" == str(e_info.value)
+        check_hole_in_country("These are not holes")
+    assert "holes -parameter is unknown input type" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
-        check_area("This is not a hole")
+        check_hole_in_country("This is not a hole")
     assert "input" in str(e_info.value)
 
 

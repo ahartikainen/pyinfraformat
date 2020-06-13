@@ -1,8 +1,10 @@
-from glob import glob
 import os
+from glob import glob
 from uuid import uuid4
-from pyinfraformat import from_infraformat, Holes, FileExtensionMissingError, PathNotFoundError
+
 import pytest
+
+from pyinfraformat import FileExtensionMissingError, Holes, PathNotFoundError, from_infraformat
 
 
 def get_object():
