@@ -367,9 +367,10 @@ def height_systems_diff(points, input_system, output_system):
         diff = -INTERPOLATORS[key](*points.T).data
     else:
         raise ValueError(
-            "input_system ({}) or output_system ({}) invalid. Possible values are N43, N60, N2000.".format(
-                input_system, output_system
-            )
+            (
+                "input_system ({}) or output_system ({}) invalid."
+                " Possible values are N43, N60, N2000."
+            ).format(input_system, output_system)
         )
     return diff
 
