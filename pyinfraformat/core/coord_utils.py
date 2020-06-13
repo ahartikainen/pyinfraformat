@@ -399,7 +399,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     if not isinstance(hole, Hole):
         raise ValueError("hole -parameter invalid")
     if output_epsg not in epsg_names:
-        raise ValueError("Unkown or not implemented EPSG as output_epsg")
+        raise ValueError("Unknown or not implemented EPSG as output_epsg")
     if (
         hasattr(hole_copy, "fileheader")
         and hasattr(hole_copy.fileheader, "KJ")
@@ -429,7 +429,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         func = other_systems[input_str]
         x, y, input_epsg = func(x, y)
     else:
-        msg = "Unkown or not implemented EPSG in holes {}".format(input_str)
+        msg = "Unknown or not implemented EPSG in holes {}".format(input_str)
         raise ValueError(msg)
 
     key = (input_epsg, output_epsg)
@@ -530,7 +530,7 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
         hole = deepcopy(holes)
         return_value = project_hole(hole, output_epsg, output_height)
     else:
-        raise ValueError("holes -parameter is unkown input type")
+        raise ValueError("holes -parameter is unknown input type")
 
     if check and check.upper() == "FINLAND":
         if not check_hole_in_country(return_value, "FI"):

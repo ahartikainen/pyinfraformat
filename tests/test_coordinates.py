@@ -86,11 +86,11 @@ def test_holes_projection_errors():
     holes = get_object()
     with pytest.raises(Exception) as e_info:
         project_holes("Wrong input")
-    assert str(e_info.value) == "holes -parameter is unkown input type"
+    assert str(e_info.value) == "holes -parameter is unknown input type"
 
     with pytest.raises(Exception) as e_info:
         project_hole(holes[0], output_epsg="EPSG:999999")
-    assert str(e_info.value) == "Unkown or not implemented EPSG as output_epsg"
+    assert str(e_info.value) == "Unknown or not implemented EPSG as output_epsg"
 
     hole = holes[0]
     hole.header.XY["X"], hole.header.XY["Y"] = np.nan, 0.1
@@ -142,7 +142,7 @@ def test_holes_projection_errors3():
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
-    assert "Unkown or not implemented EPSG" in str(e_info.value)
+    assert "Unknown or not implemented EPSG" in str(e_info.value)
 
 
 def test_holes_projection_errors4():
@@ -151,7 +151,7 @@ def test_holes_projection_errors4():
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         check_hole_in_country("These are not holes")
-    assert "holes -parameter is unkown input type" == str(e_info.value)
+    assert "holes -parameter is unknown input type" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
