@@ -40,7 +40,6 @@ jobs:
       - name: Install dev dependencies
         run: |
           python -m pip install --no-cache-dir -r requirements-dev.txt
-          python -m pip install coveralls
       - name: Run black
         run: |
           python -m black -l 100 --check pyinfraformat/
@@ -59,8 +58,11 @@ jobs:
           cd ..
       - name: Upload coverage
         if: success()
-        run: |
-          python -m coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          flag-name: ${{ matrix.os }}
+          parallel: true
       - uses: actions/upload-artifact@v2
         if: success() && matrix.os == 'ubuntu-latest'
         with:
