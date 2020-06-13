@@ -54,14 +54,11 @@ jobs:
           mkdir testing_folder
           cd testing_folder
           python -m pytest -v --cov=../pyinfraformat  --durations=0 ../tests
-          mv .coverage ..
-          cd ..
       - name: Upload coverage
         if: success()
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.github_token }}
-          flag-name: ${{ matrix.os }}
           parallel: true
       - uses: actions/upload-artifact@v2
         if: success() && matrix.os == 'ubuntu-latest'
