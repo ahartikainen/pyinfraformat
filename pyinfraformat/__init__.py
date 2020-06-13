@@ -16,5 +16,5 @@ if not logging.root.handlers:
     logger.addHandler(handler)
 
 
-__version__ = "19.12.17"
+__version__ = "20.6.13"
 __all__ = ["Holes", "from_infraformat", "to_infraformat", "print_info"]
