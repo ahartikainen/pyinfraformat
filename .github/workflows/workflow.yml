@@ -37,6 +37,10 @@ jobs:
       - name: Install wheel
         run: |
           python -m pip install dist/*.whl
+      - name: Install wheel [Windows]
+        if: matrix.os == 'windows-latest'
+        run: |
+          python -m pip install dist\*.whl
       - name: Install dev dependencies
         run: |
           python -m pip install --no-cache-dir -r requirements-dev.txt
@@ -54,6 +58,7 @@ jobs:
           mkdir testing_folder
           cd testing_folder
           python -m pytest -v --cov=../pyinfraformat  --durations=0 ../tests
+          mv .coverage ..
       - name: Upload coverage
         if: success()
         run: |

@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/ahartikainen/pyinfraformat.svg?branch=master)](https://travis-ci.org/ahartikainen/pyinfraformat) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) [![Coverage Status](https://coveralls.io/repos/github/ahartikainen/pyinfraformat/badge.svg?branch=master)](https://coveralls.io/github/ahartikainen/pyinfraformat?branch=master)
+![pyinfraformat](https://github.com/ahartikainen/pyinfraformat/workflows/pyinfraformat/badge.svg?branch=master) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) [![codecov](https://codecov.io/gh/ahartikainen/pyinfraformat/branch/master/graph/badge.svg)](https://codecov.io/gh/ahartikainen/pyinfraformat)
+
 
 # pyinfraformat
 Python library for Finnish Infraformat (version 2.5)
