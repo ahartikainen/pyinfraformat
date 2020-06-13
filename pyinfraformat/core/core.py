@@ -7,7 +7,6 @@ from gc import collect
 import pandas as pd
 
 from ..exceptions import FileExtensionMissingError
-from ..plots.holes import plot_hole
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -449,10 +448,12 @@ class Hole:
         -------
         figure : matplotlib figure or mpld3 html
         """
+        from ..plots.holes import plot_hole
+
         return plot_hole(self, backend)
 
     def _repr_html_(self):
-        return plot_hole(self, backend="mpld3")
+        return self.plot(self, backend="mpld3")
 
 
 class FileHeader:
