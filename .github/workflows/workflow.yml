@@ -62,13 +62,13 @@ jobs:
         run: |
           python -m coveralls
       - uses: actions/upload-artifact@v2
-        if: success() && matrix.os == "ubuntu-latest"
+        if: success() && matrix.os == 'ubuntu-latest'
         with:
           name: pyinfraformat_wheel
           path: dist/*.whl
       - name: Upload wheel to release
         uses: svenstaro/upload-release-action@v1-release
-        if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == "ubuntu-latest"
+        if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: dist/*.whl
@@ -76,7 +76,7 @@ jobs:
           overwrite: true
           file_glob: true
       - name: Upload to pypi
-        if: success() && startsWith(github.ref, 'refs/tags/') && (matrix.os == "ubuntu-latest")
+        if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
