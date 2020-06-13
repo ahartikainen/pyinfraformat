@@ -1,13 +1,15 @@
 """Plot a html folium map from holes object."""
 from itertools import cycle
-import folium
-import branca
-from folium.plugins import MarkerCluster, MeasureControl, MousePosition
+
 import numpy as np
 
-from .holes import plot_hole
+import branca
+import folium
+from folium.plugins import MarkerCluster, MeasureControl, MousePosition
+
 from ..core import Holes
-from ..core.coord_utils import project_points, EPSG_SYSTEMS, coord_string_fix
+from ..core.coord_utils import EPSG_SYSTEMS, coord_string_fix, project_points
+from .holes import plot_hole
 
 __all__ = ["plot_map"]
 

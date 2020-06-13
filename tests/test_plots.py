@@ -1,9 +1,11 @@
-from glob import glob
 import os
+from glob import glob
 from uuid import uuid4
-from pyinfraformat import plot_map, from_infraformat
-import folium
+
 import pytest
+
+import folium
+from pyinfraformat import from_infraformat, plot_map
 
 
 def get_object():

@@ -1,15 +1,17 @@
 # pylint: disable=try-except-raise
 """Input and output methods."""
-from collections import Counter
-from glob import glob
 import logging
 import os
+from collections import Counter
+from glob import glob
+
 import xmltodict
 from owslib.wfs import WebFeatureService
-from .core import Holes, Hole
+
 from ..exceptions import PathNotFoundError
-from .utils import identifiers, is_number
 from .coord_utils import EPSG_SYSTEMS, project_points
+from .core import Hole, Holes
+from .utils import identifiers, is_number
 
 logger = logging.getLogger("pyinfraformat")
 

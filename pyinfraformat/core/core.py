@@ -1,12 +1,13 @@
 """Core function for pyinfraformat."""
-from datetime import datetime
-from gc import collect
 import logging
 import os
+from datetime import datetime
+from gc import collect
+
 import pandas as pd
 
-from ..plots.holes import plot_hole
 from ..exceptions import FileExtensionMissingError
+from ..plots.holes import plot_hole
 
 logger = logging.getLogger("pyinfraformat")
 

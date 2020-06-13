@@ -1,9 +1,10 @@
 # pylint: disable=wildcard-import
 """pyinfraformat, Python library for Finnish infraformat files."""
 import logging
-from .plots import *
+
 from .core import *
 from .exceptions import *
+from .plots import *
 
 logger = logging.getLogger("pyinfraformat")
 

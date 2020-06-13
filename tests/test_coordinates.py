@@ -7,11 +7,18 @@ import numpy as np
 import pytest
 
 from pyinfraformat import Holes, from_infraformat
-from pyinfraformat.core.coord_utils import (check_area, coord_string_fix,
-                                            flip_xy, height_systems_diff,
-                                            proj_espoo, proj_helsinki,
-                                            proj_porvoo, project_hole,
-                                            project_holes, project_points)
+from pyinfraformat.core.coord_utils import (
+    check_area,
+    coord_string_fix,
+    flip_xy,
+    height_systems_diff,
+    proj_espoo,
+    proj_helsinki,
+    proj_porvoo,
+    project_hole,
+    project_holes,
+    project_points,
+)
 
 
 def get_object():

@@ -1,14 +1,16 @@
-from glob import glob
 import os
+from glob import glob
 from uuid import uuid4
+
+import pytest
+
 from pyinfraformat import (
-    from_infraformat,
-    Holes,
     FileExtensionMissingError,
+    Holes,
     PathNotFoundError,
     from_gtk_wfs,
+    from_infraformat,
 )
-import pytest
 
 
 def get_datafiles(quality=None):
