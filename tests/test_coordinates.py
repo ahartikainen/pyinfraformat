@@ -8,7 +8,7 @@ import pytest
 
 from pyinfraformat import Holes, from_infraformat
 from pyinfraformat.core.coord_utils import (
-    check_area,
+    check_hole_in_country,
     coord_string_fix,
     flip_xy,
     height_systems_diff,
@@ -67,9 +67,9 @@ def test_holes_coordinate_projection():
     holes5 = holes.project("ykj")
     hole = project_holes(holes[0], output="EPSG:3879", check="Finland")
     hole = project_holes(hole, output="EPSG:3879", check="Finland")
-    assert check_area(holes2, country="FI")
-    assert check_area(holes3, country="FI")
-    assert check_area(holes3, country="EE") == False
+    assert check_hole_in_country(holes2, country="FI")
+    assert check_hole_in_country(holes3, country="FI")
+    assert check_hole_in_country(holes3, country="EE") == False
 
 
 def test_hole_coordinate_projection():
@@ -79,7 +79,7 @@ def test_hole_coordinate_projection():
     hole.header.XY["Y"] = 47640.142
     hole.fileheader.KJ["Coordinate system"] = "Helsinki"
     hole = project_hole(hole, output_epsg="EPSG:3879")
-    assert check_area(hole, country="FI")
+    assert check_hole_in_country(hole, country="FI")
 
 
 def test_holes_projection_errors():
@@ -103,10 +103,10 @@ def test_holes_projection_errors():
     holes2 = get_object()
     holes_all = holes + holes2.project("Ykj")
     with pytest.raises(Exception) as e_info:
-        check_area(holes_all, "FI")
+        check_hole_in_country(holes_all, "FI")
     assert "uniform" in str(e_info.value)
 
-    check_area(holes2.project("WGS84"), "FI")
+    check_hole_in_country(holes2.project("WGS84"), "FI")
 
 
 def test_holes_projection_errors2():
@@ -150,13 +150,13 @@ def test_holes_projection_errors4():
     hole = holes[5]
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
-        check_area("These are not holes")
+        check_hole_in_country("These are not holes")
     assert "holes -parameter is unkown input type" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
         project_hole("This is not a hole")
     assert "hole -parameter invalid" == str(e_info.value)
     with pytest.raises(Exception) as e_info:
-        check_area("This is not a hole")
+        check_hole_in_country("This is not a hole")
     assert "input" in str(e_info.value)
 
 
