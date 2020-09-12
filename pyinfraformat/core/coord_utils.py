@@ -453,10 +453,12 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         transf = Transformer.from_crs(output_epsg, "EPSG:2393", always_xy=True)
         TRANSFORMERS[key] = transf
     point = transf.transform(y, x)
+
     try:
         input_system = hole.fileheader["KJ"]["Height reference"]
-    except KeyError:
-        raise ValueError("Hole has no height system")
+    except KeyError as error:
+        raise ValueError("Hole has no height system") from error
+
     if input_system not in ["N43", "N60", "N2000"]:
         raise ValueError("Hole has unknown heigth system:", input_system)
 
@@ -523,7 +525,7 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
                 if str(error) == "Hole has no coordinates":
                     logger.warning(error_str)
                     continue
-                raise ValueError(error)
+                raise ValueError(error) from error
             proj_holes.append(hole_copy)
         return_value = Holes(proj_holes)
     elif isinstance(holes, Hole):

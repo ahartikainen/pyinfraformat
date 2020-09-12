@@ -513,7 +513,7 @@ def parse_hole(str_list, robust=False):
                     logger.critical(msg)
                     raise ValueError(msg)
                 hole._add_illegal((linenum, line))  # pylint: disable=protected-access
-        except (ValueError, KeyError):
+        except (ValueError, KeyError) as error:
             if not illegal_line:
                 msg = 'Illegal line found! Line {}: "{}"'.format(
                     linenum, line if len(line) < 100 else line[:100] + "..."
@@ -522,7 +522,7 @@ def parse_hole(str_list, robust=False):
                     logger.warning(msg)
                 else:
                     logger.critical(msg)
-                    raise ValueError(msg)
+                    raise ValueError(msg) from error
             elif not robust:
                 raise
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
