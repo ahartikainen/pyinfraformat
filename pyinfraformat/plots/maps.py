@@ -53,6 +53,7 @@ ABBREVIATIONS = {
     "VP": "Pohjaveden mittausputki",
     "VPK": "Kalliopohjavesiputki",
     "WST": "Painokairaus",
+    "Missing survey abbreviation": "Missing survey abbreviation",
 }
 
 
@@ -189,8 +190,12 @@ def plot_map(holes, render_holes=True):
     for i, hole in enumerate(holes_filtered):
         x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = project_points(x, y, input_epsg)
-        key = hole.header["TT"]["Survey abbreviation"]
-        if render_holes:
+
+        if hasattr(hole.header, "TT") and "Survey abbreviation" in hole.header["TT"]:
+            key = hole.header["TT"]["Survey abbreviation"]
+        else:
+            key = "Missing survey abbreviation"
+        if render_holes and key != "Missing survey abbreviation":
             try:
                 html = plot_hole(hole, backend="mpld3")
                 iframe = branca.element.IFrame(html=html, width=width, height=height + 5)

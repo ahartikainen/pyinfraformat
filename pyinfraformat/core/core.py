@@ -453,7 +453,10 @@ class Hole:
         return plot_hole(self, backend)
 
     def _repr_html_(self):
-        return self.plot(backend="mpld3")
+        try:
+            return self.plot(backend="mpld3")
+        except KeyError:
+            return self.__str__()
 
 
 class FileHeader:
