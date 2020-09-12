@@ -446,8 +446,8 @@ def plot_hole(one_survey, backend="matplotlib"):
 
     try:
         fig = _plot_hole(one_survey)
-    except KeyError as e:
-        logger.warning("Data missing, check hole. {}".format(e))
+    except KeyError as error:
+        logger.warning("Data missing, check hole. {}".format(error))
         plt.close()
         raise
 
