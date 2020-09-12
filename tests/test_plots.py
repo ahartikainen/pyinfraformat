@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 import folium
-from pyinfraformat import from_infraformat, plot_map
+from pyinfraformat import from_infraformat, from_gtk_wfs, plot_map
 
 
 def get_object():
@@ -17,5 +17,13 @@ def get_object():
 
 def test_map():
     holes = get_object()
+    holes_map = plot_map(holes)
+    assert isinstance(holes_map, folium.Map)
+
+def test_gtk_map():
+    holes = get_object()
+    holes_map = plot_map(holes)
+    bbox = (60.12065, 24.4421945, 60.1208, 24.443) #Bbox with empty and missing data holes
+    holes = from_gtk_wfs(bbox, "WGS84")
     holes_map = plot_map(holes)
     assert isinstance(holes_map, folium.Map)
