@@ -7,6 +7,7 @@ from .exceptions import *
 from .plots import *
 
 logger = logging.getLogger("pyinfraformat")
+logger.propagate = False
 
 if not logging.root.handlers:
     # overwrite the first handler
