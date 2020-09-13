@@ -458,7 +458,7 @@ class Hole:
     def _repr_html_(self):
         try:
             return self.plot(backend="mpld3")
-        except KeyError:
+        except (KeyError, TypeError):
             return self.__str__()
 
 
