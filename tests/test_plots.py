@@ -20,10 +20,11 @@ def test_map():
     holes_map = plot_map(holes)
     assert isinstance(holes_map, folium.Map)
 
+
 def test_gtk_map():
     holes = get_object()
     holes_map = plot_map(holes)
-    bbox = (60.12065, 24.4421945, 60.1208, 24.443) #Bbox with empty and missing data holes
+    bbox = (60.12065, 24.4421945, 60.1208, 24.443)  # Bbox with empty and missing data holes
     holes = from_gtk_wfs(bbox, "WGS84")
     holes_map = plot_map(holes)
     assert isinstance(holes_map, folium.Map)

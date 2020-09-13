@@ -55,7 +55,9 @@ class Holes:
         return self.__str__()
 
     def __getitem__(self, index):
-        return self.holes[index]
+        if isinstance(index, int):
+            return self.holes[index]
+        return Holes(self.holes[index])
 
     def __iter__(self):
         self.n = 0
