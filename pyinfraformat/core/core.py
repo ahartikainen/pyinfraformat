@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 from gc import collect
+from numbers import Integral
 
 import pandas as pd
 
@@ -55,7 +56,7 @@ class Holes:
         return self.__str__()
 
     def __getitem__(self, index):
-        if isinstance(index, int):
+        if isinstance(index, Integral):
             return self.holes[index]
         return Holes(self.holes[index])
 
