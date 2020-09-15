@@ -9,7 +9,7 @@ class FileExtensionMissingError(Exception):
     def __init__(self, message, errors=None):
         self.message = message
         self.errors = errors
-        super(FileExtensionMissingError, self).__init__(message)
+        super().__init__(message)
 
 
 class PathNotFoundError(Exception):
@@ -18,4 +18,4 @@ class PathNotFoundError(Exception):
     def __init__(self, message, errors=None):
         self.message = message
         self.errors = errors
-        super(PathNotFoundError, self).__init__(message)
+        super().__init__(message)

@@ -1,6 +1,7 @@
 """Plot diagrams for a single hole."""
 import gc
 import json
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +12,8 @@ import mpld3
 __all__ = ["plot_hole"]
 
 BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
+
+logger = logging.getLogger("pyinfraformat")
 
 
 def convert_numpy(obj):
@@ -418,24 +421,36 @@ def plot_hole(one_survey, backend="matplotlib"):
     -------
     figure : matplotlib figure or mpld3 html
     """
-    hole_type = one_survey.header["TT"]["Survey abbreviation"]
-    if len(one_survey.survey.data) == 0:
-        fig = plt.figure()
-    elif hole_type == "PO":
-        fig = plot_po(one_survey)
-    elif hole_type == "PA":
-        fig = plot_pa(one_survey)
-    elif hole_type == "HP":
-        fig = plot_hp(one_survey)
-    elif hole_type == "SI":
-        fig = plot_si(one_survey)
-    elif hole_type == "TR":
-        fig = plot_tr(one_survey)
-    elif hole_type == "HE":
-        fig = plot_he(one_survey)
-    else:
-        raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
-    fig.tight_layout()
+
+    def _plot_hole(one_survey):
+        hole_type = one_survey.header["TT"]["Survey abbreviation"]
+
+        if len(one_survey.survey.data) == 0:
+            fig = plt.figure()
+        elif hole_type == "PO":
+            fig = plot_po(one_survey)
+        elif hole_type == "PA":
+            fig = plot_pa(one_survey)
+        elif hole_type == "HP":
+            fig = plot_hp(one_survey)
+        elif hole_type == "SI":
+            fig = plot_si(one_survey)
+        elif hole_type == "TR":
+            fig = plot_tr(one_survey)
+        elif hole_type == "HE":
+            fig = plot_he(one_survey)
+        else:
+            raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
+        fig.tight_layout()
+        return fig
+
+    try:
+        fig = _plot_hole(one_survey)
+    except (KeyError, TypeError) as error:
+        logger.warning("Data missing, check hole. %s", error)
+        plt.close()
+        raise
+
     if backend == "matplotlib":
         return fig
     elif backend == "mpld3":

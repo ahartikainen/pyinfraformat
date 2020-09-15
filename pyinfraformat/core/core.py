@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 from gc import collect
+from numbers import Integral
 
 import pandas as pd
 
@@ -55,7 +56,9 @@ class Holes:
         return self.__str__()
 
     def __getitem__(self, index):
-        return self.holes[index]
+        if isinstance(index, Integral):
+            return self.holes[index]
+        return Holes(self.holes[index])
 
     def __iter__(self):
         self.n = 0
@@ -453,7 +456,10 @@ class Hole:
         return plot_hole(self, backend)
 
     def _repr_html_(self):
-        return self.plot(backend="mpld3")
+        try:
+            return self.plot(backend="mpld3")
+        except (KeyError, TypeError):
+            return self.__str__()
 
 
 class FileHeader:

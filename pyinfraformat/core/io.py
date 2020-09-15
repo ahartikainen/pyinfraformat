@@ -14,6 +14,7 @@ from .core import Hole, Holes
 from .utils import identifiers, is_number
 
 logger = logging.getLogger("pyinfraformat")
+logger.propagate = False
 
 __all__ = ["from_infraformat", "from_gtk_wfs"]
 
@@ -164,9 +165,15 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         results.append(line)
 
     holes = []
-    for line in results:
-        hole_str = line["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
-        hole = parse_hole(enumerate(hole_str), robust=robust)
+
+    def parse_line(line):
+        if "Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA" in line:
+            hole_str = line["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
+            hole = parse_hole(enumerate(hole_str), robust=robust)
+        else:
+            hole = Hole()
+            file_xy = {"X": None, "Y": None}
+            hole.add_header("XY", file_xy)
         hole.add_header("OM", {"Owner": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"]})
 
         y, x = line["gml:coordinates"].split(",")
@@ -179,7 +186,16 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
             "Height reference": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)
+        return hole
+
+    for i, line in enumerate(results):
+        try:
+            hole = parse_line(line)
+        except KeyError as error:
+            msg = "Wfs hole parse failed, line {}. Missing {}".format(i, error)
+            logger.warning(msg)
         holes.append(hole)
+
     holes = Holes(holes)
     return holes
 
@@ -497,7 +513,7 @@ def parse_hole(str_list, robust=False):
                     logger.critical(msg)
                     raise ValueError(msg)
                 hole._add_illegal((linenum, line))  # pylint: disable=protected-access
-        except (ValueError, KeyError):
+        except (ValueError, KeyError) as error:
             if not illegal_line:
                 msg = 'Illegal line found! Line {}: "{}"'.format(
                     linenum, line if len(line) < 100 else line[:100] + "..."
@@ -506,7 +522,7 @@ def parse_hole(str_list, robust=False):
                     logger.warning(msg)
                 else:
                     logger.critical(msg)
-                    raise ValueError(msg)
+                    raise ValueError(msg) from error
             elif not robust:
                 raise
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
