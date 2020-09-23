@@ -14,6 +14,14 @@ def get_object():
     object = from_infraformat(filepath)
     return object
 
+def test_holes_plot():
+    holes = get_object()
+    for hole in holes:
+        try:
+            fig= hole.plot()
+            assert isinstance(fig, plt.Figure)
+        except NotImplementedError:
+            pass
 
 def test_map():
     holes = get_object()
