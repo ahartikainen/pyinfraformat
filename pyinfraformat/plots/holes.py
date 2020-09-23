@@ -3,7 +3,11 @@ import gc
 import json
 import logging
 
+from datetime import datetime
+
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 
@@ -38,6 +42,21 @@ def convert_numpy(obj):
     elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
         return float(obj)
     return json.JSONEncoder().default(obj)
+
+
+def strip_date(x):
+    """Strip str date to datetime."""
+    x = str(x)
+    try:
+        if len(x) == 6:
+            date = datetime.strptime(x, "%d%m%y")
+        elif len(x) == 8:
+            date = datetime.strptime(x, "%d%m%Y")
+        else:
+            date = pd.to_datetime(x)
+    except ValueError:
+        date = pd.NaT
+    return date
 
 
 def fig_to_hmtl(fig, clear_memory=True):
@@ -407,6 +426,82 @@ def plot_he(one_survey):
     return fig
 
 
+def plot_vp(one_survey):
+    """Plot a diagram of VP (Pohjavesiputki) or VO (Orsivesiptki) with matplotlib.
+
+    Parameters
+    ----------
+    one_survey : hole object
+
+    Returns
+    -------
+    figure : matplotlib figure
+    """
+    df = pd.DataFrame(one_survey.survey.data)
+
+    bottom_level = df["Bottom level of pipe"][0]
+    top_level = df["Top level of pipe"][0]
+    ground_level = one_survey.header.XY["Z-start"]
+    sieve_length = df["Lenght of the sieve(m)"][0]
+
+    dates = df["Date"].apply(strip_date)
+    fig, (ax_left, ax_right) = plt.subplots(
+        1, 2, sharey=True, figsize=(4, 4), gridspec_kw={"wspace": 0, "width_ratios": [1, 3]}
+    )
+
+    rect_sieve = patches.Rectangle(
+        (0.45, bottom_level), width=0.2, height=sieve_length, linewidth=1, fill=None, hatch="///"
+    )
+    rect_rest = patches.Rectangle(
+        (0.45, bottom_level + sieve_length),
+        width=0.2,
+        height=((top_level - bottom_level) - sieve_length),
+        linewidth=1,
+        fill=None,
+    )
+    try:
+        level_min = df["Water level"].min()
+    except KeyError:
+        level_min = 1
+    if bottom_level > level_min:
+        ax_left.set_ylim(level_min, top_level)
+    else:
+        if bottom_level < top_level:
+            ax_left.set_ylim(bottom_level, top_level)
+        else:
+            ax_left.set_ylim(top_level - 2, top_level)
+
+    ax_left.set_xlim(0, 1.5)
+    ax_left.add_patch(rect_sieve)
+    ax_left.add_patch(rect_rest)
+    ax_left.set_title("{:+.2f}".format(ground_level))
+    ax_left.plot(ax_left.get_xlim(), [ground_level, ground_level], c="k")
+    ax_left.set_xticks([])
+    plt.setp(ax_left.get_yticklabels(), visible=False)
+
+    ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
+    counts = dates.value_counts()
+    if len(counts) <= 1:
+        ax_right.plot(df["Water level"], "o-")
+        ax_right.text(
+            0.02,
+            0.01,
+            "Dates missing, n: {}".format(len(dates)),
+            transform=ax_right.transAxes,
+            bbox=BBOX,
+        )
+        if len(dates) < 5:
+            ax_right.set_xticks(range(len(dates)))
+    else:
+        ax_right.plot(dates, df["Water level"], "o-")
+        ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
+        ax_right.set_xticks(np.linspace(*ax_right.get_xlim(), 3))
+        ax_right.set_xticklabels(
+            [mdates.num2date(label).isoformat()[:10] for label in ax_right.get_xticks()]
+        )
+    return fig
+
+
 def plot_hole(one_survey, backend="matplotlib"):
     """Plot a diagram of a sounding with matplotlib.
 
@@ -439,6 +534,10 @@ def plot_hole(one_survey, backend="matplotlib"):
             fig = plot_tr(one_survey)
         elif hole_type == "HE":
             fig = plot_he(one_survey)
+        elif hole_type == "VP":
+            fig = plot_vp(one_survey)
+        elif hole_type == "VO":
+            fig = plot_vp(one_survey)
         else:
             raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
         fig.tight_layout()
