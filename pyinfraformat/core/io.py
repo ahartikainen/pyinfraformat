@@ -104,7 +104,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
                     raise
                 hole_list.extend(holes)
         if fileread_failed:
-            raise
+            raise  # pylint: disable=misplaced-bare-raise
 
     return Holes(hole_list)
 
