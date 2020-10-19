@@ -2,7 +2,7 @@ branca
 folium
 numpy
 matplotlib
-mpld3
+mpld3<=0.3
 pandas
 pyproj
 xmltodict
