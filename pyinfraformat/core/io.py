@@ -19,7 +19,7 @@ logger.propagate = False
 __all__ = ["from_infraformat", "from_gtk_wfs"]
 
 # pylint: disable=redefined-argument-from-local
-def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
+def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     """Read inframodel file(s).
 
     Paramaters
@@ -91,15 +91,20 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
             if holes:
                 hole_list.extend(holes)
     else:
+        fileread_failed = False
         for filepath in filelist:
             for encoding in encoding_list:
                 try:
                     holes = read(filepath, encoding=encoding, robust=robust)
+                    fileread_failed = False
                 except (UnicodeDecodeError, UnicodeEncodeError):
+                    fileread_failed = True
                     continue
                 except:
                     raise
                 hole_list.extend(holes)
+        if fileread_failed:
+            raise
 
     return Holes(hole_list)
 
