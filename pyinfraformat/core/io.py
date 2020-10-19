@@ -63,10 +63,8 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=False):
             "utf-8",
             "latin-1",
             "cp1252",
-            "latin-6",
-            "latin-2",
-            "latin-3",
-            "latin-5",
+            "iso8859_10",
+            "ascii",
             "utf-16",
         ]
         n_user_encoding = len(encoding_list)
