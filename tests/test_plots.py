@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 import folium
+import matplotlib.pyplot as plt
 from pyinfraformat import from_infraformat, from_gtk_wfs, plot_map
 
 
@@ -14,6 +15,14 @@ def get_object():
     object = from_infraformat(filepath)
     return object
 
+def test_holes_plot():
+    holes = get_object()
+    for hole in holes:
+        try:
+            fig = hole.plot()
+            assert isinstance(fig, plt.Figure)
+        except NotImplementedError:
+            pass
 
 def test_map():
     holes = get_object()
