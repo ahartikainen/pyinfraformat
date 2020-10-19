@@ -37,7 +37,7 @@ def test_reading_good(robust):
 def test_reading_bad():
     for path in get_datafiles("bad"):
         with pytest.raises(Exception):
-            from_infraformat(path)
+            from_infraformat(path, robust=False)
     with pytest.raises(Exception):
         from_infraformat("../ImaginaryFolder")
 
