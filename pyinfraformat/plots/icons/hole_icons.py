@@ -24,7 +24,7 @@ import numpy as np
 import svgwrite
 
 DRAWING_SIZE = np.array([25.0, 25.0])  # Must be isotropic and float
-STROKE_WIDTH = 1
+STROKE_WIDTH = 1.5
 STRECH_LARGE = 1.5  # ex. Näytteenotto
 HIGH_ICONS_HEIGHT_STRECH = 2  # ex. Pohjavesiputki
 
