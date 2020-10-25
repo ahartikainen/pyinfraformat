@@ -152,10 +152,7 @@ def plot_map(holes, render_holes=True):
     cluster = MarkerCluster(
         control=False,
         options=dict(
-            animate=True,
-            maxClusterRadius=20,
-            showCoverageOnHover=False,
-            disableClusteringAtZoom = 19
+            animate=True, maxClusterRadius=20, showCoverageOnHover=False, disableClusteringAtZoom=19
         ),
     ).add_to(map_fig)
     map_fig.add_child(cluster)
@@ -242,7 +239,7 @@ def get_icon(abbreviation, clust_icon_kwargs, default=False):
         return folium.Icon(**clust_icon_kwargs[abbreviation])
     path = Path(__file__).parent
 
-    icon_path = "icons//{abb}.svg".format(abb=abbreviation)
+    icon_path = "icons//{abb}.svg".format(abb=abbreviation.replace("//", "_"))
     # print(path/icon_path, path)
     # print(abbreviation)
     try:
