@@ -1,5 +1,32 @@
-import svgwrite
+"""Create hole icons {abbreviation}.svg.
+
+Creates to current path svg files with svgwrite.
+Change Globals for options like icon size and stroke width.
+Large icons are streched with STRECH_LARGE, some figures
+are heigher/wider by stroke width not to cut line edges.
+
+Options
+-------
+DRAWING_SIZE = np.array([25.0, 25.0])  # Must be isotropic and float
+STROKE_WIDTH = 1
+STRECH_LARGE = 1.5  #ex. Näytteenotto
+HIGH_ICONS_HEIGHT_STRECH = 2  #ex. Pohjavesiputki
+
+
+FUNCTIONS : dict
+    {abbreviation : function}
+
+run main() for creation.
+
+"""
 import numpy as np
+
+import svgwrite
+
+DRAWING_SIZE = np.array([25.0, 25.0])  # Must be isotropic and float
+STROKE_WIDTH = 1
+STRECH_LARGE = 1.5  # ex. Näytteenotto
+HIGH_ICONS_HEIGHT_STRECH = 2  # ex. Pohjavesiputki
 
 ABBREVIATIONS = {
     "CP": "CPT -kairaus",
@@ -43,21 +70,18 @@ ABBREVIATIONS = {
     "Missing survey abbreviation": "Missing survey abbreviation",
 }
 
-DRAWING_SIZE = np.array([25.0, 25.0])
-STROKE_WIDTH = 1
 
-
-def getArc_com(p0, p1, radius, sweep=0):
-    """Get arc command."""
+def get_arc_command(point1, point2, radius, sweep=0):
+    """Command for creating arc in svg."""
     args = {
-        "x0": p0[0],
-        "y0": p0[1],
+        "x0": point1[0],
+        "y0": point1[1],
         "xradius": radius,
         "yradius": radius,
         "ellipseRotation": 0,  # has no effect for circles,
         "sweep": int(bool(sweep)),
-        "x1": (p1[0] - p0[0]),
-        "y1": (p1[1] - p0[1]),
+        "x1": (point2[0] - point1[0]),
+        "y1": (point2[1] - point1[1]),
     }
     return (
         "M %(x0)f,%(y0)f a %(xradius)f,%(yradius)f %(ellipseRotation)f 0,%(sweep)d %(x1)f,%(y1)f"
@@ -65,12 +89,11 @@ def getArc_com(p0, p1, radius, sweep=0):
     )
 
 
-def getArc(p0, p1, radius, width=3, stroke="black", fill="black", sweep=0):
-    """Adds an arc that bulges to the right (sweep=0) or left (sweep=1)
-    as it moves from p0 to p1"""
-    d = getArc_com(p0, p1, radius, sweep=0)
+def get_arc(point1, point2, radius, width=3, stroke="black", fill="black", sweep=0):
+    """Return an path -object that bulges to the right (sweep=0) or left (sweep=1)."""
+    command = get_arc_command(point1, point2, radius, sweep=sweep)
     path = svgwrite.path.Path(
-        d=d,
+        d=command,
         fill=fill,
         stroke=stroke,
         stroke_width=width,
@@ -79,6 +102,7 @@ def getArc(p0, p1, radius, width=3, stroke="black", fill="black", sweep=0):
 
 
 def po_icon():
+    """Icon for porakonekairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
     radius = DRAWING_SIZE[0] / 2 - STROKE_WIDTH / 2
     shp = svgwrite.shapes.Circle(
@@ -93,6 +117,7 @@ def po_icon():
 
 
 def tr_icon():
+    """Icon for tärykaiaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
     radius = DRAWING_SIZE[0] / 2 - STROKE_WIDTH / 2
     shp = svgwrite.shapes.Circle(
@@ -118,6 +143,7 @@ def tr_icon():
 
 
 def pa_icon():
+    """Icon for painokairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
     radius = DRAWING_SIZE[0] / 2 - STROKE_WIDTH / 2
     shp = svgwrite.shapes.Circle(
@@ -128,7 +154,7 @@ def pa_icon():
         stroke_width=STROKE_WIDTH,
     )
 
-    arc = getArc(
+    arc = get_arc(
         (0, DRAWING_SIZE[1] / 2),
         (DRAWING_SIZE[0], DRAWING_SIZE[1] / 2),
         radius=radius,
@@ -141,44 +167,56 @@ def pa_icon():
 
 
 def pr_icon():
+    """Icon for puristinkairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
-    radius = DRAWING_SIZE[0] / 2  # - STROKE_WIDTH / 2
+    # radius = DRAWING_SIZE[0] / 2  # - STROKE_WIDTH / 2
     # radius=1
-    circle = svgwrite.shapes.Circle(
-        center=(DRAWING_SIZE / 2).tolist(),
-        r=radius,
-        fill="none",
-        stroke="black",
-        stroke_width=STROKE_WIDTH,
-    )
+    # circle = svgwrite.shapes.Circle(
+    #    center=(DRAWING_SIZE / 2).tolist(),
+    #    r=radius,
+    #    fill="none",
+    #    stroke="black",
+    #    stroke_width=STROKE_WIDTH,
+    # )
     # dwg.add(circle)  #Helper circle
 
     cos30 = 3 ** 0.5 / 2
-    r = DRAWING_SIZE[0] / 2
+    radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
-    p1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
-    p2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    p3 = (DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    points = [p1, p2, p3]
+    point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
+    point2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * radius)
+    point3 = (
+        DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2,
+        DRAWING_SIZE[1] - 1.5 * radius,
+    )
+    points = [point1, point2, point3]
 
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
     dwg.attribs["height"] += STROKE_WIDTH
     return dwg
 
 
 def hp_icon():
+    """Icon for puristinheijari -kairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
     cos30 = 3 ** 0.5 / 2
-    r = DRAWING_SIZE[0] / 2
+    radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
-    p1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
-    p2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    p3 = (DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    points = [p1, p2, p3]
+    point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
+    point2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * radius)
+    point3 = (
+        DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2,
+        DRAWING_SIZE[1] - 1.5 * radius,
+    )
+    points = [point1, point2, point3]
 
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
     radius = cos30 * (kolmion_sivu / 3)
     circle = svgwrite.shapes.Circle(
@@ -190,27 +228,31 @@ def hp_icon():
     )
     dwg.add(circle)
 
-    p1 = (DRAWING_SIZE[0] / 2 - radius, DRAWING_SIZE[1] / 2)
-    p2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
-    arc = getArc(p2, p1, radius, width=1e-5, fill="black")
-    p3 = (DRAWING_SIZE / 2).tolist()
-    arc.push("L {} {}".format(p3[0], p3[1]))
+    point1 = (DRAWING_SIZE[0] / 2 - radius, DRAWING_SIZE[1] / 2)
+    point2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
+    arc = get_arc(point2, point1, radius, width=1e-5, fill="black")
+    point3 = (DRAWING_SIZE / 2).tolist()
+    arc.push("L {} {}".format(point3[0], point3[1]))
     dwg.add(arc)
     dwg.attribs["height"] += STROKE_WIDTH
     return dwg
 
 
 def he_icon():
+    """Icon for heijarikairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
-    cos30 = 3 ** 0.5 / 2
-    r = DRAWING_SIZE[0] / 2
-    kolmion_sivu = cos30 * DRAWING_SIZE[0]
-    p1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
-    p2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    p3 = (DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    points = [p1, p2, p3]
+    # cos30 = 3 ** 0.5 / 2
+    # radius = DRAWING_SIZE[0] / 2
+    # kolmion_sivu = cos30 * DRAWING_SIZE[0]
+    # point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
+    # point2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * radius)
+    # point3 = (
+    #    DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2,
+    #    DRAWING_SIZE[1] - 1.5 * radius,
+    # )
+    # points = [point1, point2, point3]
 
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
+    # pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
     # dwg.add(pl)
 
     radius = DRAWING_SIZE[0] / 2 - STROKE_WIDTH
@@ -223,27 +265,33 @@ def he_icon():
     )
     dwg.add(circle)
 
-    p1 = (DRAWING_SIZE[0] / 2 - radius, DRAWING_SIZE[1] / 2)
-    p2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
-    arc = getArc(p2, p1, radius, width=1e-5, fill="black")
-    p3 = (DRAWING_SIZE / 2).tolist()
-    arc.push("L {} {}".format(p3[0], p3[1]))
+    point1 = (DRAWING_SIZE[0] / 2 - radius, DRAWING_SIZE[1] / 2)
+    point2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
+    arc = get_arc(point2, point1, radius, width=1e-5, fill="black")
+    point3 = (DRAWING_SIZE / 2).tolist()
+    arc.push("L {} {}".format(point3[0], point3[1]))
     dwg.add(arc)
     return dwg
 
 
 def pt_icon():
+    """Icon for putkikairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
     cos30 = 3 ** 0.5 / 2
-    r = DRAWING_SIZE[0] / 2
+    radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
-    p1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
-    p2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    p3 = (DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * r)
-    points = [p1, p2, p3]
+    point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
+    point2 = ((DRAWING_SIZE[0] - kolmion_sivu) / 2, DRAWING_SIZE[1] - 1.5 * radius)
+    point3 = (
+        DRAWING_SIZE[0] - (DRAWING_SIZE[0] - kolmion_sivu) / 2,
+        DRAWING_SIZE[1] - 1.5 * radius,
+    )
+    points = [point1, point2, point3]
 
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
     radius = cos30 * (kolmion_sivu / 3)
     circle = svgwrite.shapes.Circle(
@@ -260,6 +308,7 @@ def pt_icon():
 
 
 def si_icon():
+    """Icon for siipikairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
 
     circle_shrink = 4 / 5
@@ -274,32 +323,46 @@ def si_icon():
     dwg.add(circle)
 
     dist_to_mid = (2 ** 0.5) * DRAWING_SIZE[0] / 2
-    p1 = [0, 0]
-    p2 = ((dist_to_mid - radius) / 2 ** 0.5, (dist_to_mid - radius) / 2 ** 0.5)
-    points = [p1, p2]
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    point1 = [0, 0]
+    point2 = ((dist_to_mid - radius) / 2 ** 0.5, (dist_to_mid - radius) / 2 ** 0.5)
+    points = [point1, point2]
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
-    p1 = [DRAWING_SIZE[0], 0]
-    p2 = (DRAWING_SIZE[0] - (dist_to_mid - radius) / 2 ** 0.5, (dist_to_mid - radius) / 2 ** 0.5)
-    points = [p1, p2]
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    point1 = [DRAWING_SIZE[0], 0]
+    point2 = (
+        DRAWING_SIZE[0] - (dist_to_mid - radius) / 2 ** 0.5,
+        (dist_to_mid - radius) / 2 ** 0.5,
+    )
+    points = [point1, point2]
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
-    p1 = [DRAWING_SIZE[0], DRAWING_SIZE[1]]
-    p2 = (
+    point1 = [DRAWING_SIZE[0], DRAWING_SIZE[1]]
+    point2 = (
         DRAWING_SIZE[0] - (dist_to_mid - radius) / 2 ** 0.5,
         DRAWING_SIZE[1] - (dist_to_mid - radius) / 2 ** 0.5,
     )
-    points = [p1, p2]
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    points = [point1, point2]
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
-    p1 = [0, DRAWING_SIZE[1]]
-    p2 = ((dist_to_mid - radius) / 2 ** 0.5, DRAWING_SIZE[1] - (dist_to_mid - radius) / 2 ** 0.5)
-    points = [p1, p2]
-    pl = svgwrite.shapes.Polygon(points, fill="none", stroke="black", stroke_width=STROKE_WIDTH)
-    dwg.add(pl)
+    point1 = [0, DRAWING_SIZE[1]]
+    point2 = (
+        (dist_to_mid - radius) / 2 ** 0.5,
+        DRAWING_SIZE[1] - (dist_to_mid - radius) / 2 ** 0.5,
+    )
+    points = [point1, point2]
+    polygon = svgwrite.shapes.Polygon(
+        points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
+    )
+    dwg.add(polygon)
 
     # Note edge line cut off
     # dwg.attribs["height"] += STROKE_WIDTH
@@ -308,13 +371,13 @@ def si_icon():
 
 
 def no_icon():
-    figure_stretch = 1.5
-    width = DRAWING_SIZE[0] * figure_stretch
-    dwg = svgwrite.Drawing(size=(DRAWING_SIZE * figure_stretch).tolist())
+    """Icon for häiritty näytteenotto."""
+    width = DRAWING_SIZE[0] * STRECH_LARGE
+    dwg = svgwrite.Drawing(size=(DRAWING_SIZE * STRECH_LARGE).tolist())
 
     radius = (width / 2) - STROKE_WIDTH
     circle = svgwrite.shapes.Circle(
-        center=(DRAWING_SIZE * figure_stretch / 2).tolist(),
+        center=(DRAWING_SIZE * STRECH_LARGE / 2).tolist(),
         r=radius,
         fill="none",
         stroke="black",
@@ -325,7 +388,7 @@ def no_icon():
     circle_shrink = 3.5 / 5
     radius = (width / 2) * circle_shrink
     circle = svgwrite.shapes.Circle(
-        center=(DRAWING_SIZE * figure_stretch / 2).tolist(),
+        center=(DRAWING_SIZE * STRECH_LARGE / 2).tolist(),
         r=radius,
         fill="none",
         stroke="black",
@@ -336,13 +399,13 @@ def no_icon():
 
 
 def ne_icon():
-    figure_stretch = 1.5
-    width = DRAWING_SIZE[0] * figure_stretch
-    dwg = svgwrite.Drawing(size=(DRAWING_SIZE * figure_stretch).tolist())
+    """Icon for häiriintymätön näytteenotto."""
+    width = DRAWING_SIZE[0] * STRECH_LARGE
+    dwg = svgwrite.Drawing(size=(DRAWING_SIZE * STRECH_LARGE).tolist())
 
     radius = (width / 2) - STROKE_WIDTH
     circle = svgwrite.shapes.Circle(
-        center=(DRAWING_SIZE * figure_stretch / 2).tolist(),
+        center=(DRAWING_SIZE * STRECH_LARGE / 2).tolist(),
         r=radius,
         fill="none",
         stroke="black",
@@ -353,7 +416,7 @@ def ne_icon():
     circle_shrink = 3.5 / 5
     radius = (width / 2) * circle_shrink
     circle = svgwrite.shapes.Circle(
-        center=(DRAWING_SIZE * figure_stretch / 2).tolist(),
+        center=(DRAWING_SIZE * STRECH_LARGE / 2).tolist(),
         r=radius,
         fill="none",
         stroke="black",
@@ -361,15 +424,15 @@ def ne_icon():
     )
     dwg.add(circle)
 
-    p1 = [STROKE_WIDTH, width / 2]
-    p2 = [width - STROKE_WIDTH, width / 2]
-    arc = getArc(p1, p2, radius, width=1e-9, stroke="none", fill="black")
+    point1 = [STROKE_WIDTH, width / 2]
+    point2 = [width - STROKE_WIDTH, width / 2]
+    arc = get_arc(point1, point2, radius, width=1e-9, stroke="none", fill="black")
 
-    p3 = (width / 2 + radius, width / 2)
-    arc.push("L {} {}".format(p3[0], p3[1]))
+    point3 = (width / 2 + radius, width / 2)
+    arc.push("L {} {}".format(point3[0], point3[1]))
 
-    p4 = (width / 2 - radius, width / 2)
-    arc_arg = getArc_com(p3, p4, radius, sweep=1)
+    point4 = (width / 2 - radius, width / 2)
+    arc_arg = get_arc_command(point3, point4, radius, sweep=1)
 
     arc.push(arc_arg)
     dwg.add(arc)
@@ -377,8 +440,9 @@ def ne_icon():
 
 
 def vo_icon():
+    """Icon for orsivesiputki."""
     width = DRAWING_SIZE[0]
-    height = DRAWING_SIZE[1] * 2
+    height = DRAWING_SIZE[1] * HIGH_ICONS_HEIGHT_STRECH
     dwg = svgwrite.Drawing(size=(width, height))
 
     radius1 = (width / 2) - STROKE_WIDTH
@@ -403,19 +467,21 @@ def vo_icon():
     )
     dwg.add(circle)
 
-    p1 = (width / 2, center1[1] - radius1)
-    p2 = (width / 2, center2[1] + radius2)
-    line = svgwrite.shapes.Line(p1, p2, stroke="black", stroke_width=STROKE_WIDTH)
+    point1 = (width / 2, center1[1] - radius1)
+    point2 = (width / 2, center2[1] + radius2)
+    line = svgwrite.shapes.Line(point1, point2, stroke="black", stroke_width=STROKE_WIDTH)
     dwg.add(line)
     # dwg.add(
-    #    svgwrite.shapes.Circle((width / 2, height / 2), stroke="red", stroke_width=STROKE_WIDTH * 4)
+    #    svgwrite.shapes.Circle((width / 2, height / 2),
+    #    stroke="red", stroke_width=STROKE_WIDTH * 4)
     # )
     return dwg
 
 
 def vp_icon():
+    """Icon for pohjavesiputki."""
     width = DRAWING_SIZE[0]
-    height = DRAWING_SIZE[1] * 2
+    height = DRAWING_SIZE[1] * HIGH_ICONS_HEIGHT_STRECH
     dwg = svgwrite.Drawing(size=(width, height))
 
     radius1 = (width / 2) - STROKE_WIDTH
@@ -440,12 +506,13 @@ def vp_icon():
     )
     dwg.add(circle)
 
-    p1 = (width / 2, center1[1] - radius1)
-    p2 = (width / 2, center2[1] + radius2)
-    line = svgwrite.shapes.Line(p1, p2, stroke="black", stroke_width=STROKE_WIDTH)
+    point1 = (width / 2, center1[1] - radius1)
+    point2 = (width / 2, center2[1] + radius2)
+    line = svgwrite.shapes.Line(point1, point2, stroke="black", stroke_width=STROKE_WIDTH)
     dwg.add(line)
     # dwg.add(
-    #    svgwrite.shapes.Circle((width / 2, height / 2), stroke="red", stroke_width=STROKE_WIDTH * 4)
+    #    svgwrite.shapes.Circle((width / 2, height / 2),
+    #    stroke="red", stroke_width=STROKE_WIDTH * 4)
     # )
     return dwg
 
@@ -492,20 +559,25 @@ FUNCTIONS = {
     # "Missing survey abbreviation": "Missing survey abbreviation",
 }
 
-if __name__ == "__main__":
+
+def main():
+    """Run all functions and save by hole abbreviation."""
     print("Printing icons.")
     for abb in FUNCTIONS:
-        f = FUNCTIONS[abb]
+        func = FUNCTIONS[abb]
         name = ABBREVIATIONS[abb]
-        icon = f()
+        icon = func()
         icon.saveas(abb.replace("/", "_") + ".svg")
         print(name, "saved.")
-
-    #import os
-    #import cairosvg
-    #conda install cairo
-    #pip install cairosvg
-    #files = [i for i in os.listdir() if i.split(".")[-1] == "svg"]
-    #for file in files:
+    # import os
+    # import cairosvg
+    # conda install cairo
+    # pip install cairosvg
+    # files = [i for i in os.listdir() if i.split(".")[-1] == "svg"]
+    # for file in files:
     #    name_out = file.split(".")[0] + ".png"
     #    cairosvg.svg2png(url=file, write_to=name_out, dpi=600)
+
+
+if __name__ == "__main__":
+    main()
