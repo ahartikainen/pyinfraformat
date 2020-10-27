@@ -1,10 +1,10 @@
 """Plot a html folium map from holes object."""
 from itertools import cycle
-
-import numpy as np
+from pathlib import Path
 
 import branca
 import folium
+import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
 
 from ..core import Holes
@@ -101,7 +101,7 @@ def plot_map(holes, render_holes=True):
     x, y = np.mean(x_all), np.mean(y_all)
     x, y = project_points(x, y, input_epsg)
     map_fig = folium.Map(
-        location=[x, y], zoom_start=14, max_zoom=19, prefer_canvas=True, control_scale=True
+        location=[x, y], zoom_start=14, max_zoom=20, prefer_canvas=True, control_scale=True
     )
     folium.TileLayer("Stamen Terrain").add_to(map_fig)
     folium.TileLayer("CartoDB positron").add_to(map_fig)
@@ -152,10 +152,7 @@ def plot_map(holes, render_holes=True):
     cluster = MarkerCluster(
         control=False,
         options=dict(
-            animate=True,
-            maxClusterRadius=20,
-            showCoverageOnHover=False
-            # disableClusteringAtZoom = 18
+            animate=True, maxClusterRadius=20, showCoverageOnHover=False, disableClusteringAtZoom=19
         ),
     ).add_to(map_fig)
     map_fig.add_child(cluster)
@@ -200,21 +197,22 @@ def plot_map(holes, render_holes=True):
                 html = plot_hole(hole, backend="mpld3")
                 iframe = branca.element.IFrame(html=html, width=width, height=height + 5)
                 popup = folium.Popup(iframe, max_width=width)
-                folium.Marker(
-                    location=[x, y], popup=popup, icon=folium.Icon(**clust_icon_kwargs[key])
-                ).add_to(hole_clusters[key])
+                icon = get_icon(key, clust_icon_kwargs)
+                folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
 
             except (NotImplementedError, KeyError):
+                icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(
                     location=[x, y],
                     popup=ABBREVIATIONS[key] + " " + str(i),
-                    icon=folium.Icon(**clust_icon_kwargs[key]),
+                    icon=icon,
                 ).add_to(hole_clusters[key])
         else:
+            icon = get_icon(key, clust_icon_kwargs)
             folium.Marker(
                 location=[x, y],
                 popup=ABBREVIATIONS[key] + " " + str(i),
-                icon=folium.Icon(**clust_icon_kwargs[key]),
+                icon=icon,
             ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
@@ -233,3 +231,31 @@ def plot_map(holes, render_holes=True):
         lng_formatter=fmtr,
     ).add_to(map_fig)
     return map_fig
+
+
+def get_icon(abbreviation, clust_icon_kwargs, default=False):
+    """Get icon from /icons or create colored default folium icon."""
+    if default:
+        return folium.Icon(**clust_icon_kwargs[abbreviation])
+    path = Path(__file__).parent
+
+    icon_path = "icons//{abb}.svg".format(abb=abbreviation.replace("//", "_"))
+    # print(path/icon_path, path)
+    # print(abbreviation)
+    try:
+        with open(path / icon_path, "r") as f:
+            svg_str = f.read()
+    except FileNotFoundError:
+        return folium.Icon(**clust_icon_kwargs[abbreviation])
+    height = float(
+        [line for line in svg_str.split() if line.startswith("height")][0]
+        .split("=")[-1]
+        .replace('"', "")
+    )
+    width = float(
+        [line for line in svg_str.split() if line.startswith("width")][0]
+        .split("=")[-1]
+        .replace('"', "")
+    )
+    icon = folium.DivIcon(html=svg_str, icon_anchor=(width / 2, height / 2))
+    return icon
