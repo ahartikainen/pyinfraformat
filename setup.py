@@ -54,5 +54,6 @@ setup(
     ],
     keywords="infraformat",
     packages=find_packages(exclude=["docs", "tests"]),
+    package_data={"pyinfraformat": ["plots//icons//*.svg"]},
     install_requires=get_requirements(),
 )
