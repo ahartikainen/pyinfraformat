@@ -166,7 +166,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
 
     def parse_line(line):
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
-            hole_str = line["properties"]["ALKUPERAINEN_DATA"].split("\r")
+            hole_str = line["properties"]["ALKUPERAINEN_DATA"].splitlines()
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
