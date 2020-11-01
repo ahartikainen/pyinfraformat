@@ -170,7 +170,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
-        hole.add_header("OM", {"Owner": line["properties"]["OMISTAJA"]})
+        hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
 
         x, y = line["geometry"]["coordinates"]
         x, y = round(float(y), 4), round(float(x), 4)
