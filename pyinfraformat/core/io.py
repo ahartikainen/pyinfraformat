@@ -154,7 +154,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     )
 
     data = wfs_io.read().decode("utf-8")
-    data = data.replace("\\",r"\\")
+    data = data.replace("\\", r"\\")
     data_json = json.loads(data, strict=False)
     if "features" not in data_json:
         return Holes()
