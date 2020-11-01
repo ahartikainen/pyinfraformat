@@ -154,7 +154,6 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     )
 
     data = wfs_io.read().replace(b"\x1a", b"\n")
-    # print(data)
     data_dict = xmltodict.parse(data)
 
     if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
