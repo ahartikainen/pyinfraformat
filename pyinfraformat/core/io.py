@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 from collections import Counter
 from glob import glob
 
@@ -154,8 +155,10 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         outputFormat="GEOJSON",
     )
 
-    data = wfs_io.read()
-    data_json = json.loads(data.decode("utf-8"), strict=False)
+    data = wfs_io.read().decode("utf-8")
+    #data = re.sub(r'[^\n\r\t\x20-\x7f]+', r'', data) # clean from invalid chracters
+    data = data.replace("\\",r"\\")
+    data_json = json.loads(data, strict=False)
     if "features" not in data_json:
         return Holes()
 
@@ -170,12 +173,13 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
-            file_xy = {"X": None, "Y": None}
-            hole.add_header("XY", file_xy)
         hole.add_header("OM", {"Owner": line["properties"]["OMISTAJA"]})
 
         x, y = line["geometry"]["coordinates"]
         x, y = round(float(y), 4), round(float(x), 4)
+        if not hasattr(hole.header, "XY"):
+            file_xy = {"X": None, "Y": None}
+            hole.add_header("XY", file_xy)
         hole.header.XY["X"], hole.header.XY["Y"] = x, y  # pylint: disable=E1101
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
