@@ -144,7 +144,6 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
 
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
-    bbox = [y1, x1, y2, x2]
     bbox = [x1, y1, x2, y2]
 
     wfs_io = wfs.getfeature(
