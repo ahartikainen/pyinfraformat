@@ -1,12 +1,11 @@
 # pylint: disable=try-except-raise
 """Input and output methods."""
+import json
 import logging
 import os
-import re
 from collections import Counter
 from glob import glob
 
-import xmltodict
 from owslib.wfs import WebFeatureService
 
 from ..exceptions import PathNotFoundError
@@ -138,59 +137,51 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     """
     # pylint: disable=invalid-name
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
-    wfs = WebFeatureService(url, version="1.1.0")
+    wfs = WebFeatureService(url, version="2.0.0")
 
-    x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:3067")
-    x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:3067")
+    x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:4326")
+    x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:4326")
 
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
     bbox = [y1, x1, y2, x2]
+    bbox = [x1, y1, x2, y2]
 
     wfs_io = wfs.getfeature(
         typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
         maxfeatures=maxholes,
-        srsname="EPSG:3067",
         bbox=bbox,
+        outputFormat="GEOJSON",
     )
 
     data = wfs_io.read()
-    data = re.sub(b'[^\n\r\t\x20-\x7f]+', b'', data) # clean from invalid chracters
-    data_dict = xmltodict.parse(data)
-
-    if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
+    data_json = json.loads(data.decode("utf-8"), strict=False)
+    if "features" not in data_json:
         return Holes()
 
     results = []
-    for i in data_dict["wfs:FeatureCollection"]["gml:featureMember"]:
-        line = dict(
-            **i["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"][
-                "Rajapinnat_GTK_Pohjatutkimukset_WFS:Shape"
-            ]["gml:Point"],
-            **i["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"]
-        )
+    for line in data_json["features"]:
         results.append(line)
-
     holes = []
 
     def parse_line(line):
-        if "Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA" in line:
-            hole_str = line["Rajapinnat_GTK_Pohjatutkimukset_WFS:ALKUPERAINEN_DATA"].split("\n")
+        if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
+            hole_str = line["properties"]["ALKUPERAINEN_DATA"].split("\r")
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
             file_xy = {"X": None, "Y": None}
             hole.add_header("XY", file_xy)
-        hole.add_header("OM", {"Owner": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"]})
+        hole.add_header("OM", {"Owner": line["properties"]["OMISTAJA"]})
 
-        y, x = line["gml:pos"].split(" ")
-        y, x = round(float(y), 4), round(float(x), 4)
+        x, y = line["geometry"]["coordinates"]
+        x, y = round(float(y), 4), round(float(x), 4)
         hole.header.XY["X"], hole.header.XY["Y"] = x, y  # pylint: disable=E1101
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
             "Coordinate system": "ETRS-TM35FIN",
-            "Height reference": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
+            "Height reference": line["properties"]["KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)
         return hole
