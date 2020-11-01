@@ -2,6 +2,7 @@
 """Input and output methods."""
 import logging
 import os
+import re
 from collections import Counter
 from glob import glob
 
@@ -153,7 +154,8 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         bbox=bbox,
     )
 
-    data = wfs_io.read().replace(b"\x1a", b"\n")
+    data = wfs_io.read()
+    data = re.sub(b'[^\n\r\t\x20-\x7f]+', b'', data) # clean from invalid chracters
     data_dict = xmltodict.parse(data)
 
     if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
