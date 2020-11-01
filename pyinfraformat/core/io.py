@@ -9,7 +9,7 @@ import xmltodict
 from owslib.wfs import WebFeatureService
 
 from ..exceptions import PathNotFoundError
-from .coord_utils import EPSG_SYSTEMS, project_points
+from .coord_utils import project_points
 from .core import Hole, Holes
 from .utils import identifiers, is_number
 
@@ -136,9 +136,8 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     holes = from_gtk_wfs(bbox, coord_system="EPSG:4326", robust=True)
     """
     # pylint: disable=invalid-name
-    epsg_names = {EPSG_SYSTEMS[i]: i for i in EPSG_SYSTEMS}
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
-    wfs = WebFeatureService(url)
+    wfs = WebFeatureService(url, version="1.1.0")
 
     x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:3067")
     x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:3067")
@@ -148,10 +147,14 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     bbox = [y1, x1, y2, x2]
 
     wfs_io = wfs.getfeature(
-        typename=["Pohjatutkimukset"], maxfeatures=maxholes, srsname="EPSG:3067", bbox=bbox
+        typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
+        maxfeatures=maxholes,
+        srsname="EPSG:3067",
+        bbox=bbox,
     )
 
-    data = wfs_io.read()
+    data = wfs_io.read().replace(b"\x1a", b"\n")
+    # print(data)
     data_dict = xmltodict.parse(data)
 
     if "gml:featureMember" not in data_dict["wfs:FeatureCollection"]:
@@ -179,25 +182,27 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
             hole.add_header("XY", file_xy)
         hole.add_header("OM", {"Owner": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:OMISTAJA"]})
 
-        y, x = line["gml:coordinates"].split(",")
+        y, x = line["gml:pos"].split(" ")
         y, x = round(float(y), 4), round(float(x), 4)
         hole.header.XY["X"], hole.header.XY["Y"] = x, y  # pylint: disable=E1101
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
-            "Coordinate system": epsg_names[line["@srsName"]],
+            "Coordinate system": "ETRS-TM35FIN",
             "Height reference": line["Rajapinnat_GTK_Pohjatutkimukset_WFS:KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)
         return hole
 
     for i, line in enumerate(results):
+        hole = None
         try:
             hole = parse_line(line)
         except KeyError as error:
             msg = "Wfs hole parse failed, line {}. Missing {}".format(i, error)
             logger.warning(msg)
-        holes.append(hole)
+        if hole:
+            holes.append(hole)
 
     holes = Holes(holes)
     return holes
