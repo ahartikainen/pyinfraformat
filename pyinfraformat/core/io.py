@@ -3,7 +3,6 @@
 import json
 import logging
 import os
-import re
 from collections import Counter
 from glob import glob
 
@@ -156,7 +155,6 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     )
 
     data = wfs_io.read().decode("utf-8")
-    #data = re.sub(r'[^\n\r\t\x20-\x7f]+', r'', data) # clean from invalid chracters
     data = data.replace("\\",r"\\")
     data_json = json.loads(data, strict=False)
     if "features" not in data_json:
