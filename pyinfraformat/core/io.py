@@ -73,7 +73,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
         for filepath in filelist:
             try:
                 holes = read(filepath, encoding=encoding, robust=robust)
-            except UnicodeDecodeError:
+            except (UnicodeDecodeError, UnicodeEncodeError, UnicodeError):
                 holes = None
                 for i, encoding in enumerate(common_encoding, 1):
                     try:
@@ -97,7 +97,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
                 try:
                     holes = read(filepath, encoding=encoding, robust=robust)
                     fileread_failed = False
-                except (UnicodeDecodeError, UnicodeEncodeError):
+                except (UnicodeDecodeError, UnicodeEncodeError, UnicodeError):
                     fileread_failed = True
                     continue
                 except:
