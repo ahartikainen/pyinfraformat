@@ -29,7 +29,7 @@ class Holes:
         """
         if holes is None:
             holes = []
-        self.holes = holes
+        self.holes = list(holes) if not isinstance(holes, Hole) else [holes]
         self._lowmemory = lowmemory
         self.n = None
 
