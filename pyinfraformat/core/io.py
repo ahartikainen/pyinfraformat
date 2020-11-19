@@ -262,8 +262,8 @@ def write_fileheader(data, f, fo=None, kj=None):
                 if hasattr(hole.fileheader, "KJ"):
                     coord.append(hole.fileheader.KJ["Coordinate system"])
                     height.append(hole.fileheader.KJ["Height reference"])
-            ((coord, _),) = Counter(coord).most_common(1)
-            ((height, _),) = Counter(height).most_common(1)
+            (coord, _), = Counter(coord).most_common(1)
+            (height, _), = Counter(height).most_common(1)
             kj = {"Coordinate system": coord, "Height reference": height}
         except:
             kj = {"Coordinate system": "-", "Height reference": "-"}
