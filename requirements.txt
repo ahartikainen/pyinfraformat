@@ -1,7 +1,7 @@
 branca
 folium
 numpy
-matplotlib
+matplotlib<3.3.3
 mpld3<=0.3
 pandas
 pyproj
