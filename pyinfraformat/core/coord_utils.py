@@ -54,28 +54,28 @@ def coord_string_fix(input_string):
     abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3", "KKJ": "KKJ3"}
     input_string = input_string.upper()
     input_string = abbreviations.get(input_string, input_string)
-    common_separators = r"[,. :\_-]"
 
     ignore_start = r"(?:.*[,.\s:\_-])*[,.\s:\_-]*"
     ignore_end = r"[,.\s:\_-]*(?:[,.\s:\_-].*)*"
-    pattern_EPSG = rf"^{ignore_start}(?:EPSG)*[,.\s:\_-]*(\d+){ignore_end}$"
-    pattern_GK = rf"^{ignore_start}GK[,.\s:\_-]*(19|2[0-9]|3[0-1]){ignore_end}$"
-    pattern_TM = rf"^{ignore_start}TM[,.\s:\_-]*(3(?:5FIN|[4-6])){ignore_end}$"
-    pattern_KKJ = rf"^{ignore_start}(KKJ[0-5]){ignore_end}$"
 
-    match_EPSG = re.search(pattern_EPSG, input_string, re.IGNORECASE)
-    match_GK = re.search(pattern_GK, input_string, re.IGNORECASE)
-    match_TM = re.search(pattern_TM, input_string, re.IGNORECASE)
-    match_KKJ = re.search(pattern_KKJ, input_string, re.IGNORECASE)
+    pattern_epsg = rf"^{ignore_start}(?:EPSG)*[,.\s:\_-]*(\d+){ignore_end}$"
+    pattern_gk = rf"^{ignore_start}GK[,.\s:\_-]*(19|2[0-9]|3[0-1]){ignore_end}$"
+    pattern_tm = rf"^{ignore_start}TM[,.\s:\_-]*(3(?:5FIN|[4-6])){ignore_end}$"
+    pattern_kkj = rf"^{ignore_start}(KKJ[0-5]){ignore_end}$"
 
-    if match_EPSG:
-        output_string = "EPSG:{}".format(match_EPSG.group(1))
-    elif match_GK:
-        output_string = "ETRS-GK{}".format(match_GK.group(1))
-    elif match_TM:
-        output_string = "ETRS-TM{}".format(match_TM.group(1))
-    elif match_KKJ:
-        output_string = match_KKJ.group(0)
+    match_epsg = re.search(pattern_epsg, input_string, re.IGNORECASE)
+    match_gk = re.search(pattern_gk, input_string, re.IGNORECASE)
+    match_tm = re.search(pattern_tm, input_string, re.IGNORECASE)
+    match_kkj = re.search(pattern_kkj, input_string, re.IGNORECASE)
+
+    if match_epsg:
+        output_string = "EPSG:{}".format(match_epsg.group(1))
+    elif match_gk:
+        output_string = "ETRS-GK{}".format(match_gk.group(1))
+    elif match_tm:
+        output_string = "ETRS-TM{}".format(match_tm.group(1))
+    elif match_kkj:
+        output_string = match_kkj.group(0)
     else:
         output_string = input_string
 

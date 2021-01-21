@@ -81,7 +81,7 @@ def plot_map(holes, render_holes=True):
                 holes_filtered.append(hole)
                 coord_system = hole.fileheader.KJ["Coordinate system"]
                 coord_system = coord_string_fix(coord_system)
-                if re.search(r"^EPSG:\d+$", coord_system):
+                if re.search(r"^EPSG:\d+$", coord_system, re.IGNORECASE):
                     input_epsg = coord_system
                 elif coord_system in EPSG_SYSTEMS:
                     input_epsg = EPSG_SYSTEMS[coord_system]
