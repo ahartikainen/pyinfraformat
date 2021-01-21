@@ -1,4 +1,5 @@
 """Plot a html folium map from holes object."""
+import re
 from itertools import cycle
 from pathlib import Path
 
@@ -80,10 +81,12 @@ def plot_map(holes, render_holes=True):
                 holes_filtered.append(hole)
                 coord_system = hole.fileheader.KJ["Coordinate system"]
                 coord_system = coord_string_fix(coord_system)
-                if coord_system in EPSG_SYSTEMS:
+                if re.search(r"^EPSG:\d+$", coord_system):
+                    input_epsg = coord_system
+                elif coord_system in EPSG_SYSTEMS:
                     input_epsg = EPSG_SYSTEMS[coord_system]
                 else:
-                    msg = "Coordinate system {} not implemted"
+                    msg = "Coordinate system {} is not implemented"
                     msg = msg.format(coord_system)
                     raise NotImplementedError(msg)
                 if not first_system:
