@@ -2,16 +2,14 @@
 import gc
 import json
 import logging
-
 from datetime import datetime
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import matplotlib.dates as mdates
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import mpld3
 import numpy as np
 import pandas as pd
-
-import mpld3
 
 __all__ = ["plot_hole"]
 
