@@ -64,7 +64,7 @@ jobs:
       - name: Upload coverage
         if: success() && matrix.os == 'ubuntu-latest'
         run: |
-          bash <(curl -s https://codecov.io/bash) --name "${{ matrix.os }} ${{ matrix.python-version }}"
+          bash <(curl -s https://codecov.io/bash) -n "${{ matrix.os }} ${{ matrix.python-version }}"
       - uses: actions/upload-artifact@v2
         if: success() && matrix.os == 'ubuntu-latest'
         with:
