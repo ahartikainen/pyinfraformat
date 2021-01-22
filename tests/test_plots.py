@@ -2,11 +2,11 @@ import os
 from glob import glob
 from uuid import uuid4
 
-import pytest
-
 import folium
 import matplotlib.pyplot as plt
-from pyinfraformat import from_infraformat, from_gtk_wfs, plot_map
+import pytest
+
+from pyinfraformat import from_gtk_wfs, from_infraformat, plot_map
 
 
 def get_object():

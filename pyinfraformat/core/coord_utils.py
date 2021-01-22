@@ -40,10 +40,12 @@ EPSG_SYSTEMS = {  # System name : EPSG code
     "ETRS-TM34": "EPSG:25834",
     "ETRS-TM35": "EPSG:25835",
     "ETRS-TM36": "EPSG:25836",
+    "KKJ0": "EPSG:3386",
     "KKJ1": "EPSG:2391",
     "KKJ2": "EPSG:2392",
     "KKJ3": "EPSG:2393",
     "KKJ4": "EPSG:2394",
+    "KKJ5": "EPSG:3387",
 }
 
 
@@ -52,10 +54,32 @@ def coord_string_fix(input_string):
     abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3", "KKJ": "KKJ3"}
     input_string = input_string.upper()
     input_string = abbreviations.get(input_string, input_string)
-    common_separators = r"[,. :\_-]"
-    if ("GK" in input_string or "TM" in input_string) and len(input_string) <= 4:
-        input_string = "ETRS-" + input_string
-    return "-".join(re.split(common_separators, input_string))
+
+    ignore_start = r"(?:.*[,.\s:\_-])*[,.\s:\_-]*"
+    ignore_end = r"[,.\s:\_-]*(?:[,.\s:\_-].*)*"
+
+    pattern_epsg = rf"^{ignore_start}(?:EPSG)*[,.\s:\_-]*(\d+){ignore_end}$"
+    pattern_gk = rf"^{ignore_start}GK[,.\s:\_-]*(19|2[0-9]|3[0-1]){ignore_end}$"
+    pattern_tm = rf"^{ignore_start}TM[,.\s:\_-]*(3(?:5FIN|[4-6])){ignore_end}$"
+    pattern_kkj = rf"^{ignore_start}(KKJ[0-5]){ignore_end}$"
+
+    match_epsg = re.search(pattern_epsg, input_string, re.IGNORECASE)
+    match_gk = re.search(pattern_gk, input_string, re.IGNORECASE)
+    match_tm = re.search(pattern_tm, input_string, re.IGNORECASE)
+    match_kkj = re.search(pattern_kkj, input_string, re.IGNORECASE)
+
+    if match_epsg:
+        output_string = "EPSG:{}".format(match_epsg.group(1))
+    elif match_gk:
+        output_string = "ETRS-GK{}".format(match_gk.group(1))
+    elif match_tm:
+        output_string = "ETRS-TM{}".format(match_tm.group(1))
+    elif match_kkj:
+        output_string = match_kkj.group(0)
+    else:
+        output_string = input_string
+
+    return output_string
 
 
 def flip_xy(holes):
@@ -496,19 +520,18 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     holes_gk25 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
     one_hole_gk24 = project_holes(one_hole, output_epsg="EPSG:3878", check="Estonia")
     """
-    output = output.upper()
-    if "EPSG" in output:
-        output_epsg = output
+    output = str(output).upper()
+    name = coord_string_fix(output)
+    if re.search(r"^EPSG:\d+$", name):
+        output_epsg = name
+    elif name in EPSG_SYSTEMS:
+        output_epsg = EPSG_SYSTEMS[name]
     else:
-        name = coord_string_fix(output)
-        if name in EPSG_SYSTEMS:
-            output_epsg = EPSG_SYSTEMS[name]
-        else:
-            raise ValueError(
-                "Ivalid output parameter {}, possible systems: {}".format(
-                    name, list(EPSG_SYSTEMS.keys())
-                )
+        raise ValueError(
+            "Invalid output parameter {}, possible systems: {}".format(
+                name, list(EPSG_SYSTEMS.keys())
             )
+        )
     if isinstance(holes, Holes):
         proj_holes = []
         for hole in holes:

@@ -27,7 +27,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     path : str, optional, default None
         path to read data (file / folder / glob statement)
     encoding : str or list of str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'latin-1'.
+        file encoding, if 'utf-8' fails, code will try to use 'iso8859_10'.
         If input is a list, will try to read with path in given order.
     use_glob : bool, optional, default False
         path is a glob string
@@ -60,10 +60,10 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     if robust:
         # Common encoding types
         common_encoding = [
+            "iso8859_10",
             "utf-8",
             "latin-1",
             "cp1252",
-            "iso8859_10",
             "ascii",
             "utf-16",
         ]

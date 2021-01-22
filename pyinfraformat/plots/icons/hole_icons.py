@@ -20,7 +20,6 @@ run main() for creation.
 
 """
 import numpy as np
-
 import svgwrite
 
 DRAWING_SIZE = np.array([25.0, 25.0])  # Must be isotropic and float
