@@ -72,6 +72,10 @@ def test_gtk_wfs():
     assert len(holes[0].dataframe) > 0
     assert isinstance(holes, Holes)
 
+    bbox = [6686269, 392073, 6686279, 392083] 
+    holes = from_gtk_wfs(bbox, "TM35fin")  #malformated json
+    assert len(holes) == 3
+
 
 def test_output():
     for path in get_datafiles("good"):
