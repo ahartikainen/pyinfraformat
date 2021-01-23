@@ -123,7 +123,6 @@ def from_gtk_wfs(bbox, coord_system, robust=True):
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
 
-
     Returns
     -------
     Holes -object
