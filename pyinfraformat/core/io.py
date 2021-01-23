@@ -109,7 +109,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
+def from_gtk_wfs(bbox, coord_system, robust=True):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -122,8 +122,6 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         Check pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
-    maxholes : int, optional, default 1000
-        Maximum number of points to get from wfs.
 
 
     Returns
@@ -141,27 +139,41 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
 
     x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:4326")
     x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:4326")
-
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
     bbox = [x1, y1, x2, y2]
 
-    wfs_io = wfs.getfeature(
-        typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
-        maxfeatures=maxholes,
-        bbox=bbox,
-        outputFormat="GEOJSON",
-    )
-
-    data = wfs_io.read().decode("utf-8")
-    data = data.replace("\\", r"\\")
-    data_json = json.loads(data, strict=False)
-    if "features" not in data_json:
-        return Holes()
-
     results = []
-    for line in data_json["features"]:
-        results.append(line)
+    page_size = 1000
+    for startindex in range(0, int(1e100), page_size):
+        wfs_io = wfs.getfeature(
+            typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
+            bbox=bbox,
+            maxfeatures=page_size,
+            startindex=startindex,
+            outputFormat="GEOJSON",
+        )
+        data = wfs_io.read().decode("utf-8")
+        data = data.replace("\\", r"\\")
+        while True:
+            try:
+                data_json = json.loads(data, strict=False)
+                break
+            except json.JSONDecodeError as error:
+                if error.msg == "Expecting ',' delimiter":
+                    msg = error.msg + " at pos " + str(error.pos)
+                    msg += """. Asuming invalid char, replacing " with '."""
+                    logger.warning(msg)
+                    data = data[: error.pos - 1] + "'" + data[error.pos :]
+        if "features" in data_json:
+            results.extend(data_json["features"])
+            if len(data_json["features"]) < page_size:
+                break
+        else:
+            msg = f"No features retured at page {startindex//page_size}."
+            logger.warning(msg)
+            break
+
     holes = []
 
     def parse_line(line):
