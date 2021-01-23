@@ -109,7 +109,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, coord_system, robust=True):
+def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -121,7 +121,9 @@ def from_gtk_wfs(bbox, coord_system, robust=True):
         ESPG code of bbox, 'EPSG:XXXX' or name of the coordinate system.
         Check pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
     robust : bool, optional, default False
-        If True, enable reading files with ill-defined/illegal lines.
+        If True, enable reading files with ill-defined/illegal lines.    
+    maxholes : int, optional, default 1000	
+        Maximum number of points to get from wfs.
 
     Returns
     -------
@@ -145,6 +147,9 @@ def from_gtk_wfs(bbox, coord_system, robust=True):
     results = []
     page_size = 1000
     for startindex in range(0, int(1e100), page_size):
+        if len(results) > maxholes:
+            break
+        print(startindex, end=' ')
         wfs_io = wfs.getfeature(
             typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
             bbox=bbox,
@@ -199,6 +204,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True):
         return hole
 
     for i, line in enumerate(results):
+        if (i%1000) == 0: print(i, end=' ')
         hole = None
         try:
             hole = parse_line(line)
