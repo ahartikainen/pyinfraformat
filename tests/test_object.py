@@ -22,6 +22,8 @@ def test_str():
 def test_repr():
     holes = get_object()
     assert len(holes.__repr__().splitlines()) == 40
+    hole = holes[0]
+    assert len(repr(hole.fileheader)) > 10
 
 
 def test_iteration():
@@ -51,6 +53,9 @@ def test_subobject_pandas():
 def test_object_pandas():
     holes = get_object()
     assert holes.dataframe.shape == (258, 95)
+    holes = get_object()
+    holes._lowmemory = True
+    assert holes._get_dataframe().shape == (258, 95)
 
 
 def test_drop_duplicates():
@@ -64,6 +69,9 @@ def test_filter_by_date():
     filtered_holes = holes.filter_holes(start="2014-05-18", end="2019-01-10", fmt="%Y-%m-%d")
     assert len(filtered_holes) <= len(holes)
 
+    filtered_holes2 = holes.filter_holes(start="2014-05-18", fmt="%Y-%m-%d")
+    filtered_holes3 = filtered_holes2.filter_holes(end="2019-01-10", fmt="%Y-%m-%d")
+    assert len(filtered_holes) <= len(filtered_holes3)
 
 def test_filter_by_hole_type():
     holes = get_object()
@@ -83,15 +91,20 @@ def test_append_extend_slices():
     holes2 = holes[:-1]
     one_hole = holes[-1]
     assert len(holes2+one_hole) == len(holes)
+    assert len(one_hole+holes2) == len(holes)
+    assert len(one_hole+holes[0]) == 2
     holes2.append(one_hole)
     assert len(holes2) == len(holes)
+
     holes3 = holes[::2]
     holes4 = holes[1::2]
-    holes3.extend(holes4)
+    holes3.add_holes(holes4)
     assert len(holes3) == len(holes)
     with pytest.raises(ValueError):
         holes.append("This is not a hole")
     with pytest.raises(ValueError):
         holes.extend("This is a holes".split())
+    with pytest.raises(ValueError):
+        holes + "This is a holes"
     with pytest.raises(ValueError):
         one_hole + "This is not a hole"

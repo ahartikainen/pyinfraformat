@@ -33,10 +33,6 @@ class Holes:
         self._lowmemory = lowmemory
         self.n = None
 
-    def add_holes(self, holes):
-        """Add list of holes to class."""
-        self.holes.extend(holes)
-
     def __str__(self):
         msg = "Infraformat Holes -object:\n  Total of {n} holes".format(n=len(self.holes))
         value_counts = self.value_counts()
@@ -154,8 +150,6 @@ class Holes:
 
     def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
-        if bbox is None:
-            return Holes(holes)
         xmin, xmax, ymin, ymax = bbox
         filtered_holes = []
         for hole in holes:
@@ -176,8 +170,6 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
-        if hole_type is None:
-            Holes(holes)
         filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
@@ -192,9 +184,6 @@ class Holes:
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
-        if start is None and end is None:
-            return Holes(holes)
-
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
         elif isinstance(start, str) and fmt is not None:
