@@ -90,7 +90,7 @@ class Holes:
             raise ValueError("Only Hole -object can be appended.")
 
     def extend(self, holes):
-        """Append Hole object to holes."""
+        """Extend with Holes -object."""
         if isinstance(holes, Holes):
             self.holes += holes
         else:
