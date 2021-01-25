@@ -77,3 +77,21 @@ def test_filter_by_coordinates():
     holes = get_object()
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
     assert len(filtered_holes) <= len(holes)
+
+def test_append_extend_slices():
+    holes = get_object()
+    holes2 = holes[:-1]
+    one_hole = holes[-1]
+    assert len(holes2+one_hole) == len(holes)
+    holes2.append(one_hole)
+    assert len(holes2) == len(holes)
+    holes3 = holes[::2]
+    holes4 = holes[1::2]
+    holes3.extend(holes4)
+    assert len(holes3) == len(holes)
+    with pytest.raises(ValueError):
+        holes.append("This is not a hole")
+    with pytest.raises(ValueError):
+        holes.extend("This is a holes".split())
+    with pytest.raises(ValueError):
+        one_hole + "This is not a hole"

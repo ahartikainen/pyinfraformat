@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+import pyinfraformat as pif
 from pyinfraformat import (
     FileExtensionMissingError,
     Holes,
@@ -73,7 +74,7 @@ def test_gtk_wfs():
     assert isinstance(holes, Holes)
 
     bbox = [6686269, 392073, 6686279, 392083] 
-    holes = from_gtk_wfs(bbox, "TM35fin")  #malformated json
+    holes = from_gtk_wfs(bbox, "TM35fin", progress_bar=True)  #malformated json
     assert len(holes) == 3
 
 
@@ -111,3 +112,12 @@ def test_output():
             assert os.path.exists(output_path)
             os.remove(output_path)
             assert not os.path.exists(output_path)
+
+def test_set_logger():
+    pif.set_logger_level(10)
+    pif.log_to_file("test_log.log")
+    for path in get_datafiles("good"):
+        holes = from_infraformat(path)
+    with open("test_log.log") as f:
+        length = len(f.read())
+    assert length > 0
