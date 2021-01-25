@@ -206,8 +206,10 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
                 break
             except json.JSONDecodeError as error:
                 if error.msg == "Expecting ',' delimiter":
-                    msg = error.msg + " at pos " + str(error.pos)
-                    msg += """. Asuming invalid char, replacing " with '."""
+                    msg = (
+                        f"{error.msg} at pos {error.pos}."
+                        " Assuming invalid char, replacing \" with '."
+                    )
                     logger.warning(msg)
                     data = data[: error.pos - 1] + "'" + data[error.pos :]
         if "features" in data_json:
@@ -229,7 +231,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
                 if len(holes) >= maxholes:
                     break
         else:
-            msg = f"No features retured at page {startindex//page_size}."
+            msg = f"No features returned at page {startindex//page_size}."
             logger.warning(msg)
             break
         startindex += page_size
