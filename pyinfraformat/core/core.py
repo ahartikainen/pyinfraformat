@@ -82,11 +82,19 @@ class Holes:
     def __len__(self):
         return len(self.holes)
 
-    def append(self, other):
-        self.holes += [other]
+    def append(self, hole):
+        """Append Hole object to holes."""
+        if isinstance(hole, Hole):
+            self.holes += [hole]
+        else:
+            raise ValueError("Only Hole -object can be appended.")
 
-    def extend(self, other):
-        self.holes += other
+    def extend(self, holes):
+        """Append Hole object to holes."""
+        if isinstance(holes, Holes):
+            self.holes += holes
+        else:
+            raise ValueError("Only Holes -object can be extended.")
 
     def filter_holes(self, *, bbox=None, hole_type=None, start=None, end=None, fmt=None, **kwargs):
         """Filter holes.
@@ -393,7 +401,7 @@ class Hole:
         if isinstance(other, Hole):
             return Holes([self] + [other])
         raise ValueError("Only Holes or Hole -objects can be added.")
-    
+
     def add_fileheader(self, key, fileheader):
         """Add fileheader to object."""
         self.fileheader.add(key, fileheader)
