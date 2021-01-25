@@ -98,7 +98,7 @@ def test_append_extend_slices():
 
     holes3 = holes[::2]
     holes4 = holes[1::2]
-    assert len(holes3+holes4[::2]) == len(holes)
+    assert len(holes3+holes4) == len(holes)
     with pytest.raises(ValueError):
         holes.append("This is not a hole")
     with pytest.raises(ValueError):
