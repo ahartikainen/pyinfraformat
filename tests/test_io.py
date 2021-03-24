@@ -38,7 +38,7 @@ def test_reading_good(robust):
 @pytest.mark.parametrize("robust", [True, False])
 def test_reading_good_stringio(robust):
     for path in get_datafiles("good"):
-        with StringIO as text:
+        with StringIO() as text:
             with open(path) as f:
                 text.write(f.read())
             text.seek(0)
@@ -122,9 +122,8 @@ def test_output():
             os.remove(output_path)
             assert not os.path.exists(output_path)
 
-            output_io = StringIO()
-            output_io.seek(0)
-            holes.to_infraformat(output_io)
-            output_io.seek(0)
-            assert len(output_io.read())
-            output_io.close()
+            with StringIO() as output_io:
+                output_io.seek(0)
+                holes.to_infraformat(output_io)
+                output_io.seek(0)
+                assert len(output_io.read())
