@@ -1,5 +1,6 @@
 import os
 from glob import glob
+from io import StringIO
 from uuid import uuid4
 
 import pytest
