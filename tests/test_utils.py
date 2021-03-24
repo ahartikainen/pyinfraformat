@@ -1,7 +1,13 @@
 import numpy as np
 import pytest
 
-from pyinfraformat.core.utils import custom_float, custom_int, info_fi, is_number, print_info
+from pyinfraformat.core.utils import (
+    custom_float,
+    custom_int,
+    info_fi,
+    is_number,
+    print_info,
+)
 
 
 @pytest.mark.parametrize(
