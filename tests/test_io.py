@@ -34,6 +34,19 @@ def test_reading_good(robust):
         assert isinstance(holes.holes, list)
 
 
+@pytest.mark.parametrize("robust", [True, False])
+def test_reading_good_stringio(robust):
+    for path in get_datafiles("good"):
+        with StringIO as text:
+            with open(path) as f:
+                text.write(f.read())
+            text.seek(0)
+            holes = from_infraformat(text, robust=robust)
+
+        assert isinstance(holes, Holes)
+        assert isinstance(holes.holes, list)
+
+
 def test_reading_bad():
     for path in get_datafiles("bad"):
         with pytest.raises(Exception):
@@ -107,3 +120,10 @@ def test_output():
             assert os.path.exists(output_path)
             os.remove(output_path)
             assert not os.path.exists(output_path)
+
+            output_io = StringIO()
+            output_io.seek(0)
+            holes.to_infraformat(output_io)
+            output_io.seek(0)
+            assert len(output_io.read())
+            output_io.close()
