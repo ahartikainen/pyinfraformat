@@ -236,7 +236,7 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
         By default create a new file.
         If "wa" appends to current file and it is recommended to set fo and kj to False.
     """
-    with open(path, mode=write_mode) as f:
+    with _open(path, mode=write_mode) as f:
         write_fileheader(data, f, fo=fo, kj=kj)
         for hole in data:
             write_header(hole.header, f)
@@ -398,7 +398,8 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
 
 @contextmanager
-def open(path, *args, **kwargs):
+def _open(path, *args, **kwargs):
+    """Yield StringIO if needed."""
     if hasattr(path, "write") or hasattr(path, "read"):
         try:
             yield path
@@ -425,7 +426,7 @@ def read(path, encoding="utf-8", robust=False):
     fileheaders = {}
     holes = []
 
-    with open(path, "r", encoding=encoding) as f:
+    with _open(path, "r", encoding=encoding) as f:
         holestr_list = []
         for linenumber, line in enumerate(f):
             if not line.strip():
