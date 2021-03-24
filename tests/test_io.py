@@ -1,5 +1,6 @@
 import os
 from glob import glob
+from io import StringIO
 from uuid import uuid4
 
 import pytest
@@ -30,6 +31,19 @@ def get_datafiles(quality=None):
 def test_reading_good(robust):
     for path in get_datafiles("good"):
         holes = from_infraformat(path, robust=robust)
+        assert isinstance(holes, Holes)
+        assert isinstance(holes.holes, list)
+
+
+@pytest.mark.parametrize("robust", [True, False])
+def test_reading_good_stringio(robust):
+    for path in get_datafiles("good"):
+        with StringIO() as text:
+            with open(path) as f:
+                text.write(f.read())
+            text.seek(0)
+            holes = from_infraformat(text, robust=robust)
+
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
 
@@ -107,3 +121,9 @@ def test_output():
             assert os.path.exists(output_path)
             os.remove(output_path)
             assert not os.path.exists(output_path)
+
+            with StringIO() as output_io:
+                output_io.seek(0)
+                holes.to_infraformat(output_io)
+                output_io.seek(0)
+                assert len(output_io.read())

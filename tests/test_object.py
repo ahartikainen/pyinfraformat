@@ -4,7 +4,12 @@ from uuid import uuid4
 
 import pytest
 
-from pyinfraformat import FileExtensionMissingError, Holes, PathNotFoundError, from_infraformat
+from pyinfraformat import (
+    FileExtensionMissingError,
+    Holes,
+    PathNotFoundError,
+    from_infraformat,
+)
 
 
 def get_object():

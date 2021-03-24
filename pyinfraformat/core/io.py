@@ -1,10 +1,13 @@
 # pylint: disable=try-except-raise
 """Input and output methods."""
+import io
 import json
 import logging
 import os
 from collections import Counter
+from contextlib import contextmanager
 from glob import glob
+from pathlib import Path
 
 from owslib.wfs import WebFeatureService
 
@@ -41,17 +44,24 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     """
     if path is None or not path:
         return Holes()
-    if os.path.isdir(path):
-        if extension is None:
-            filelist = glob(os.path.join(path, "*"))
+
+    if isinstance(path, Path):
+        path = str(path)
+
+    if isinstance(path, str):
+        if os.path.isdir(path):
+            if extension is None:
+                filelist = glob(os.path.join(path, "*"))
+            else:
+                if not extension.startswith("."):
+                    extension = ".{}".format(extension)
+                filelist = glob(os.path.join(path, "*{}".format(extension)))
         else:
-            if not extension.startswith("."):
-                extension = ".{}".format(extension)
-            filelist = glob(os.path.join(path, "*{}".format(extension)))
+            filelist = glob(path)
+            if not filelist:
+                raise PathNotFoundError("{}".format(path))
     else:
-        filelist = glob(path)
-        if not filelist:
-            raise PathNotFoundError("{}".format(path))
+        filelist = [path]
 
     if isinstance(encoding, str):
         encoding_list = [encoding]
@@ -226,7 +236,7 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
         By default create a new file.
         If "wa" appends to current file and it is recommended to set fo and kj to False.
     """
-    with open(path, mode=write_mode) as f:
+    with _open(path, mode=write_mode) as f:
         write_fileheader(data, f, fo=fo, kj=kj)
         for hole in data:
             write_header(hole.header, f)
@@ -275,7 +285,7 @@ def write_fileheader(data, f, fo=None, kj=None):
                 continue
             line_string.append(str(value))
         if len(line_string) > 1:
-            print(" ".join(line_string), file=f)
+            f.write(" ".join(line_string))
 
 
 def write_header(header, f):
@@ -298,7 +308,7 @@ def write_header(header, f):
                 if key_ == "linenumber":
                     continue
                 header_string.append(str(value))
-            print(" ".join(header_string), file=f)
+            f.write(" ".join(header_string))
 
 
 # pylint: disable=protected-access
@@ -384,7 +394,20 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
     # print to file
     for key in sorted(body_text.keys()):
-        print(body_text[key], file=f)
+        f.write(body_text[key])
+
+
+@contextmanager
+def _open(path, *args, **kwargs):
+    """Yield StringIO if needed."""
+    if hasattr(path, "write") or hasattr(path, "read"):
+        try:
+            yield path
+        finally:
+            pass
+    else:
+        with io.open(path, *args, **kwargs) as f:
+            yield f
 
 
 def read(path, encoding="utf-8", robust=False):
@@ -402,7 +425,8 @@ def read(path, encoding="utf-8", robust=False):
 
     fileheaders = {}
     holes = []
-    with open(path, "r", encoding=encoding) as f:
+
+    with _open(path, "r", encoding=encoding) as f:
         holestr_list = []
         for linenumber, line in enumerate(f):
             if not line.strip():
