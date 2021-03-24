@@ -17,5 +17,16 @@ if not logging.root.handlers:
     logger.addHandler(handler)
 
 
+def set_logger_level(level):
+    """Set level for pyinfraformat logger, level must be an int (0-50) or a str."""
+    logger.setLevel(level)
+
+
+def log_to_file(filename):
+    """Replace logging handler to log to file."""
+    file_handler = logging.FileHandler(filename, encoding="utf-8")
+    logger.handlers = [file_handler]
+
+
 __version__ = "21.1.22"
 __all__ = ["Holes", "from_infraformat", "to_infraformat", "print_info"]

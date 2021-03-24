@@ -33,10 +33,6 @@ class Holes:
         self._lowmemory = lowmemory
         self.n = None
 
-    def add_holes(self, holes):
-        """Add list of holes to class."""
-        self.holes.extend(holes)
-
     def __str__(self):
         msg = "Infraformat Holes -object:\n  Total of {n} holes".format(n=len(self.holes))
         value_counts = self.value_counts()
@@ -73,10 +69,28 @@ class Holes:
             raise StopIteration
 
     def __add__(self, other):
-        return Holes(self.holes + other.holes)
+        if isinstance(other, Holes):
+            return Holes(self.holes + other.holes)
+        if isinstance(other, Hole):
+            return Holes(self.holes + [other])
+        raise ValueError("Only Holes or Hole -objects can be added.")
 
     def __len__(self):
         return len(self.holes)
+
+    def append(self, hole):
+        """Append Hole object to holes."""
+        if isinstance(hole, Hole):
+            self.holes += [hole]
+        else:
+            raise ValueError("Only Hole -object can be appended.")
+
+    def extend(self, holes):
+        """Extend with Holes -object."""
+        if isinstance(holes, Holes):
+            self.holes += holes
+        else:
+            raise ValueError("Only Holes -object can be extended.")
 
     def filter_holes(self, *, bbox=None, hole_type=None, start=None, end=None, fmt=None, **kwargs):
         """Filter holes.
@@ -136,8 +150,6 @@ class Holes:
 
     def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
-        if bbox is None:
-            return Holes(holes)
         xmin, xmax, ymin, ymax = bbox
         filtered_holes = []
         for hole in holes:
@@ -158,8 +170,6 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
-        if hole_type is None:
-            Holes(holes)
         filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
@@ -174,9 +184,6 @@ class Holes:
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
-        if start is None and end is None:
-            return Holes(holes)
-
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
         elif isinstance(start, str) and fmt is not None:
@@ -377,6 +384,13 @@ class Hole:
     def __repr__(self):
         return self.__str__()
 
+    def __add__(self, other):
+        if isinstance(other, Holes):
+            return Holes([self] + other.holes)
+        if isinstance(other, Hole):
+            return Holes([self] + [other])
+        raise ValueError("Only Holes or Hole -objects can be added.")
+
     def add_fileheader(self, key, fileheader):
         """Add fileheader to object."""
         self.fileheader.add(key, fileheader)
@@ -454,12 +468,6 @@ class Hole:
         from ..plots.holes import plot_hole
 
         return plot_hole(self, backend)
-
-    def _repr_html_(self):
-        try:
-            return self.plot(backend="mpld3")
-        except (KeyError, TypeError):
-            return self.__str__()
 
 
 class FileHeader:

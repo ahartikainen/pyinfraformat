@@ -7,3 +7,5 @@ pandas
 pyproj
 xmltodict
 owslib
+requests
+tqdm

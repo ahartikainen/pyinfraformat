@@ -9,7 +9,9 @@ from contextlib import contextmanager
 from glob import glob
 from pathlib import Path
 
+import requests
 from owslib.wfs import WebFeatureService
+from tqdm.autonotebook import tqdm
 
 from ..exceptions import PathNotFoundError
 from .coord_utils import project_points
@@ -119,7 +121,7 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
+def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=False):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -134,7 +136,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         If True, enable reading files with ill-defined/illegal lines.
     maxholes : int, optional, default 1000
         Maximum number of points to get from wfs.
-
+    progress_bar : bool
 
     Returns
     -------
@@ -151,30 +153,30 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
 
     x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:4326")
     x2, y2 = project_points(bbox[2], bbox[3], coord_system, "EPSG:4326")
-
     x1, x2 = min((x1, x2)), max((x1, x2))
     y1, y2 = min((y1, y2)), max((y1, y2))
     bbox = [x1, y1, x2, y2]
 
-    wfs_io = wfs.getfeature(
-        typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
-        maxfeatures=maxholes,
-        bbox=bbox,
-        outputFormat="GEOJSON",
-    )
-
-    data = wfs_io.read().decode("utf-8")
-    data = data.replace("\\", r"\\")
-    data_json = json.loads(data, strict=False)
-    if "features" not in data_json:
-        return Holes()
-
-    results = []
-    for line in data_json["features"]:
-        results.append(line)
-    holes = []
+    holes = Holes()
+    page_size = 1000
+    if progress_bar:
+        params = {
+            "service": "WFS",
+            "version": "2.0.0",
+            "request": "GetFeature",
+            "bbox": "{},{},{},{}".format(*bbox),
+            "crs": "EPSG::3067",
+            "typenames": "Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset",
+            "resultType": "hits",
+        }
+        r = requests.get(url, params=params)
+        for item in r.text.split():
+            if "numberMatched" in item:
+                holes_found = int(item.split("=")[1].replace('"', ""))
+        pbar = tqdm(total=min([holes_found, maxholes]))
 
     def parse_line(line):
+
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
             hole_str = line["properties"]["ALKUPERAINEN_DATA"].splitlines()
             hole = parse_hole(enumerate(hole_str), robust=robust)
@@ -197,17 +199,54 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000):
         hole.add_fileheader("KJ", file_kj)
         return hole
 
-    for i, line in enumerate(results):
-        hole = None
-        try:
-            hole = parse_line(line)
-        except KeyError as error:
-            msg = "Wfs hole parse failed, line {}. Missing {}".format(i, error)
+    startindex = 0
+    while len(holes) < maxholes:
+        wfs_io = wfs.getfeature(
+            typename=["Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset"],
+            bbox=bbox,
+            maxfeatures=page_size,
+            startindex=startindex,
+            outputFormat="GEOJSON",
+        )
+        data = wfs_io.read().decode("utf-8")
+        data = data.replace("\\", r"\\")
+        while True:
+            try:
+                data_json = json.loads(data, strict=False)
+                break
+            except json.JSONDecodeError as error:
+                if error.msg == "Expecting ',' delimiter":
+                    msg = (
+                        f"{error.msg} at pos {error.pos}."
+                        " Assuming invalid char, replacing \" with '."
+                    )
+                    logger.warning(msg)
+                    data = data[: error.pos - 1] + "'" + data[error.pos :]
+        if "features" in data_json:
+            i = startindex
+            if len(data_json["features"]) == 0:
+                break
+            for line in data_json["features"]:
+                hole = None
+                try:
+                    hole = parse_line(line)
+                except KeyError as error:
+                    msg = "Wfs hole parse failed, line {}. Missing {}".format(i, error)
+                    logger.warning(msg)
+                if hole:
+                    holes.append(hole)
+                i += 1
+                if progress_bar:
+                    pbar.update(1)
+                if len(holes) >= maxholes:
+                    break
+        else:
+            msg = f"No features returned at page {startindex//page_size}."
             logger.warning(msg)
-        if hole:
-            holes.append(hole)
-
-    holes = Holes(holes)
+            break
+        startindex += page_size
+    if progress_bar:
+        pbar.close()
     return holes
 
 
