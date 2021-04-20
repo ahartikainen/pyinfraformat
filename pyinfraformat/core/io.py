@@ -423,10 +423,13 @@ def read(path, encoding="auto", robust=False):
     with _open(path, "rb") as f:
         text_bytes = f.read()
         if isinstance(text_bytes, bytes):
-            encoding_dict = chardet.detect(text_bytes)
-            lines = text_bytes.decode(
-                encoding=encoding_dict.get("encoding", "ascii"), errors="replace"
-            ).splitlines()
+            if encoding == "auto":
+                encoding_dict = chardet.detect(text_bytes)
+                lines = text_bytes.decode(
+                    encoding=encoding_dict.get("encoding", "ascii"), errors="replace"
+                ).splitlines()
+            else:
+                lines = text_bytes.decode(encoding=encoding).splitlines()
         else:
             lines = text_bytes.splitlines()
         holestr_list = []
