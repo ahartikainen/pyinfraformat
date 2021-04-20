@@ -65,9 +65,6 @@ def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
     else:
         filelist = [path]
 
-    if isinstance(encoding, str):
-        encoding_list = [encoding]
-
     hole_list = []
     for filepath in filelist:
         holes = read(filepath, encoding=encoding, robust=robust)
