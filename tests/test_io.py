@@ -53,7 +53,6 @@ def test_reading_good_encoding(robust, encoding):
 @pytest.mark.parametrize("robust", [True, False])
 def test_reading_good_stringio(robust):
     for path in get_datafiles("good", "ascii"):
-        print(path)
         with StringIO() as text:
             with open(path, "r") as f:
                 text.write(f.read())
