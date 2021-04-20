@@ -33,7 +33,7 @@ def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
     path : str, optional, default None
         path to read data (file / folder / glob statement)
     encoding : str or list of str, optional, default 'auto'
-        file encoding, by default use `chardet` library to find encoding.
+        file encoding, by default use `chardet` library to find the correct encoding.
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
@@ -390,7 +390,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
 @contextmanager
 def _open(path, *args, **kwargs):
-    """Yield StringIO if needed."""
+    """Yield StringIO or BytesIO if needed."""
     if hasattr(path, "write") or hasattr(path, "read"):
         try:
             yield path
@@ -408,7 +408,7 @@ def read(path, encoding="auto", robust=False):
     ----------
     path : str, optional, default None
         path to read data (file / folder / glob statement, see use_glob)
-    encoding : str, optional, default 'utf-8'
+    encoding : str, optional, default 'auto'
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     """

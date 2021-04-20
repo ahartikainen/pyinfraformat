@@ -78,6 +78,7 @@ def test_filter_by_date():
     filtered_holes3 = filtered_holes2.filter_holes(end="2019-01-10", fmt="%Y-%m-%d")
     assert len(filtered_holes) <= len(filtered_holes3)
 
+
 def test_filter_by_hole_type():
     holes = get_object()
     filtered_holes = holes.filter_holes(hole_type=["PO"])
@@ -91,19 +92,20 @@ def test_filter_by_coordinates():
     filtered_holes = holes.filter_holes(bbox=(24, 25, 60, 61))
     assert len(filtered_holes) <= len(holes)
 
+
 def test_append_extend_slices():
     holes = get_object()
     holes2 = holes[:-1]
     one_hole = holes[-1]
-    assert len(holes2+one_hole) == len(holes)
-    assert len(one_hole+holes2) == len(holes)
-    assert len(one_hole+holes[0]) == 2
+    assert len(holes2 + one_hole) == len(holes)
+    assert len(one_hole + holes2) == len(holes)
+    assert len(one_hole + holes[0]) == 2
     holes2.append(one_hole)
     assert len(holes2) == len(holes)
 
     holes3 = holes[::2]
     holes4 = holes[1::2]
-    assert len(holes3+holes4) == len(holes)
+    assert len(holes3 + holes4) == len(holes)
     with pytest.raises(ValueError):
         holes.append("This is not a hole")
     with pytest.raises(ValueError):
