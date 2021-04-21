@@ -44,7 +44,6 @@ def fig_to_hmtl(fig, clear_memory=True):
     -------
     html
     """
-
     str_io = io.StringIO()
     fig.savefig(str_io, format="svg")
     str_io.seek(0)
