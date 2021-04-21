@@ -57,7 +57,7 @@ ABBREVIATIONS = {
 }
 
 
-def plot_map(holes, render_holes=True):
+def plot_map(holes, render_holes=True, popup_size=(3, 3)):
     """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
@@ -65,6 +65,8 @@ def plot_map(holes, render_holes=True):
     holes : holes object
     render_holes : bool
         Render popup diagrams for holes
+    popup_size : tuple
+        size in inches of popup figure
 
     Returns
     -------
@@ -194,7 +196,7 @@ def plot_map(holes, render_holes=True):
             key = "Missing survey abbreviation"
         if render_holes and key != "Missing survey abbreviation":
             try:
-                hole_svg = plot_hole(hole, output="svg", figsize=(3, 3))
+                hole_svg = plot_hole(hole, output="svg", figsize=popup_size)
                 popup = folium.Popup(hole_svg)
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
