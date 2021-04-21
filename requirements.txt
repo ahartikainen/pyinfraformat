@@ -1,4 +1,5 @@
 branca
+chardet
 folium
 numpy
 matplotlib<3.3.3

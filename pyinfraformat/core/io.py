@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from glob import glob
 from pathlib import Path
 
+import chardet
 import requests
 from owslib.wfs import WebFeatureService
 from tqdm.autonotebook import tqdm
@@ -24,16 +25,15 @@ logger.propagate = False
 __all__ = ["from_infraformat", "from_gtk_wfs"]
 
 # pylint: disable=redefined-argument-from-local
-def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
+def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
     """Read inframodel file(s).
 
     Paramaters
     ----------
     path : str, optional, default None
         path to read data (file / folder / glob statement)
-    encoding : str or list of str, optional, default 'utf-8'
-        file encoding, if 'utf-8' fails, code will try to use 'iso8859_10'.
-        If input is a list, will try to read with path in given order.
+    encoding : str or list of str, optional, default 'auto'
+        file encoding, by default use `chardet` library to find the correct encoding.
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
@@ -65,58 +65,10 @@ def from_infraformat(path=None, encoding="utf-8", extension=None, robust=True):
     else:
         filelist = [path]
 
-    if isinstance(encoding, str):
-        encoding_list = [encoding]
-
     hole_list = []
-    if robust:
-        # Common encoding types
-        common_encoding = [
-            "iso8859_10",
-            "utf-8",
-            "latin-1",
-            "cp1252",
-            "ascii",
-            "utf-16",
-        ]
-        n_user_encoding = len(encoding_list)
-        encoding, *common_encoding = list(encoding_list) + common_encoding
-
-        for filepath in filelist:
-            try:
-                holes = read(filepath, encoding=encoding, robust=robust)
-            except (UnicodeDecodeError, UnicodeEncodeError, UnicodeError):
-                holes = None
-                for i, encoding in enumerate(common_encoding, 1):
-                    try:
-                        holes = read(filepath, encoding=encoding, robust=robust)
-                    except (UnicodeDecodeError, UnicodeEncodeError, UnicodeError):
-                        continue
-                    except:
-                        raise
-                    else:
-                        if i > n_user_encoding:
-                            msg = "Non-default encoding used for reading: {}".format(encoding)
-                            logger.info(msg)
-            except:
-                raise
-            if holes:
-                hole_list.extend(holes)
-    else:
-        fileread_failed = False
-        for filepath in filelist:
-            for encoding in encoding_list:
-                try:
-                    holes = read(filepath, encoding=encoding, robust=robust)
-                    fileread_failed = False
-                except (UnicodeDecodeError, UnicodeEncodeError, UnicodeError):
-                    fileread_failed = True
-                    continue
-                except:
-                    raise
-                hole_list.extend(holes)
-        if fileread_failed:
-            raise  # pylint: disable=misplaced-bare-raise
+    for filepath in filelist:
+        holes = read(filepath, encoding=encoding, robust=robust)
+        hole_list.extend(holes)
 
     return Holes(hole_list)
 
@@ -438,7 +390,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
 @contextmanager
 def _open(path, *args, **kwargs):
-    """Yield StringIO if needed."""
+    """Yield StringIO or BytesIO if needed."""
     if hasattr(path, "write") or hasattr(path, "read"):
         try:
             yield path
@@ -449,14 +401,14 @@ def _open(path, *args, **kwargs):
             yield f
 
 
-def read(path, encoding="utf-8", robust=False):
+def read(path, encoding="auto", robust=False):
     """Read input data.
 
     Paramaters
     ----------
     path : str, optional, default None
         path to read data (file / folder / glob statement, see use_glob)
-    encoding : str, optional, default 'utf-8'
+    encoding : str, optional, default 'auto'
     robust : bool, optional, default False
         If True, enable reading files with ill-defined/illegal lines.
     """
@@ -465,9 +417,20 @@ def read(path, encoding="utf-8", robust=False):
     fileheaders = {}
     holes = []
 
-    with _open(path, "r", encoding=encoding) as f:
+    with _open(path, "rb") as f:
+        text_bytes = f.read()
+        if isinstance(text_bytes, bytes):
+            if encoding == "auto":
+                encoding_dict = chardet.detect(text_bytes)
+                lines = text_bytes.decode(
+                    encoding=encoding_dict.get("encoding", "ascii"), errors="replace"
+                ).splitlines()
+            else:
+                lines = text_bytes.decode(encoding=encoding).splitlines()
+        else:
+            lines = text_bytes.splitlines()
         holestr_list = []
-        for linenumber, line in enumerate(f):
+        for linenumber, line in enumerate(lines):
             if not line.strip():
                 continue
             head, *tail = line.split(maxsplit=1)

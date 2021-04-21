@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from io import StringIO
+from io import BytesIO, StringIO
 from uuid import uuid4
 
 import pytest
@@ -15,7 +15,7 @@ from pyinfraformat import (
 )
 
 
-def get_datafiles(quality=None):
+def get_datafiles(quality=None, encoding=None):
     here = os.path.dirname(os.path.abspath(__file__))
     data_directory = os.path.join(here, "test_data", "*.tek")
     datafiles = glob(data_directory)
@@ -25,6 +25,11 @@ def get_datafiles(quality=None):
     elif isinstance(quality, str) and quality.lower() == "good":
         # use regex here
         datafiles = [path for path in datafiles if "_bad" not in path]
+
+    if isinstance(encoding, str) and encoding.lower() == "utf-16":
+        datafiles = [path for path in datafiles if "utf16" in path]
+    elif isinstance(encoding, str) and encoding.lower() == "ascii":
+        datafiles = [path for path in datafiles if "utf16" not in path]
     return datafiles
 
 
@@ -37,10 +42,32 @@ def test_reading_good(robust):
 
 
 @pytest.mark.parametrize("robust", [True, False])
+@pytest.mark.parametrize("encoding", ["utf-16", "auto"])
+def test_reading_good_encoding(robust, encoding):
+    for path in get_datafiles("good", "utf-16"):
+        holes = from_infraformat(path, robust=robust, encoding=encoding)
+        assert isinstance(holes, Holes)
+        assert isinstance(holes.holes, list)
+
+
+@pytest.mark.parametrize("robust", [True, False])
 def test_reading_good_stringio(robust):
-    for path in get_datafiles("good"):
+    for path in get_datafiles("good", "ascii"):
         with StringIO() as text:
-            with open(path) as f:
+            with open(path, "r") as f:
+                text.write(f.read())
+            text.seek(0)
+            holes = from_infraformat(text, robust=robust)
+
+        assert isinstance(holes, Holes)
+        assert isinstance(holes.holes, list)
+
+
+@pytest.mark.parametrize("robust", [True, False])
+def test_reading_good_bytesio(robust):
+    for path in get_datafiles("good"):
+        with BytesIO() as text:
+            with open(path, "rb") as f:
                 text.write(f.read())
             text.seek(0)
             holes = from_infraformat(text, robust=robust)
@@ -55,6 +82,33 @@ def test_reading_bad():
             from_infraformat(path, robust=False)
     with pytest.raises(Exception):
         from_infraformat("../ImaginaryFolder")
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "ascii"])
+def test_reading_bad_encoding(encoding):
+    for path in get_datafiles(None, "utf-16"):
+        with pytest.raises(UnicodeDecodeError):
+            from_infraformat(path, robust=False, encoding=encoding)
+
+
+def test_reading_bad_stringio():
+    for path in get_datafiles("bad"):
+        with StringIO() as text:
+            with open(path, "r") as f:
+                text.write(f.read())
+            text.seek(0)
+            with pytest.raises(Exception):
+                from_infraformat(text, robust=False)
+
+
+def test_reading_bad_bytesio():
+    for path in get_datafiles("bad"):
+        with BytesIO() as text:
+            with open(path, "rb") as f:
+                text.write(f.read())
+            text.seek(0)
+            with pytest.raises(Exception):
+                from_infraformat(text, robust=False)
 
 
 def test_reading_dir():
@@ -87,8 +141,8 @@ def test_gtk_wfs():
     assert len(holes[0].dataframe) > 0
     assert isinstance(holes, Holes)
 
-    bbox = [6686269, 392073, 6686279, 392083] 
-    holes = from_gtk_wfs(bbox, "TM35fin", progress_bar=True)  #malformated json
+    bbox = [6686269, 392073, 6686279, 392083]
+    holes = from_gtk_wfs(bbox, "TM35fin", progress_bar=True)  # malformated json
     assert len(holes) == 3
 
 
@@ -141,4 +195,4 @@ def test_set_logger():
         holes = from_infraformat(path)
     with open("test_log.log") as f:
         length = len(f.read())
-    assert length > 0                
+    assert length > 0
