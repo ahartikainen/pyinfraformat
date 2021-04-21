@@ -2,8 +2,7 @@ branca
 chardet
 folium
 numpy
-matplotlib<3.3.3
-mpld3<=0.3
+matplotlib
 pandas
 pyproj
 xmltodict

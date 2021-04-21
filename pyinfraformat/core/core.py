@@ -452,22 +452,23 @@ class Hole:
 
         return self._dataframe
 
-    def plot(self, backend="matplotlib"):
+    def plot(self, format="figure", figsize=(4, 4)):
         """Plot a diagram of a sounding with matplotlib.
 
         Parameters
         ----------
-        backend : str
-            Backend to plot with
-            possible values 'mpld3' and 'matplotlib'
+        format : str
+            Possible values: ['figure', 'svg']
+        figsize : tuple
+            figure size in inches
 
         Returns
         -------
-        figure : matplotlib figure or mpld3 html
+        figure : matplotlib figure or svg
         """
         from ..plots.holes import plot_hole
 
-        return plot_hole(self, backend)
+        return plot_hole(self, format)
 
 
 class FileHeader:
