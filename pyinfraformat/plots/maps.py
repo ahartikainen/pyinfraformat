@@ -184,8 +184,6 @@ def plot_map(holes, render_holes=True):
         clust_icon_kwargs[key] = dict(color=color, icon="")
         map_fig.add_child(hole_clusters[key])
 
-    width = 300
-    height = 300
     for i, hole in enumerate(holes_filtered):
         x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = project_points(x, y, input_epsg)

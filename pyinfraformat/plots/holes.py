@@ -461,13 +461,13 @@ def plot_vp(one_survey):
     return fig
 
 
-def plot_hole(one_survey, format="figure", figsize=(4, 4)):
+def plot_hole(one_survey, output="figure", figsize=(4, 4)):
     """Plot a diagram of a sounding with matplotlib.
 
     Parameters
     ----------
     one_survey : hole object
-    format : str
+    output : str
         Possible values: ['figure', 'svg']
     figsize : tuple
         figure size in inches
@@ -511,9 +511,9 @@ def plot_hole(one_survey, format="figure", figsize=(4, 4)):
         plt.close()
         raise
 
-    if format == "figure":
+    if output == "figure":
         return fig
-    elif format == "svg":
+    elif output == "svg":
         return fig_to_hmtl(fig)
     else:
         raise NotImplementedError("Plotting backend {} not implemented".format(format))
