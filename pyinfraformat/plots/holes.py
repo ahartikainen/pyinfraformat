@@ -49,6 +49,7 @@ def fig_to_hmtl(fig, clear_memory=True):
     str_io.seek(0)
     if clear_memory:
         fig.clear()
+        plt.close()
         gc.collect()
     return str_io.read()
 
