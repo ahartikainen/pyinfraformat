@@ -3,7 +3,6 @@ import re
 from itertools import cycle
 from pathlib import Path
 
-import branca
 import folium
 import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
@@ -197,9 +196,8 @@ def plot_map(holes, render_holes=True):
             key = "Missing survey abbreviation"
         if render_holes and key != "Missing survey abbreviation":
             try:
-                html = plot_hole(hole, format="svg", figsize=(3, 3))
-                iframe = branca.element.IFrame(html=html, height="288pt", width="288pt")
-                popup = folium.Popup(html, max_width="50%")
+                hole_svg = plot_hole(hole, format="svg", figsize=(3, 3))
+                popup = folium.Popup(hole_svg)
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
 
