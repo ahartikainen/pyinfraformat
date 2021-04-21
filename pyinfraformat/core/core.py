@@ -452,12 +452,12 @@ class Hole:
 
         return self._dataframe
 
-    def plot(self, format="figure", figsize=(4, 4)):
+    def plot(self, output="figure", figsize=(4, 4)):
         """Plot a diagram of a sounding with matplotlib.
 
         Parameters
         ----------
-        format : str
+        output : str
             Possible values: ['figure', 'svg']
         figsize : tuple
             figure size in inches
@@ -468,7 +468,7 @@ class Hole:
         """
         from ..plots.holes import plot_hole
 
-        return plot_hole(self, format)
+        return plot_hole(self, output, figsize)
 
 
 class FileHeader:

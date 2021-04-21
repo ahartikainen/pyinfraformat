@@ -194,7 +194,7 @@ def plot_map(holes, render_holes=True):
             key = "Missing survey abbreviation"
         if render_holes and key != "Missing survey abbreviation":
             try:
-                hole_svg = plot_hole(hole, format="svg", figsize=(3, 3))
+                hole_svg = plot_hole(hole, output="svg", figsize=(3, 3))
                 popup = folium.Popup(hole_svg)
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
