@@ -517,4 +517,4 @@ def plot_hole(one_survey, output="figure", figsize=(4, 4)):
     elif output == "svg":
         return fig_to_hmtl(fig)
     else:
-        raise NotImplementedError("Plotting backend {} not implemented".format(format))
+        raise NotImplementedError("Plotting backend {} not implemented".format(output))
