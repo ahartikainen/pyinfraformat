@@ -1,13 +1,12 @@
 """Plot diagrams for a single hole."""
 import gc
-import json
+import io
 import logging
 from datetime import datetime
 
 import matplotlib.dates as mdates
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import mpld3
 import numpy as np
 import pandas as pd
 
@@ -16,30 +15,6 @@ __all__ = ["plot_hole"]
 BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
 
 logger = logging.getLogger("pyinfraformat")
-
-
-def convert_numpy(obj):
-    """Convert numpy float or int to python."""
-    if isinstance(
-        obj,
-        (
-            np.int_,
-            np.intc,
-            np.intp,
-            np.int8,
-            np.int16,
-            np.int32,
-            np.int64,
-            np.uint8,
-            np.uint16,
-            np.uint32,
-            np.uint64,
-        ),
-    ):
-        return int(obj)
-    elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
-        return float(obj)
-    return json.JSONEncoder().default(obj)
 
 
 def strip_date(x):
@@ -63,33 +38,20 @@ def fig_to_hmtl(fig, clear_memory=True):
     Parameters
     ----------
     fig: matplotlib figure
+    clear_memory: bool
 
     Returns
     -------
     html
     """
-    # mpld3.plugins.clear(fig)
-    html = mpld3.fig_to_html(
-        fig, no_extras=True, template_type="simple", d3_url=r"https://d3js.org/d3.v3.min.js"
-    )
-    emtpy_html = (
-        html[: html.find("{", html.find("{") + 1)]
-        + "{replace}"
-        + html[html.rfind("}", 0, html.rfind("}") - 1) + 1 :]
-    )
-    figure_dict = mpld3.fig_to_dict(fig)
-
-    left, _ = figure_dict["axes"]
-    del left["axes"][1]
-
-    figure_json = json.dumps(figure_dict, default=convert_numpy)
-
+    str_io = io.StringIO()
+    fig.savefig(str_io, format="svg")
+    str_io.seek(0)
     if clear_memory:
         fig.clear()
         plt.close()
         gc.collect()
-
-    return emtpy_html.replace("{replace}", figure_json)
+    return str_io.read()
 
 
 def plot_po(one_survey):
@@ -500,19 +462,20 @@ def plot_vp(one_survey):
     return fig
 
 
-def plot_hole(one_survey, backend="matplotlib"):
+def plot_hole(one_survey, output="figure", figsize=(4, 4)):
     """Plot a diagram of a sounding with matplotlib.
 
     Parameters
     ----------
     one_survey : hole object
-    backend : str
-        Backend to plot with
-        possible values 'mpld3' and 'matplotlib'
+    output : str
+        Possible values: ['figure', 'svg']
+    figsize : tuple
+        figure size in inches
 
     Returns
     -------
-    figure : matplotlib figure or mpld3 html
+    figure : figure or svg
     """
 
     def _plot_hole(one_survey):
@@ -539,6 +502,7 @@ def plot_hole(one_survey, backend="matplotlib"):
         else:
             raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
         fig.tight_layout()
+        fig.set_size_inches(figsize)
         return fig
 
     try:
@@ -548,9 +512,9 @@ def plot_hole(one_survey, backend="matplotlib"):
         plt.close()
         raise
 
-    if backend == "matplotlib":
+    if output == "figure":
         return fig
-    elif backend == "mpld3":
+    elif output == "svg":
         return fig_to_hmtl(fig)
     else:
-        raise NotImplementedError("Plotting backend {} not implemented".format(backend))
+        raise NotImplementedError("Plotting backend {} not implemented".format(output))

@@ -3,7 +3,6 @@ import re
 from itertools import cycle
 from pathlib import Path
 
-import branca
 import folium
 import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
@@ -58,7 +57,7 @@ ABBREVIATIONS = {
 }
 
 
-def plot_map(holes, render_holes=True):
+def plot_map(holes, render_holes=True, popup_size=(3, 3)):
     """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
@@ -66,6 +65,8 @@ def plot_map(holes, render_holes=True):
     holes : holes object
     render_holes : bool
         Render popup diagrams for holes
+    popup_size : tuple
+        size in inches of popup figure
 
     Returns
     -------
@@ -185,8 +186,6 @@ def plot_map(holes, render_holes=True):
         clust_icon_kwargs[key] = dict(color=color, icon="")
         map_fig.add_child(hole_clusters[key])
 
-    width = 300
-    height = 300
     for i, hole in enumerate(holes_filtered):
         x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = project_points(x, y, input_epsg)
@@ -197,9 +196,8 @@ def plot_map(holes, render_holes=True):
             key = "Missing survey abbreviation"
         if render_holes and key != "Missing survey abbreviation":
             try:
-                html = plot_hole(hole, backend="mpld3")
-                iframe = branca.element.IFrame(html=html, width=width, height=height + 5)
-                popup = folium.Popup(iframe, max_width=width)
+                hole_svg = plot_hole(hole, output="svg", figsize=popup_size)
+                popup = folium.Popup(hole_svg)
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
 
