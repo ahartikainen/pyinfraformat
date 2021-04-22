@@ -28,5 +28,5 @@ def log_to_file(filename):
     logger.handlers = [file_handler]
 
 
-__version__ = "21.4.21"
+__version__ = "21.4.22"
 __all__ = ["Holes", "from_infraformat", "to_infraformat", "print_info"]
