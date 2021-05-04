@@ -222,9 +222,42 @@ class Holes:
                 counts["Missing survey abbreviation"] += 1
         return counts
 
-    def drop_duplicates(self):
-        """Check if hole headers/datas are unique; drop duplicates."""
-        raise NotImplementedError
+    def drop_duplicates(self, strict=False, tolerance=0.1, tol_z=0.1, project=True):
+        """
+        Check if hole headers/datas are unique; drop duplicates.
+
+        Parameters
+        ----------
+        strict : bool
+            If true, chekcs for all key except linenumbers, no tolerance checks. 
+            False checks hole_type, data, coordinates, z-start and date.
+        tolerance : float
+            How much difference in XY coordinates is allowed
+        tol_z : float
+            How much difference in Z-start is allowed.
+        project : bool
+            If to project holes before checking similarities.
+
+        Returns
+        -------
+        holes : Holes -object
+        """
+        if strict:
+            holes_new = []
+            hashes = set()
+            holes = self
+            if project:
+                holes = self.project(output_height='N2000') #TODO check output projection 
+            for hole in holes:
+                hole_hash = hash(hole)
+                if hole_hash in hashes:
+                    continue
+                holes_new.append(hole)
+                hashes.add(hole_hash)
+            return Holes(holes_new)
+
+        else:
+            raise NotImplementedError
 
     @property
     def dataframe(self):
@@ -391,6 +424,14 @@ class Hole:
             return Holes([self] + [other])
         raise ValueError("Only Holes or Hole -objects can be added.")
 
+    def __hash__(self):
+        """Calculate hash based on header, fileheader and data."""
+        return (
+            hash(frozenset(self._get_header_dict().items()))
+            ^ hash(frozenset(self._get_filheader_dict().items()))
+            ^ hash(tuple(frozenset(item.items()) for item in self._get_data_list()))
+        )
+
     def add_fileheader(self, key, fileheader):
         """Add fileheader to object."""
         self.fileheader.add(key, fileheader)
@@ -410,6 +451,30 @@ class Hole:
     def _add_illegal(self, illegal):
         """Add illegal lines to object."""
         self._illegal.add(illegal)
+
+    def _get_header_dict(self):
+        """Concat header items to a dict, drop linenumbers."""
+        return_dict = {}
+        for key in self.header.keys:
+            return_dict.update({i: j for i, j in self.header[key].items() if i != "linenumber"})
+        return return_dict
+
+
+    def _get_filheader_dict(self):
+        """Concat fileheader items to a dict, drop linenumbers."""
+        return_dict = {}
+        for key in self.fileheader.keys:
+            return_dict.update(self.fileheader[key])
+        return return_dict
+
+
+    def _get_data_list(self):
+        """Get list of data dicts, drop linenumbers."""
+        return [
+            {i: j for i, j in item.items() if i != "linenumber"}
+            for item in self.survey.data
+        ]
+
 
     @property
     def dataframe(self):
