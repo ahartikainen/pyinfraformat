@@ -106,9 +106,14 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
     x, y = project_points(x, y, input_epsg)
     max_zoom = 22
     map_fig = folium.Map(
-        location=[x, y], zoom_start=14, max_zoom=22, prefer_canvas=True, control_scale=True, tiles=None
+        location=[x, y],
+        zoom_start=14,
+        max_zoom=22,
+        prefer_canvas=True,
+        control_scale=True,
+        tiles=None,
     )
-    folium.TileLayer('OpenStreetMap', maxNativeZoom=19, maxZoom=max_zoom).add_to(map_fig)
+    folium.TileLayer("OpenStreetMap", maxNativeZoom=19, maxZoom=max_zoom).add_to(map_fig)
     folium.TileLayer("Stamen Terrain", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     folium.TileLayer("CartoDB positron", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     esri_url = (
@@ -116,15 +121,33 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
         + "World_Imagery/MapServer/tile/{z}/{y}/{x}"
     )
     folium.TileLayer(
-        tiles=esri_url, attr="Esri", name="Esri Satellite", overlay=False, control=True, maxNativeZoom=18, maxZoom=max_zoom
+        tiles=esri_url,
+        attr="Esri",
+        name="Esri Satellite",
+        overlay=False,
+        control=True,
+        maxNativeZoom=18,
+        maxZoom=max_zoom,
     ).add_to(map_fig)
     mml_url_perus = "http://tiles.kartat.kapsi.fi/peruskartta/{z}/{x}/{y}.jpg"
     mml_url_orto = "http://tiles.kartat.kapsi.fi/ortokuva/{z}/{x}/{y}.jpg"
     folium.TileLayer(
-        tiles=mml_url_perus, attr="MML", name="MML peruskartta", overlay=False, control=True, maxNativeZoom=18, maxZoom=max_zoom
+        tiles=mml_url_perus,
+        attr="MML",
+        name="MML peruskartta",
+        overlay=False,
+        control=True,
+        maxNativeZoom=18,
+        maxZoom=max_zoom,
     ).add_to(map_fig)
     folium.TileLayer(
-        tiles=mml_url_orto, attr="MML", name="MML ilmakuva", overlay=False, control=True, maxNativeZoom=18, maxZoom=max_zoom
+        tiles=mml_url_orto,
+        attr="MML",
+        name="MML ilmakuva",
+        overlay=False,
+        control=True,
+        maxNativeZoom=18,
+        maxZoom=max_zoom,
     ).add_to(map_fig)
 
     gtk_url = (
