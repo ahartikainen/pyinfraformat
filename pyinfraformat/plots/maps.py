@@ -226,7 +226,7 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(location=[x, y], popup=popup, icon=icon).add_to(hole_clusters[key])
 
-            except (NotImplementedError, KeyError):
+            except (NotImplementedError, KeyError, TypeError):
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(
                     location=[x, y],
