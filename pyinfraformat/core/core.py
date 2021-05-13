@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from gc import collect
 from numbers import Integral
-
+from pprint import pformat
 import pandas as pd
 
 from ..exceptions import FileExtensionMissingError
@@ -229,7 +229,7 @@ class Holes:
         Parameters
         ----------
         strict : bool
-            If true, chekcs for all key except linenumbers, no tolerance checks. 
+            If true, chekcs for all key except linenumbers, no tolerance checks.
             False checks hole_type, data, coordinates, z-start and date.
         tolerance : float
             How much difference in XY coordinates is allowed
@@ -247,7 +247,7 @@ class Holes:
             hashes = set()
             holes = self
             if project:
-                holes = self.project(output_height='N2000') #TODO check output projection 
+                holes = self.project(output_height="N2000")  # TODO check output projection
             for hole in holes:
                 hole_hash = hash(hole)
                 if hole_hash in hashes:
@@ -406,13 +406,54 @@ class Hole:
         self.header = Header()
         self.inline_comment = InlineComment()
         self.survey = Survey()
-        self._illegal = Illegal()
+        self.illegal = Illegal()
 
     def __str__(self):
-        from pprint import pformat
-
-        msg = pformat(self.header.__dict__)
-        return "Infraformat Hole -object:\n  {}".format(msg)
+        # s = """Infraformat Hole -object:
+        # FileHeader object - contains {} items
+        # Header object - contains {} items
+        # Survey object - contains {} items
+        # InlineComment object - contains {} items
+        # Illegal object - contains {} items"""
+        # msg = s.format(
+        #     len(self.fileheader.keys),
+        #     len(self.header.keys),
+        #     len(self.survey.data),
+        #     len(self.inline_comment.data),
+        #     len(self.illegal.data),
+        # )
+        point_id = (
+            self.header.XY["Point ID"]
+            if hasattr(self.header, "XY") and "Point ID" in self.header.XY
+            else "-"
+        )
+        abbrev = (
+            self.header.XY["Point ID"]
+            if hasattr(self.header, "TT") and "Survey abbreviation" in self.header.TT
+            else "-"
+        )
+        owner = (
+            self.header.OM["Owner"]
+            if hasattr(self.header, "TT") and "Owner" in self.header.TT
+            else "-"
+        )
+        research = (
+            self.header.OR["Research organization"]
+            if hasattr(self.header, "OR") and "Research organization" in self.header.OR
+            else "-"
+        )
+        s = """Infraformat Hole -object:
+                {} / {}
+                {} / {}"""
+        msg = s.format(owner, research, abbrev, point_id)
+        msg += "\n\t{} survey data rows".format(len(self.survey.data))
+        msg += (
+            "\n\t{} inline comments".format(len(self.inline_comment.data))
+            if self.inline_comment.data
+            else ""
+        )
+        msg += "\n\t{} illegal objects".format(len(self.illegal.data)) if self.illegal.data else ""
+        return msg
 
     def __repr__(self):
         return self.__str__()
@@ -450,7 +491,7 @@ class Hole:
 
     def _add_illegal(self, illegal):
         """Add illegal lines to object."""
-        self._illegal.add(illegal)
+        self.illegal.add(illegal)
 
     def _get_header_dict(self):
         """Concat header items to a dict, drop linenumbers."""
@@ -459,7 +500,6 @@ class Hole:
             return_dict.update({i: j for i, j in self.header[key].items() if i != "linenumber"})
         return return_dict
 
-
     def _get_filheader_dict(self):
         """Concat fileheader items to a dict, drop linenumbers."""
         return_dict = {}
@@ -467,14 +507,9 @@ class Hole:
             return_dict.update(self.fileheader[key])
         return return_dict
 
-
     def _get_data_list(self):
         """Get list of data dicts, drop linenumbers."""
-        return [
-            {i: j for i, j in item.items() if i != "linenumber"}
-            for item in self.survey.data
-        ]
-
+        return [{i: j for i, j in item.items() if i != "linenumber"} for item in self.survey.data]
 
     @property
     def dataframe(self):
@@ -621,8 +656,6 @@ class Survey:
         return self.data[attr]
 
     def __str__(self):
-        from pprint import pformat
-
         columns = set([item for line in self.data for item in line]) if self.data else "-"
         msg = "\tNumber of rows: {}\n\tData keys: {}".format(len(self.data), columns)
         return "Survey -object:\n  {}".format(msg)
