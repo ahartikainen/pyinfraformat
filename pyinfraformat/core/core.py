@@ -428,7 +428,7 @@ class Hole:
             else "-"
         )
         abbrev = (
-            self.header.XY["Point ID"]
+            self.header.TT["Survey abbreviation"]
             if hasattr(self.header, "TT") and "Survey abbreviation" in self.header.TT
             else "-"
         )
@@ -442,10 +442,11 @@ class Hole:
             if hasattr(self.header, "OR") and "Research organization" in self.header.OR
             else "-"
         )
+        date = self.header.date.strftime("%Y-%m-%d") if hasattr(self.header, "date") else "-"
         s = """Infraformat Hole -object:
-                {} / {}
-                {} / {}"""
-        msg = s.format(owner, research, abbrev, point_id)
+        {} / {} / {}
+        {} / {}"""
+        msg = s.format(owner, research, date, abbrev, point_id)
         msg += "\n\t{} survey data rows".format(len(self.survey.data))
         msg += (
             "\n\t{} inline comments".format(len(self.inline_comment.data))
@@ -627,6 +628,16 @@ class Header:
         else:
             raise TypeError("Attribute not found: {}".format(attr))
 
+    def __str__(self):
+        lines = ['Header -object']
+        for key in sorted(self.keys):
+            line = key + " "+pformat(self[key], indent=8, depth=1).replace("{"+" "*7, '{') 
+            lines.append(line)
+        msg = "\n    ".join(lines)
+        return msg
+
+    def __repr__(self):
+        return self.__str__()
 
 class InlineComment:
     """Class to inline comments."""
