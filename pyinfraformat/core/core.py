@@ -620,6 +620,16 @@ class Survey:
     def __getitem__(self, attr):
         return self.data[attr]
 
+    def __str__(self):
+        from pprint import pformat
+
+        columns = set([item for line in self.data for item in line]) if self.data else "-"
+        msg = "\tNumber of rows: {}\n\tData keys: {}".format(len(self.data), columns)
+        return "Survey -object:\n  {}".format(msg)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Illegal:
     """Class to contain illegal lines."""
