@@ -6,6 +6,7 @@ from gc import collect
 from numbers import Integral
 from pprint import pformat
 import pandas as pd
+import numpy as np
 
 from ..exceptions import FileExtensionMissingError
 
@@ -229,14 +230,14 @@ class Holes:
         Parameters
         ----------
         strict : bool
-            If true, chekcs for all key except linenumbers, no tolerance checks.
+            If True, checks for all keys except linenumbers, no tolerance checks.
             False checks hole_type, data, coordinates, z-start and date.
         tolerance : float
             How much difference in XY coordinates is allowed
         tol_z : float
             How much difference in Z-start is allowed.
         project : bool
-            If to project holes before checking similarities.
+            If to project holes before checking similarities. Returns holes in EPSG:4326.
 
         Returns
         -------
@@ -249,7 +250,7 @@ class Holes:
             if project:
                 holes = self.project(output_height="N2000")  # TODO check output projection
             for hole in holes:
-                hole_hash = hash(hole)
+                hole_hash = hole._hash()
                 if hole_hash in hashes:
                     continue
                 holes_new.append(hole)
@@ -257,7 +258,41 @@ class Holes:
             return Holes(holes_new)
 
         else:
-            raise NotImplementedError
+            holes_new = []
+            search = dict()
+            holes = self
+            if project:
+                holes = self.project(output_height="N2000")  # TODO check output projection
+            for i, hole in enumerate(holes):
+                header_hash = hole._hash_header()
+                if header_hash in search:
+                    hole_type = hole.header.TT["Survey abbreviation"]
+                    hole_xy = hole.header.XY["X"], check_hole.header.XY["Y"]
+                    hole_z = hole.header.XY["Z-start"]
+                    hole_date = hole.header.date
+
+                    check_indexes = search[header_hash]
+                    for check_index in check_indexes:
+                        check_hole = self[check_index]
+
+                        check_hole_type = check_hole.header.TT["Survey abbreviation"]
+                        check_hole_xy = check_hole.header.XY["X"], check_hole.header.XY["Y"]
+                        check_hole_z = check_hole.header.XY["Z-start"]
+                        check_hole_date = check_hole.header.date
+
+                        checks = (
+                            np.allclose(hole_xy, check_hole_xy, atol=tolerance),
+                            abs(check_hole_z - hole_z) < tol_z,
+                            check_hole_type == hole_type,
+                            hole_date == check_hole_date,
+                        )
+
+                        if all(checks):
+                            break
+
+                else:
+                    holes_new.append(hole)
+            return Holes(holes_new)
 
     @property
     def dataframe(self):
@@ -442,7 +477,8 @@ class Hole:
             if hasattr(self.header, "OR") and "Research organization" in self.header.OR
             else "-"
         )
-        date = self.header.date.strftime("%Y-%m-%d") if hasattr(self.header, "date") else "-"
+        date = self.header.date if hasattr(self.header, "date") else "-"
+        date = date.strftime("%Y-%m-%d") if not pd.isna(date) else "-"
         s = """Infraformat Hole -object:
         {} / {} / {}
         {} / {}"""
@@ -466,13 +502,21 @@ class Hole:
             return Holes([self] + [other])
         raise ValueError("Only Holes or Hole -objects can be added.")
 
-    def __hash__(self):
+    def _hash(self):
         """Calculate hash based on header, fileheader and data."""
         return (
             hash(frozenset(self._get_header_dict().items()))
             ^ hash(frozenset(self._get_filheader_dict().items()))
             ^ hash(tuple(frozenset(item.items()) for item in self._get_data_list()))
         )
+
+    def _hash_header(self):
+        """Calculate hash based on header."""
+        return hash(frozenset(self._get_header_dict().items()))
+
+    def _hash_data(self):
+        """Calculate hash based on data."""
+        return hash(tuple(frozenset(item.items()) for item in self._get_data_list()))
 
     def add_fileheader(self, key, fileheader):
         """Add fileheader to object."""
@@ -629,15 +673,16 @@ class Header:
             raise TypeError("Attribute not found: {}".format(attr))
 
     def __str__(self):
-        lines = ['Header -object']
+        lines = ["Header -object"]
         for key in sorted(self.keys):
-            line = key + " "+pformat(self[key], indent=8, depth=1).replace("{"+" "*7, '{') 
+            line = key + " " + pformat(self[key], indent=8, depth=1).replace("{" + " " * 7, "{")
             lines.append(line)
         msg = "\n    ".join(lines)
         return msg
 
     def __repr__(self):
         return self.__str__()
+
 
 class InlineComment:
     """Class to inline comments."""
