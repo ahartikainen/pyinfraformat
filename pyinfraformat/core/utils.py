@@ -170,10 +170,10 @@ def identifiers():
         "SI/FVT": (
             [
                 "Depth (m)",
-                "Shear strenght (kN/m^2)",
-                "Residual Shear strenght (kN/m^2)",
+                "Shear strength (kN/m^2)",
+                "Residual Shear strength (kN/m^2)",
                 "Sensitivity (-)",
-                "Residual strenght (MPa)",
+                "Residual strength (MPa)",
             ],
             [custom_float, custom_float, custom_float, custom_float, custom_float],
             [True, False, False, False, False],
@@ -181,10 +181,10 @@ def identifiers():
         "SI": (
             [
                 "Depth (m)",
-                "Shear strenght (kN/m^2)",
-                "Residual Shear strenght (kN/m^2)",
+                "Shear strength (kN/m^2)",
+                "Residual Shear strength (kN/m^2)",
                 "Sensitivity (-)",
-                "Residual strenght (MPa)",
+                "Residual strength (MPa)",
             ],
             [custom_float, custom_float, custom_float, custom_float, custom_float],
             [True, False, False, False, False],
@@ -192,10 +192,10 @@ def identifiers():
         "FVT": (
             [
                 "Depth (m)",
-                "Shear strenght (kN/m^2)",
-                "Residual Shear strenght (kN/m^2)",
+                "Shear strength (kN/m^2)",
+                "Residual Shear strength (kN/m^2)",
                 "Sensitivity (-)",
-                "Residual strenght (MPa)",
+                "Residual strength (MPa)",
             ],
             [custom_float, custom_float, custom_float, custom_float, custom_float],
             [True, False, False, False, False],
