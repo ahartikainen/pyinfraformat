@@ -161,7 +161,11 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
             outputFormat="GEOJSON",
         )
         data = wfs_io.read().decode("utf-8")
-        data = data.replace("\\", r"\\")
+        data = (
+            data.replace("\\", r"\\")
+            .replace("strenght", "strength")
+            .replace("Strenght", "Strength")
+        )
         while True:
             try:
                 data_json = json.loads(data, strict=False)
