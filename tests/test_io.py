@@ -14,6 +14,8 @@ from pyinfraformat import (
     from_infraformat,
 )
 
+from .helpers import ping_gtk
+
 
 def get_datafiles(quality=None, encoding=None):
     here = os.path.dirname(os.path.abspath(__file__))
@@ -134,6 +136,7 @@ def test_reading_empty():
     assert isinstance(holes, Holes)
 
 
+@pytest.mark.skipif(not ping_gtk(), reason="GTK DB not available")
 def test_gtk_wfs():
     bbox = (60.2, 24.8, 60.215, 24.83)
     holes = from_gtk_wfs(bbox, "EPSG:4326")
