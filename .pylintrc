@@ -65,6 +65,7 @@ disable=cyclic-import,
         bad-continuation,
         import-outside-toplevel,
         bare-except,
+        consider-using-max-builtin,
 
 
 # Enable the message, report, category or checker with the given id(s). You can
