@@ -254,7 +254,7 @@ def plot_si(one_survey):
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
     ax_right.spines["top"].set_visible(False)
     ax_right.spines["right"].set_visible(False)
-    x_max = int(max([60, max(df["Shear strenght (kN/m^2)"]) + 10]))
+    x_max = int(max([60, max(df["Shear strength (kN/m^2)"]) + 10]))
     ax_right.set_xlim([0, x_max])
     ax_right.set_xticks(list(range(0, x_max, (10 if x_max < 60 else 20))))
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
