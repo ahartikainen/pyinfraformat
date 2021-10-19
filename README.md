@@ -20,6 +20,6 @@ Library can be installed also by `git clone` / downloading zip.
     cd pyinfraformat
     python -m pip install .
 
-To install inplace for decelopment work, use `-e` command.
+To install inplace for development work, use `-e` command.
 
     python -m pip install -e .
