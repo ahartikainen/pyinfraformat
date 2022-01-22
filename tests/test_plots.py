@@ -8,6 +8,8 @@ import pytest
 
 from pyinfraformat import from_gtk_wfs, from_infraformat, plot_map
 
+from .helpers import ping_gtk
+
 
 def get_object():
     here = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +34,7 @@ def test_map():
     assert isinstance(holes_map, folium.Map)
 
 
+@pytest.mark.skipif(not ping_gtk(), reason="GTK DB not available")
 def test_gtk_map():
     holes = get_object()
     holes_map = plot_map(holes)

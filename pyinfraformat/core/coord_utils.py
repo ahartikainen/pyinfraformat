@@ -396,7 +396,7 @@ def height_systems_diff(points, input_system, output_system):
                 " Possible values are N43, N60, N2000."
             ).format(input_system, output_system)
         )
-    return diff
+    return -diff
 
 
 def project_hole(hole, output_epsg="EPSG:4326", output_height=False):

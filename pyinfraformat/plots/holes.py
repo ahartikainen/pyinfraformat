@@ -91,9 +91,7 @@ def plot_po(one_survey):
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = ax_right.get_ylim()[0]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ymax_atleast, ax_right.get_ylim()[0])
     ax_right.set_ylim(ymax, 0)
 
     if soils is not None:
@@ -102,7 +100,8 @@ def plot_po(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     # ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(0.03, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(0.03, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
     return fig
 
 
@@ -141,14 +140,13 @@ def plot_pa(one_survey):
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = ax_right.get_ylim()[0]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ymax_atleast, ax_right.get_ylim()[0])
     ax_right.set_ylim(ymax, 0)
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
     return fig
 
 
@@ -187,16 +185,15 @@ def plot_hp(one_survey):
         height=df["Depth (m)"].diff(periods=1),
         linewidth=1.5,
     )
-    ax_right.plot(df["Pressure (MN/m^2)"] * 5, df["Depth (m)"], c="k")
+    if "Pressure (MN/m^2)" in df.columns:
+        ax_right.plot(df["Pressure (MN/m^2)"] * 5, df["Depth (m)"], c="k")
 
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
 
     ax_right.set_xlim([0, 110])
     ax_right.set_xticks(list(range(0, 120, 20)))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = ax_right.get_ylim()[0]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ymax_atleast, ax_right.get_ylim()[0])
     ax_right.set_ylim(ymax, 0)
 
     locs = ax_right.get_xticks()
@@ -213,7 +210,8 @@ def plot_hp(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
     return fig
 
 
@@ -247,28 +245,28 @@ def plot_si(one_survey):
         depth = list(df.iloc[[i, i + 1]]["Depth (m)"])
         depth.insert(0, depth[0])
         depth.append(depth[-1])
-        strength = list(df.iloc[[i, i + 1]]["Shear strenght (kN/m^2)"])
+        strength = list(df.iloc[[i, i + 1]]["Shear strength (kN/m^2)"])
         strength.insert(0, 0)
         strength.append(0)
         ax_right.plot(strength, depth, c="k")
 
-    ax_right.plot(df["Residual Shear strenght (kN/m^2)"], df["Depth (m)"], c="k", ls="--")
+    ax_right.plot(df["Residual Shear strength (kN/m^2)"], df["Depth (m)"], c="k", ls="--")
     ax_right.yaxis.set_tick_params(which="both", labelbottom=True)
     ax_right.spines["top"].set_visible(False)
     ax_right.spines["right"].set_visible(False)
-    ax_right.set_xlim([0, 60])
-    ax_right.set_xticks(list(range(0, 70, 10)))
+    x_max = int(max([60, max(df["Shear strength (kN/m^2)"]) + 10]))
+    ax_right.set_xlim([0, x_max])
+    ax_right.set_xticks(list(range(0, x_max, (10 if x_max < 60 else 20))))
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = ax_right.get_ylim()[0]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ymax_atleast, ax_right.get_ylim()[0])
     ax_right.set_ylim(ymax, 0)
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(3, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
     return fig
 
 
@@ -310,9 +308,7 @@ def plot_tr(one_survey):
     ax_right.set_title(one_survey.header.date.isoformat().split("T")[0])
     ax_left.set_title("{:+.2f}".format(float(one_survey.header["XY"]["Z-start"])))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = df["Depth (m)"].iloc[-1]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ymax_atleast, df["Depth (m)"].iloc[-1])
     ax_right.set_ylim(ymax, 0)
 
     if soils is not None:
@@ -321,7 +317,8 @@ def plot_tr(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(0.10, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
 
     return fig
 
@@ -364,9 +361,7 @@ def plot_he(one_survey):
     ax_right.set_xlim([0, 110])
     ax_right.set_xticks(list(range(0, 120, 20)))
     ymax_atleast = 5  # hard limit minimum for aestics
-    ymax = ax_right.get_ylim()[0]
-    if ymax < ymax_atleast:
-        ymax = ymax_atleast
+    ymax = max(ax_right.get_ylim()[0], ymax_atleast)
     ax_right.set_ylim(ymax, 0)
 
     ax_right.spines["top"].set_visible(False)
@@ -377,7 +372,8 @@ def plot_he(one_survey):
 
     last = df["Depth (m)"].iloc[-1]
     ax_right.plot(0, last, marker="_", zorder=10, clip_on=False, ms=20, c="k")
-    ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
+    if hasattr(one_survey.header, "-1") and "Ending" in one_survey.header["-1"]:
+        ax_right.text(8, last, s=one_survey.header["-1"]["Ending"], va="top", bbox=BBOX)
 
     if soils is not None:
         for _, row in soils.iterrows():

@@ -65,6 +65,16 @@ disable=cyclic-import,
         bad-continuation,
         import-outside-toplevel,
         bare-except,
+        consider-using-max-builtin,
+        consider-using-f-string,
+        consider-using-from-import,
+        unneeded-not,
+        unspecified-encoding,
+        use-list-literal,
+        use-dict-literal,
+        no-member,
+        unsupported-assignment-operation,
+        unsubscriptable-object
 
 
 # Enable the message, report, category or checker with the given id(s). You can

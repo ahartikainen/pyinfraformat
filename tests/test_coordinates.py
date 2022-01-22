@@ -279,8 +279,8 @@ def test_proj_porvoo():
 )
 def test_height_systems(coords):
     input_coords, correct = coords
-    output_height = height_systems_diff(input_coords, "N43", "N2000")
-    output_height2 = height_systems_diff(input_coords, "N2000", "N43")
+    output_height = height_systems_diff(input_coords, "N2000", "N43")
+    output_height2 = height_systems_diff(input_coords, "N43", "N2000")
     assert abs(float(output_height) - correct[0]) < 0.01
     assert output_height == -output_height2
 
