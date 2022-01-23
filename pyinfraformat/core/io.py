@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import re
 from collections import Counter
 from contextlib import contextmanager
 from glob import glob
@@ -12,7 +13,7 @@ from pathlib import Path
 import chardet
 import requests
 from owslib.wfs import WebFeatureService
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 
 from ..exceptions import PathNotFoundError
 from .coord_utils import project_points
@@ -128,16 +129,15 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
         pbar = tqdm(total=min([holes_found, maxholes]))
 
     def parse_line(line):
-
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
-            hole_str = line["properties"]["ALKUPERAINEN_DATA"].splitlines()
+            hole_str = re.split(r'[\r\n]+|\\r', line["properties"]["ALKUPERAINEN_DATA"])
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
         hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
 
         x, y = line["geometry"]["coordinates"]
-        x, y = round(float(y), 4), round(float(x), 4)
+        x, y = round(float(y), 12), round(float(x), 12)
         if not hasattr(hole.header, "XY"):
             file_xy = {"X": None, "Y": None}
             hole.add_header("XY", file_xy)
@@ -145,7 +145,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
-            "Coordinate system": "ETRS-TM35FIN",
+            "Coordinate system": "WGS84",
             "Height reference": line["properties"]["KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)

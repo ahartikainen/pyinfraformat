@@ -396,7 +396,7 @@ def height_systems_diff(points, input_system, output_system):
                 " Possible values are N43, N60, N2000."
             ).format(input_system, output_system)
         )
-    return -diff
+    return diff
 
 
 def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
@@ -486,6 +486,10 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     if input_system not in ["N43", "N60", "N2000"]:
         raise ValueError("Hole has unknown heigth system:", input_system)
 
+    try:
+        hole_copy.header.XY["Z-start"]
+    except KeyError as error:
+        raise ValueError("Hole has no Z-start value") from error
     diff = height_systems_diff(point, input_system, output_height)
     hole_copy.header.XY["Z-start"] += round(float(diff), 3)
     hole_copy.fileheader["KJ"]["Height reference"] = output_height
@@ -546,6 +550,12 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
                     logger.warning(error_str)
                     continue
                 if str(error) == "Hole has no coordinates":
+                    logger.warning(error_str)
+                    continue
+                if str(error) == "Hole has no Z-start value":
+                    logger.warning(error_str)
+                    continue
+                if str(error) == "('Hole has unknown heigth system:', '?')":
                     logger.warning(error_str)
                     continue
                 raise ValueError(error) from error

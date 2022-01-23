@@ -259,21 +259,26 @@ class Holes:
 
         else:
             holes_new = []
-            search = dict()
             holes = self
             if project:
                 holes = self.project(output_height="N2000")  # TODO check output projection
             for i, hole in enumerate(holes):
-                header_hash = hole._hash_header()
-                if header_hash in search:
+                checks = [False, False]
+                if (
+                    hasattr(hole, "header")
+                    and hasattr(hole.header, "TT")
+                    and ("Survey abbreviation" in hole.header.TT)
+                    and ("X" in hole.header.XY)
+                    and ("Y" in hole.header.XY)
+                    and ("Z-start" in hole.header.XY)
+                    and hasattr(hole.header, "date")
+                ):
                     hole_type = hole.header.TT["Survey abbreviation"]
-                    hole_xy = hole.header.XY["X"], check_hole.header.XY["Y"]
+                    hole_xy = hole.header.XY["X"], hole.header.XY["Y"]
                     hole_z = hole.header.XY["Z-start"]
                     hole_date = hole.header.date
 
-                    check_indexes = search[header_hash]
-                    for check_index in check_indexes:
-                        check_hole = self[check_index]
+                    for check_hole in holes_new:
 
                         check_hole_type = check_hole.header.TT["Survey abbreviation"]
                         check_hole_xy = check_hole.header.XY["X"], check_hole.header.XY["Y"]
@@ -289,9 +294,10 @@ class Holes:
 
                         if all(checks):
                             break
-
-                else:
+                    if all(checks):
+                        break
                     holes_new.append(hole)
+
             return Holes(holes_new)
 
     @property

@@ -91,12 +91,7 @@ def get_arc_command(point1, point2, radius, sweep=0):
 def get_arc(point1, point2, radius, width=3, stroke="black", fill="black", sweep=0):
     """Return an path -object that bulges to the right (sweep=0) or left (sweep=1)."""
     command = get_arc_command(point1, point2, radius, sweep=sweep)
-    path = svgwrite.path.Path(
-        d=command,
-        fill=fill,
-        stroke=stroke,
-        stroke_width=width,
-    )
+    path = svgwrite.path.Path(d=command, fill=fill, stroke=stroke, stroke_width=width,)
     return path
 
 
@@ -447,22 +442,14 @@ def vo_icon():
     radius1 = (width / 2) - STROKE_WIDTH
     center1 = (width / 2, 3 * height / 4)
     circle = svgwrite.shapes.Circle(
-        center=center1,
-        r=radius1,
-        fill="none",
-        stroke="black",
-        stroke_width=STROKE_WIDTH,
+        center=center1, r=radius1, fill="none", stroke="black", stroke_width=STROKE_WIDTH,
     )
     dwg.add(circle)
 
     radius2 = (width / 2) * 0.30
     center2 = (width / 2, height / 4)
     circle = svgwrite.shapes.Circle(
-        center=center2,
-        r=radius2,
-        fill="black",
-        stroke="black",
-        stroke_width=STROKE_WIDTH,
+        center=center2, r=radius2, fill="black", stroke="black", stroke_width=STROKE_WIDTH,
     )
     dwg.add(circle)
 
@@ -486,22 +473,14 @@ def vp_icon():
     radius1 = (width / 2) - STROKE_WIDTH
     center1 = (width / 2, 3 * height / 4)
     circle = svgwrite.shapes.Circle(
-        center=center1,
-        r=radius1,
-        fill="none",
-        stroke="black",
-        stroke_width=STROKE_WIDTH,
+        center=center1, r=radius1, fill="none", stroke="black", stroke_width=STROKE_WIDTH,
     )
     dwg.add(circle)
 
     radius2 = (width / 2) * 0.30
     center2 = (width / 2, height / 4)
     circle = svgwrite.shapes.Circle(
-        center=center2,
-        r=radius2,
-        fill="none",
-        stroke="black",
-        stroke_width=STROKE_WIDTH,
+        center=center2, r=radius2, fill="none", stroke="black", stroke_width=STROKE_WIDTH,
     )
     dwg.add(circle)
 

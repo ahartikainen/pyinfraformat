@@ -229,16 +229,12 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
             except (NotImplementedError, KeyError, TypeError):
                 icon = get_icon(key, clust_icon_kwargs)
                 folium.Marker(
-                    location=[x, y],
-                    popup=ABBREVIATIONS[key] + " " + str(i),
-                    icon=icon,
+                    location=[x, y], popup=ABBREVIATIONS[key] + " " + str(i), icon=icon,
                 ).add_to(hole_clusters[key])
         else:
             icon = get_icon(key, clust_icon_kwargs)
             folium.Marker(
-                location=[x, y],
-                popup=ABBREVIATIONS[key] + " " + str(i),
-                icon=icon,
+                location=[x, y], popup=ABBREVIATIONS[key] + " " + str(i), icon=icon,
             ).add_to(hole_clusters[key])
 
     folium.LayerControl().add_to(map_fig)
