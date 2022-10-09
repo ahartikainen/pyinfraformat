@@ -179,7 +179,7 @@ def pr_icon():
     # )
     # dwg.add(circle)  #Helper circle
 
-    cos30 = 3 ** 0.5 / 2
+    cos30 = 3**0.5 / 2
     radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
     point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
@@ -201,7 +201,7 @@ def pr_icon():
 def hp_icon():
     """Icon for puristinheijari -kairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
-    cos30 = 3 ** 0.5 / 2
+    cos30 = 3**0.5 / 2
     radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
     point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
@@ -276,7 +276,7 @@ def he_icon():
 def pt_icon():
     """Icon for putkikairaus."""
     dwg = svgwrite.Drawing(size=DRAWING_SIZE.tolist())
-    cos30 = 3 ** 0.5 / 2
+    cos30 = 3**0.5 / 2
     radius = DRAWING_SIZE[0] / 2
     kolmion_sivu = cos30 * DRAWING_SIZE[0]
     point1 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1])
@@ -321,9 +321,9 @@ def si_icon():
     )
     dwg.add(circle)
 
-    dist_to_mid = (2 ** 0.5) * DRAWING_SIZE[0] / 2
+    dist_to_mid = (2**0.5) * DRAWING_SIZE[0] / 2
     point1 = [0, 0]
-    point2 = ((dist_to_mid - radius) / 2 ** 0.5, (dist_to_mid - radius) / 2 ** 0.5)
+    point2 = ((dist_to_mid - radius) / 2**0.5, (dist_to_mid - radius) / 2**0.5)
     points = [point1, point2]
     polygon = svgwrite.shapes.Polygon(
         points, fill="none", stroke="black", stroke_width=STROKE_WIDTH
@@ -332,8 +332,8 @@ def si_icon():
 
     point1 = [DRAWING_SIZE[0], 0]
     point2 = (
-        DRAWING_SIZE[0] - (dist_to_mid - radius) / 2 ** 0.5,
-        (dist_to_mid - radius) / 2 ** 0.5,
+        DRAWING_SIZE[0] - (dist_to_mid - radius) / 2**0.5,
+        (dist_to_mid - radius) / 2**0.5,
     )
     points = [point1, point2]
     polygon = svgwrite.shapes.Polygon(
@@ -343,8 +343,8 @@ def si_icon():
 
     point1 = [DRAWING_SIZE[0], DRAWING_SIZE[1]]
     point2 = (
-        DRAWING_SIZE[0] - (dist_to_mid - radius) / 2 ** 0.5,
-        DRAWING_SIZE[1] - (dist_to_mid - radius) / 2 ** 0.5,
+        DRAWING_SIZE[0] - (dist_to_mid - radius) / 2**0.5,
+        DRAWING_SIZE[1] - (dist_to_mid - radius) / 2**0.5,
     )
     points = [point1, point2]
     polygon = svgwrite.shapes.Polygon(
@@ -354,8 +354,8 @@ def si_icon():
 
     point1 = [0, DRAWING_SIZE[1]]
     point2 = (
-        (dist_to_mid - radius) / 2 ** 0.5,
-        DRAWING_SIZE[1] - (dist_to_mid - radius) / 2 ** 0.5,
+        (dist_to_mid - radius) / 2**0.5,
+        DRAWING_SIZE[1] - (dist_to_mid - radius) / 2**0.5,
     )
     points = [point1, point2]
     polygon = svgwrite.shapes.Polygon(
