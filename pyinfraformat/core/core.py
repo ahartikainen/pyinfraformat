@@ -37,7 +37,7 @@ class Holes:
         msg = "Infraformat Holes -object:\n  Total of {n} holes".format(n=len(self.holes))
         value_counts = self.value_counts()
         if self.holes:
-            max_length = max([len(str(values)) for values in value_counts.values()]) + 1
+            max_length = max(len(str(values)) for values in value_counts.values()) + 1
             counts = "\n".join(
                 "    - {key:.<10}{value:.>6}".format(
                     key="{} ".format(key),
@@ -437,7 +437,7 @@ class Hole:
 
         dict_list = self.survey.data
         if not dict_list:
-            msg = "No data in Hole object. Header: {}".format(self.__str__())
+            msg = "No data in Hole object. Header: {}".format(str(self))
             logger.warning(msg)
             return pd.DataFrame()
         self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init

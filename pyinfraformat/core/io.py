@@ -73,7 +73,9 @@ def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
     return Holes(hole_list)
 
 
-def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=False):
+def from_gtk_wfs(
+    bbox, coord_system, robust=True, maxholes=1000, progress_bar=False, timeout=36_000
+):
     """Get holes from GTK WFS.
 
     Paramaters
@@ -121,7 +123,7 @@ def from_gtk_wfs(bbox, coord_system, robust=True, maxholes=1000, progress_bar=Fa
             "typenames": "Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset",
             "resultType": "hits",
         }
-        r = requests.get(url, params=params)
+        r = requests.get(url, params=params, timeout=timeout)
         for item in r.text.split():
             if "numberMatched" in item:
                 holes_found = int(item.split("=")[1].replace('"', ""))
