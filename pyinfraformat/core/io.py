@@ -132,7 +132,7 @@ def from_gtk_wfs(
     def parse_line(line):
 
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
-            hole_str = line["properties"]["ALKUPERAINEN_DATA"].replace("\\r","\n").splitlines()
+            hole_str = line["properties"]["ALKUPERAINEN_DATA"].replace("\\r", "\n").splitlines()
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
