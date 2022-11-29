@@ -147,7 +147,7 @@ def from_gtk_wfs(
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
-            "Coordinate system": "ETRS-TM35FIN",
+            "Coordinate system": "WGS84",
             "Height reference": line["properties"]["KORKEUSJARJ"],
         }
         hole.add_fileheader("KJ", file_kj)
