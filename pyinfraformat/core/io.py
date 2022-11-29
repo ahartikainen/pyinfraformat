@@ -132,14 +132,14 @@ def from_gtk_wfs(
     def parse_line(line):
 
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
-            hole_str = line["properties"]["ALKUPERAINEN_DATA"].splitlines()
+            hole_str = line["properties"]["ALKUPERAINEN_DATA"].replace("\\r","\n").splitlines()
             hole = parse_hole(enumerate(hole_str), robust=robust)
         else:
             hole = Hole()
         hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
 
         x, y = line["geometry"]["coordinates"]
-        x, y = round(float(y), 4), round(float(x), 4)
+        x, y = round(float(y), 10), round(float(x), 10)
         if not hasattr(hole.header, "XY"):
             file_xy = {"X": None, "Y": None}
             hole.add_header("XY", file_xy)
@@ -282,7 +282,7 @@ def write_fileheader(data, f, fo=None, kj=None):
                 continue
             line_string.append(str(value))
         if len(line_string) > 1:
-            f.write(" ".join(line_string))
+            f.write(" ".join(line_string) + "\n")
 
 
 def write_header(header, f):
@@ -305,7 +305,7 @@ def write_header(header, f):
                 if key_ == "linenumber":
                     continue
                 header_string.append(str(value))
-            f.write(" ".join(header_string))
+            f.write(" ".join(header_string) + "\n")
 
 
 # pylint: disable=protected-access
@@ -391,7 +391,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
     # print to file
     for key in sorted(body_text.keys()):
-        f.write(body_text[key])
+        f.write(body_text[key] + "\n")
 
 
 @contextmanager
