@@ -9,52 +9,10 @@ from tqdm.auto import tqdm
 
 from ..core import Holes
 from ..core.coord_utils import coord_str_recognize, project_points
+from ..core.utils import ABBREVIATIONS
 from .holes import plot_hole
 
 __all__ = ["plot_map"]
-
-
-ABBREVIATIONS = {
-    "CP": "CPT -kairaus",
-    "CP/CPT": "CPT -kairaus",
-    "CPT": "CPT -kairaus",
-    "CPTU": "CPTU -kairaus",
-    "CU": "CPTU -kairaus",
-    "CU/CPTU": "CPTU -kairaus",
-    "FVT": "Siipikairaus",
-    "HE": "Heijarikairaus",
-    "HE/DP": "Heijarikairaus",
-    "HK": "Heijarikairaus vääntömomentilla",
-    "HK/DP": "Heijarikairaus vääntömomentilla",
-    "HP": "Puristin-heijari -kairaus",
-    "KE": "Kallionäytekairaus laajennettu",
-    "KO": "Koekuoppa",
-    "KR": "Kallionäytekairaus videoitu",
-    "LB": "Laboratoriotutkimukset // Kallionäytetutkimus",
-    "LY": "Lyöntikairaus",
-    "MW": "MWD -kairaus",
-    "NE": "Näytteenotto häiriintymätön",
-    "NO": "Näytteenotto häiritty",
-    "PA": "Painokairaus",
-    "PA/WST": "Painokairaus",
-    "PI": "Pistokairaus",
-    "PMT": "Pressometrikoe",
-    "PO": "Porakonekairaus",
-    "PR": "Puristinkairaus",
-    "PS": "Pressometrikoe",
-    "PS/PMT": "Pressometrikoe",
-    "PT": "Putkikairaus",
-    "RK": "Rakeisuus",
-    "SI": "Siipikairaus",
-    "SI/FVT": "Siipikairaus",
-    "TR": "Tärykairaus",
-    "VK": "Vedenpinnan mittaus kaivosta",
-    "VO": "Orsiveden mittausputki",
-    "VP": "Pohjaveden mittausputki",
-    "VPK": "Kalliopohjavesiputki",
-    "WST": "Painokairaus",
-    "Missing survey abbreviation": "Missing survey abbreviation",
-}
 
 
 def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
