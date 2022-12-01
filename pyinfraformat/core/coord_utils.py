@@ -41,7 +41,6 @@ def coord_str_recognize(input_string):
     input_string = abbreviations.get(input_string, input_string)
     if input_string in LOCAL_SYSTEMS:
         return input_string
-
     try:
         crs = pyproj.CRS.from_user_input(input_string)
     except pyproj.exceptions.CRSError as error:
@@ -51,7 +50,7 @@ def coord_str_recognize(input_string):
         error_string = error_string[error_string.rfind(": ") + 2 : -1]
         projections = error_string.split(",")
         logger.warning(
-            ("Several coordinate systems match %s " "input string %s, assuming %s"),
+            ("Several coordinate systems match %s input string %s, assuming %s"),
             projections,
             input_string,
             projections[0],
