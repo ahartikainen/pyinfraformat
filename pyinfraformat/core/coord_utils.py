@@ -1,6 +1,5 @@
 """Utilities to handle coordinates and transformations."""
 import logging
-import re
 from copy import deepcopy
 from functools import lru_cache
 
@@ -25,6 +24,7 @@ COUNTRY_BBOX = {
 
 @lru_cache(maxsize=10_000)
 def get_transformer(input_system, output_system):
+    """Return pyproj transformer, use lru_cache to cache calls."""
     return Transformer.from_crs(input_system, output_system, always_xy=True)
 
 
@@ -44,14 +44,17 @@ def coord_str_recognize(input_string):
 
     try:
         crs = pyproj.CRS.from_user_input(input_string)
-    except pyproj.exceptions.CRSError as e:
-        s = e.args[0]
-        if "several objects matching this name" not in s:
+    except pyproj.exceptions.CRSError as error:
+        error_string = error.args[0]
+        if "several objects matching this name" not in error_string:
             raise
-        s = s[s.rfind(": ") + 2 : -1]
-        projections = s.split(",")
-        logger.warn(
-            f"Several coordinate systems match {projections} input string {input_string}, assuming {projections[0]}"
+        error_string = error_string[error_string.rfind(": ") + 2 : -1]
+        projections = error_string.split(",")
+        logger.warning(
+            ("Several coordinate systems match %s " "input string %s, assuming %s"),
+            projections,
+            input_string,
+            projections[0],
         )
         crs = pyproj.CRS.from_user_input(projections[0])
     return crs.name

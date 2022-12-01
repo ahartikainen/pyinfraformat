@@ -7,6 +7,48 @@ __all__ = ["identifiers", "print_info"]
 
 logger = logging.getLogger("pyinfraformat")
 
+ABBREVIATIONS = {
+    "CP": "CPT -kairaus",
+    "CP/CPT": "CPT -kairaus",
+    "CPT": "CPT -kairaus",
+    "CPTU": "CPTU -kairaus",
+    "CU": "CPTU -kairaus",
+    "CU/CPTU": "CPTU -kairaus",
+    "FVT": "Siipikairaus",
+    "HE": "Heijarikairaus",
+    "HE/DP": "Heijarikairaus",
+    "HK": "Heijarikairaus vääntömomentilla",
+    "HK/DP": "Heijarikairaus vääntömomentilla",
+    "HP": "Puristin-heijari -kairaus",
+    "KE": "Kallionäytekairaus laajennettu",
+    "KO": "Koekuoppa",
+    "KR": "Kallionäytekairaus videoitu",
+    "LB": "Laboratoriotutkimukset // Kallionäytetutkimus",
+    "LY": "Lyöntikairaus",
+    "MW": "MWD -kairaus",
+    "NE": "Näytteenotto häiriintymätön",
+    "NO": "Näytteenotto häiritty",
+    "PA": "Painokairaus",
+    "PA/WST": "Painokairaus",
+    "PI": "Pistokairaus",
+    "PMT": "Pressometrikoe",
+    "PO": "Porakonekairaus",
+    "PR": "Puristinkairaus",
+    "PS": "Pressometrikoe",
+    "PS/PMT": "Pressometrikoe",
+    "PT": "Putkikairaus",
+    "RK": "Rakeisuus",
+    "SI": "Siipikairaus",
+    "SI/FVT": "Siipikairaus",
+    "TR": "Tärykairaus",
+    "VK": "Vedenpinnan mittaus kaivosta",
+    "VO": "Orsiveden mittausputki",
+    "VP": "Pohjaveden mittausputki",
+    "VPK": "Kalliopohjavesiputki",
+    "WST": "Painokairaus",
+    "Missing survey abbreviation": "Missing survey abbreviation",
+}
+
 
 def is_number(number_str):
     """Test if number_str is number including infraformat logic."""
