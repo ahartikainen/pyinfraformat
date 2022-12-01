@@ -221,8 +221,12 @@ def check_hole_in_country(holes, country="FI"):
     bbox = COUNTRY_BBOX[country][1].copy()
     if input_str != "EPSG:4326":
         transf = get_transformer("EPSG:4326", input_str)
-        bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1]) # pylint: disable=unpacking-non-sequence
-        bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3]) # pylint: disable=unpacking-non-sequence
+        bbox[0], bbox[1] = transf.transform(
+            bbox[0], bbox[1]
+        )  # pylint: disable=unpacking-non-sequence
+        bbox[2], bbox[3] = transf.transform(
+            bbox[2], bbox[3]
+        )  # pylint: disable=unpacking-non-sequence
 
     else:
         raise ValueError("Input has to be in known epsg system.", input_str)
@@ -414,7 +418,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         raise ValueError("Unrecognized format / unknown name EPSG in holes {}".format(input_str))
 
     transf = get_transformer(input_str, output_epsg)
-    y, x = transf.transform(y, x) # pylint: disable=unpacking-non-sequence
+    y, x = transf.transform(y, x)  # pylint: disable=unpacking-non-sequence
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
     hole_copy.fileheader.KJ["Coordinate system"] = output_epsg
