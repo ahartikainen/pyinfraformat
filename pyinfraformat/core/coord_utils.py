@@ -16,12 +16,16 @@ __all__ = ["project_holes"]
 
 logger = logging.getLogger("pyinfraformat")
 
-TRANSFORMERS = {}  # dict of pyproj Transformers, key (input, output). Functions add transformers.
 INTERPOLATORS = {}  # LinearTriInterpolator for height systems. Functions add interpolators.
 COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
+
+
+@lru_cache(maxsize=10_000)
+def get_transformer(input_system, output_system):
+    return Transformer.from_crs(input_system, output_system, always_xy=True)
 
 
 @lru_cache(maxsize=10_000)
@@ -179,12 +183,7 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
 
     if input_epsg == output_epsg:
         return x, y
-    key = (input_epsg, output_epsg)
-    if key in TRANSFORMERS:
-        transf = TRANSFORMERS[key]
-    else:
-        transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
-        TRANSFORMERS[key] = transf
+    transf = get_transformer(input_epsg, output_epsg)
     y, x = transf.transform(y, x)
     return x, y
 
@@ -219,12 +218,7 @@ def check_hole_in_country(holes, country="FI"):
 
     bbox = COUNTRY_BBOX[country][1].copy()
     if input_str != "EPSG:4326":
-        key = ("EPSG:4326", input_str)
-        if key in TRANSFORMERS:
-            transf = TRANSFORMERS[key]
-        else:
-            transf = Transformer.from_crs("EPSG:4326", input_str, always_xy=True)
-            TRANSFORMERS[key] = transf
+        transf = get_transformer("EPSG:4326", input_str)
         bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
         bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
@@ -417,12 +411,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     elif "unrecognized format" in input_str.lower():
         raise ValueError("Unrecognized format / unknown name EPSG in holes {}".format(input_str))
 
-    key = (input_str, output_epsg)
-    if key in TRANSFORMERS:
-        transf = TRANSFORMERS[key]
-    else:
-        transf = Transformer.from_crs(input_str, output_epsg, always_xy=True)
-        TRANSFORMERS[key] = transf
+    transf = get_transformer(input_str, output_epsg)
     y, x = transf.transform(y, x)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
@@ -431,12 +420,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     if not output_height:
         return hole_copy
 
-    key = (output_epsg, "EPSG:2393")
-    if key in TRANSFORMERS:
-        transf = TRANSFORMERS[key]
-    else:
-        transf = Transformer.from_crs(output_epsg, "EPSG:2393", always_xy=True)
-        TRANSFORMERS[key] = transf
+    transf = get_transformer(output_epsg, "EPSG:2393")
     point = transf.transform(y, x)
 
     try:
