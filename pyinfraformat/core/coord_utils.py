@@ -221,12 +221,10 @@ def check_hole_in_country(holes, country="FI"):
     bbox = COUNTRY_BBOX[country][1].copy()
     if input_str != "EPSG:4326":
         transf = get_transformer("EPSG:4326", input_str)
-        bbox[0], bbox[1] = transf.transform(
-            bbox[0], bbox[1]
-        )  # pylint: disable=unpacking-non-sequence
-        bbox[2], bbox[3] = transf.transform(
-            bbox[2], bbox[3]
-        )  # pylint: disable=unpacking-non-sequence
+        # pylint: disable=unpacking-non-sequence
+        bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
+        # pylint: disable=unpacking-non-sequence
+        bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
     else:
         raise ValueError("Input has to be in known epsg system.", input_str)
