@@ -33,8 +33,8 @@ def coord_str_recognize(input_string):
     """Try to recognize user input coordinate systems."""
     abbreviations = {
         "HKI": "HELSINKI",
-        "YKJ": "KKJ3",
-        "KKJ": "KKJ3",
+        "YKJ": "KKJ / Finland Uniform Coordinate System",
+        "KKJ": "KKJ / Finland Uniform Coordinate System",
         "TM35FIN": "ETRS89 / TM35FIN(E,N)",
     }
     input_string = input_string.upper()

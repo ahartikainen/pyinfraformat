@@ -30,41 +30,7 @@ def get_object():
 
 @pytest.mark.parametrize(
     "strings",
-    [
-        ("ETRS-GK19", "ETRS-GK19"),
-        ("GK19", "ETRS-GK19"),
-        ("GK20", "ETRS-GK20"),
-        ("GK21", "ETRS-GK21"),
-        ("GK22", "ETRS-GK22"),
-        ("GK23", "ETRS-GK23"),
-        ("GK24", "ETRS-GK24"),
-        ("GK25", "ETRS-GK25"),
-        ("GK26", "ETRS-GK26"),
-        ("GK27", "ETRS-GK27"),
-        ("GK28", "ETRS-GK28"),
-        ("GK29", "ETRS-GK29"),
-        ("GK30", "ETRS-GK30"),
-        ("GK31", "ETRS-GK31"),
-        ("ETRS-TM35FIN", "ETRS-TM35FIN"),
-        ("TM35FIN", "ETRS-TM35FIN"),
-        ("WGS84", "WGS84"),
-        ("ETRS GK26", "ETRS-GK26"),
-        ("ETRS_GK26", "ETRS-GK26"),
-        ("Helsinki", "HELSINKI"),
-        ("Hki", "HELSINKI"),
-        ("ykj", "KKJ3"),
-        ("KKJ", "KKJ3"),
-        ("KKJ0", "KKJ0"),
-        ("KKJ1", "KKJ1"),
-        ("KKJ2", "KKJ2"),
-        ("KKJ3", "KKJ3"),
-        ("KKJ4", "KKJ4"),
-        ("KKJ5", "KKJ5"),
-        ("EPSG:3879", "EPSG:3879"),
-        ("epsg:1111", "EPSG:1111"),
-        ("GK25 EPSG:3879", "EPSG:3879"),
-        ("GK24 EPSG:3878", "EPSG:3878"),
-    ],
+    [("WGS84", "WGS 84"), ("Gk25", "ETRS89 / GK25FIN"), ("TM35FIN", "ETRS89 / TM35FIN(E,N)")],
 )
 def test_fix_coord_str(strings):
     intput_str, correct = strings
@@ -115,7 +81,7 @@ def test_holes_projection_errors():
 
     with pytest.raises(Exception) as e_info:
         project_hole(holes[0], output_epsg="EPSG:999999")
-    assert str(e_info.value) == "Unknown or not implemented EPSG as output_epsg"
+    assert "Internal Proj Error" in str(e_info.value)
 
     hole = holes[0]
     hole.header.XY["X"], hole.header.XY["Y"] = np.nan, 0.1
@@ -167,7 +133,7 @@ def test_holes_projection_errors3():
     hole.fileheader.KJ["Coordinate system"] = "UnknownString"
     with pytest.raises(Exception) as e_info:
         project_hole(hole, output_epsg="EPSG:4326")
-    assert "Unknown or not implemented EPSG" in str(e_info.value)
+    assert "Internal Proj Error" in str(e_info.value)
 
 
 def test_holes_projection_errors4():
