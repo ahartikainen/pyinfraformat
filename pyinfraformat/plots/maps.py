@@ -6,9 +6,10 @@ from pathlib import Path
 import folium
 import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
+from tqdm.auto import tqdm
 
 from ..core import Holes
-from ..core.coord_utils import EPSG_SYSTEMS, coord_string_fix, project_points
+from ..core.coord_utils import coord_str_recognize, project_points
 from .holes import plot_hole
 
 __all__ = ["plot_map"]
@@ -57,7 +58,7 @@ ABBREVIATIONS = {
 }
 
 
-def plot_map(holes, render_holes=True, popup_size=(3, 3)):
+def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
     """Plot a leaflet map from holes with popup hole plots.
 
     Parameters
@@ -65,6 +66,8 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
     holes : holes object
     render_holes : bool
         Render popup diagrams for holes
+    progress_bar : bool
+        Show tqdm progress bar while adding/rendering holes
     popup_size : tuple
         size in inches of popup figure
 
@@ -81,15 +84,11 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
                 holes_filtered.append(hole)
                 coord_system = hole.fileheader.KJ["Coordinate system"]
-                coord_system = coord_string_fix(coord_system)
-                if re.search(r"^EPSG:\d+$", coord_system, re.IGNORECASE):
-                    input_epsg = coord_system
-                elif coord_system in EPSG_SYSTEMS:
-                    input_epsg = EPSG_SYSTEMS[coord_system]
-                else:
-                    msg = "Coordinate system {} is not implemented"
+                input_epsg = coord_str_recognize(coord_system)
+                if "unknown" in input_epsg.lower():
+                    msg = "Coordinate system {} is unrecognized format / unknown name"
                     msg = msg.format(coord_system)
-                    raise NotImplementedError(msg)
+                    raise ValueError(msg)
                 if not first_system:
                     first_system = coord_system
                 else:
@@ -206,11 +205,16 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
     clust_icon_kwargs = {}
     for color, key in zip(colors, holes_filtered.value_counts().keys()):
         hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
-            cluster, name=ABBREVIATIONS[key], show=True
+            cluster, name=ABBREVIATIONS.get(key, "Unrecognize abbreviation"), show=True
         )
         clust_icon_kwargs[key] = dict(color=color, icon="")
         map_fig.add_child(hole_clusters[key])
 
+    if progress_bar:
+        pbar = tqdm(
+            total=len(holes_filtered),
+            desc="Rendering holes" if render_holes else "Adding points to map",
+        )
     for i, hole in enumerate(holes_filtered):
         x, y = [hole.header.XY["X"], hole.header.XY["Y"]]
         x, y = project_points(x, y, input_epsg)
@@ -237,9 +241,12 @@ def plot_map(holes, render_holes=True, popup_size=(3, 3)):
             icon = get_icon(key, clust_icon_kwargs)
             folium.Marker(
                 location=[x, y],
-                popup=ABBREVIATIONS[key] + " " + str(i),
+                popup=ABBREVIATIONS.get(key, f"Unrecognize abbreviation {key}") + " " + str(i),
                 icon=icon,
             ).add_to(hole_clusters[key])
+
+        if progress_bar:
+            pbar.update(1)
 
     folium.LayerControl().add_to(map_fig)
     MeasureControl(

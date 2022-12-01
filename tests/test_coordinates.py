@@ -9,7 +9,7 @@ import pytest
 from pyinfraformat import Holes, from_infraformat
 from pyinfraformat.core.coord_utils import (
     check_hole_in_country,
-    coord_string_fix,
+    coord_str_recognize,
     flip_xy,
     height_systems_diff,
     proj_espoo,
@@ -68,7 +68,7 @@ def get_object():
 )
 def test_fix_coord_str(strings):
     intput_str, correct = strings
-    output_str = coord_string_fix(intput_str)
+    output_str = coord_str_recognize(intput_str)
     assert output_str == correct
 
 

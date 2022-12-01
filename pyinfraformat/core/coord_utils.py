@@ -2,9 +2,11 @@
 import logging
 import re
 from copy import deepcopy
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
+import pyproj
 from matplotlib.tri import LinearTriInterpolator, Triangulation
 from pyproj import Transformer
 
@@ -20,66 +22,35 @@ COUNTRY_BBOX = {
     "FI": ("Finland", [19.0, 59.0, 32.0, 71.0]),
     "EE": ("Estonia", [23.5, 57.0, 29.0, 59.0]),
 }
-EPSG_SYSTEMS = {  # System name : EPSG code
-    "WGS84": "EPSG:4326",
-    "ETRS-TM35FIN": "EPSG:3067",
-    "ETRS89": "EPSG:4258",
-    "ETRS-GK19": "EPSG:3873",
-    "ETRS-GK20": "EPSG:3874",
-    "ETRS-GK21": "EPSG:3875",
-    "ETRS-GK22": "EPSG:3876",
-    "ETRS-GK23": "EPSG:3877",
-    "ETRS-GK24": "EPSG:3878",
-    "ETRS-GK25": "EPSG:3879",
-    "ETRS-GK26": "EPSG:3880",
-    "ETRS-GK27": "EPSG:3881",
-    "ETRS-GK28": "EPSG:3882",
-    "ETRS-GK29": "EPSG:3883",
-    "ETRS-GK30": "EPSG:3884",
-    "ETRS-GK31": "EPSG:3885",
-    "ETRS-TM34": "EPSG:25834",
-    "ETRS-TM35": "EPSG:25835",
-    "ETRS-TM36": "EPSG:25836",
-    "KKJ0": "EPSG:3386",
-    "KKJ1": "EPSG:2391",
-    "KKJ2": "EPSG:2392",
-    "KKJ3": "EPSG:2393",
-    "KKJ4": "EPSG:2394",
-    "KKJ5": "EPSG:3387",
-}
 
 
-def coord_string_fix(input_string):
-    """Try to fix coordinate systems string into machine readable."""
-    abbreviations = {"HKI": "HELSINKI", "YKJ": "KKJ3", "KKJ": "KKJ3"}
+@lru_cache(maxsize=10_000)
+def coord_str_recognize(input_string):
+    """Try to recognize user input coordinate systems."""
+    abbreviations = {
+        "HKI": "HELSINKI",
+        "YKJ": "KKJ3",
+        "KKJ": "KKJ3",
+        "TM35FIN": "ETRS89 / TM35FIN(E,N)",
+    }
     input_string = input_string.upper()
     input_string = abbreviations.get(input_string, input_string)
+    if input_string in LOCAL_SYSTEMS:
+        return input_string
 
-    ignore_start = r"(?:.*[,.\s:\_-])*[,.\s:\_-]*"
-    ignore_end = r"[,.\s:\_-]*(?:[,.\s:\_-].*)*"
-
-    pattern_epsg = rf"^{ignore_start}(?:EPSG)*[,.\s:\_-]*(\d+){ignore_end}$"
-    pattern_gk = rf"^{ignore_start}GK[,.\s:\_-]*(19|2[0-9]|3[0-1]){ignore_end}$"
-    pattern_tm = rf"^{ignore_start}TM[,.\s:\_-]*(3(?:5FIN|[4-6])){ignore_end}$"
-    pattern_kkj = rf"^{ignore_start}(KKJ[0-5]){ignore_end}$"
-
-    match_epsg = re.search(pattern_epsg, input_string, re.IGNORECASE)
-    match_gk = re.search(pattern_gk, input_string, re.IGNORECASE)
-    match_tm = re.search(pattern_tm, input_string, re.IGNORECASE)
-    match_kkj = re.search(pattern_kkj, input_string, re.IGNORECASE)
-
-    if match_epsg:
-        output_string = "EPSG:{}".format(match_epsg.group(1))
-    elif match_gk:
-        output_string = "ETRS-GK{}".format(match_gk.group(1))
-    elif match_tm:
-        output_string = "ETRS-TM{}".format(match_tm.group(1))
-    elif match_kkj:
-        output_string = match_kkj.group(0)
-    else:
-        output_string = input_string
-
-    return output_string
+    try:
+        crs = pyproj.CRS.from_user_input(input_string)
+    except pyproj.exceptions.CRSError as e:
+        s = e.args[0]
+        if "several objects matching this name" not in s:
+            raise
+        s = s[s.rfind(": ") + 2 : -1]
+        projections = s.split(",")
+        logger.warn(
+            f"Several coordinate systems match {projections} input string {input_string}, assuming {projections[0]}"
+        )
+        crs = pyproj.CRS.from_user_input(projections[0])
+    return crs.name
 
 
 def flip_xy(holes):
@@ -163,6 +134,9 @@ def proj_porvoo(x, y):
     return x, y, output_epsg
 
 
+LOCAL_SYSTEMS = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
+
+
 def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     """Transform coordinate points from input to output, default output WGS84.
 
@@ -171,41 +145,35 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     x : list or float
     x : list or float
     input_system : str
-        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
-        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system.
     output_system : str
-        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
-        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system.
 
     Returns
     -------
     x : list or float
     y : list or float
     """
-    input_system = input_system.upper()
+    input_system = str(input_system).upper()
     if "EPSG" in input_system:
         input_epsg = input_system
     else:
-        name = coord_string_fix(input_system)
-        if name in EPSG_SYSTEMS:
-            input_epsg = EPSG_SYSTEMS[name]
-        else:
+        input_epsg = coord_str_recognize(input_system)
+        if "unrecognized format" in input_epsg.lower():
             raise ValueError(
-                "Invalid input_system parameter {}, possible systems: {}".format(
-                    name, list(EPSG_SYSTEMS.keys())
+                "Unrecognized format / unknown name for input_system parameter {}".format(
+                    input_epsg
                 )
             )
-    output_system = output_system.upper()
+    output_system = str(output_system).upper()
     if "EPSG" in output_system:
         output_epsg = output_system
     else:
-        name = coord_string_fix(output_system)
-        if name in EPSG_SYSTEMS:
-            output_epsg = EPSG_SYSTEMS[name]
-        else:
+        output_epsg = coord_str_recognize(output_system)
+        if "unrecognized format" in output_epsg.lower():
             raise ValueError(
-                "Invalid output_system parameter {}, possible systems: {}".format(
-                    name, list(EPSG_SYSTEMS.keys())
+                "Unrecognized format / unknown name for output_system parameter {}".format(
+                    input_epsg
                 )
             )
 
@@ -247,21 +215,18 @@ def check_hole_in_country(holes, country="FI"):
         input_str = holes.fileheader.KJ["Coordinate system"]
     else:
         raise ValueError("holes -parameter is unknown input type")
-    input_str = coord_string_fix(input_str)
+    input_str = coord_str_recognize(input_str)
 
-    if input_str in EPSG_SYSTEMS:
-        input_epsg = EPSG_SYSTEMS[input_str]
-
-        bbox = COUNTRY_BBOX[country][1].copy()
-        if input_epsg != "EPSG:4326":
-            key = ("EPSG:4326", input_epsg)
-            if key in TRANSFORMERS:
-                transf = TRANSFORMERS[key]
-            else:
-                transf = Transformer.from_crs("EPSG:4326", input_epsg, always_xy=True)
-                TRANSFORMERS[key] = transf
-            bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
-            bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
+    bbox = COUNTRY_BBOX[country][1].copy()
+    if input_str != "EPSG:4326":
+        key = ("EPSG:4326", input_str)
+        if key in TRANSFORMERS:
+            transf = TRANSFORMERS[key]
+        else:
+            transf = Transformer.from_crs("EPSG:4326", input_str, always_xy=True)
+            TRANSFORMERS[key] = transf
+        bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
+        bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
     else:
         raise ValueError("Input has to be in known epsg system.", input_str)
@@ -416,14 +381,13 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     hole : Hole -object
         Copy of hole with coordinates transformed
     """
-    epsg_names = {key: value for value, key in EPSG_SYSTEMS.items()}
-    other_systems = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_porvoo}
-
     hole_copy = deepcopy(hole)
     if not isinstance(hole, Hole):
         raise ValueError("hole -parameter invalid")
-    if output_epsg not in epsg_names:
-        raise ValueError("Unknown or not implemented EPSG as output_epsg")
+
+    output_epsg = coord_str_recognize(output_epsg)
+    if "unrecognized format" in output_epsg.lower():
+        raise ValueError("Unrecognized format / unknown name as output_epsg")
     if (
         hasattr(hole_copy, "fileheader")
         and hasattr(hole_copy.fileheader, "KJ")
@@ -431,7 +395,7 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         and hasattr(hole_copy, "header")
     ):
         input_str = hole_copy.fileheader.KJ["Coordinate system"]
-        input_str = coord_string_fix(input_str)
+        input_str = coord_str_recognize(input_str)
 
     else:
         raise ValueError("Hole has no coordinate system")
@@ -447,25 +411,22 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     else:
         raise ValueError("Hole has no coordinates")
 
-    if input_str in EPSG_SYSTEMS:
-        input_epsg = EPSG_SYSTEMS[input_str]
-    elif input_str in other_systems:
-        func = other_systems[input_str]
-        x, y, input_epsg = func(x, y)
-    else:
-        msg = "Unknown or not implemented EPSG in holes {}".format(input_str)
-        raise ValueError(msg)
+    if input_str in LOCAL_SYSTEMS:
+        func = LOCAL_SYSTEMS[input_str]
+        x, y, input_str = func(x, y)
+    elif "unrecognized format" in input_str.lower():
+        raise ValueError("Unrecognized format / unknown name EPSG in holes {}".format(input_str))
 
-    key = (input_epsg, output_epsg)
+    key = (input_str, output_epsg)
     if key in TRANSFORMERS:
         transf = TRANSFORMERS[key]
     else:
-        transf = Transformer.from_crs(input_epsg, output_epsg, always_xy=True)
+        transf = Transformer.from_crs(input_str, output_epsg, always_xy=True)
         TRANSFORMERS[key] = transf
     y, x = transf.transform(y, x)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
-    hole_copy.fileheader.KJ["Coordinate system"] = epsg_names[output_epsg]
+    hole_copy.fileheader.KJ["Coordinate system"] = output_epsg
 
     if not output_height:
         return hole_copy
@@ -501,8 +462,7 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     ----------
     holes : holes or hole -object
     output : str
-        ESPG code, 'EPSG:XXXX' or name of the coordinate system. Check
-        pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
+        ESPG code, 'EPSG:XXXX' or name of the coordinate system.
     check : str
         Check if points are inside area. Raises warning into logger.
         Possible values: 'Finland', 'Estonia', False
@@ -521,16 +481,10 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     one_hole_gk24 = project_holes(one_hole, output_epsg="EPSG:3878", check="Estonia")
     """
     output = str(output).upper()
-    name = coord_string_fix(output)
-    if re.search(r"^EPSG:\d+$", name):
-        output_epsg = name
-    elif name in EPSG_SYSTEMS:
-        output_epsg = EPSG_SYSTEMS[name]
-    else:
+    output_epsg = coord_str_recognize(output)
+    if "unknown" in output_epsg.lower():
         raise ValueError(
-            "Invalid output parameter {}, possible systems: {}".format(
-                name, list(EPSG_SYSTEMS.keys())
-            )
+            "Unrecognized format / unknown name for output parameter {}".format(output)
         )
     if isinstance(holes, Holes):
         proj_holes = []

@@ -12,7 +12,7 @@ from pathlib import Path
 import chardet
 import requests
 from owslib.wfs import WebFeatureService
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 
 from ..exceptions import PathNotFoundError
 from .coord_utils import project_points
