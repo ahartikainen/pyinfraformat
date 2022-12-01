@@ -450,7 +450,7 @@ def identifiers():
             [True, True],
         ),
         "NO": (
-            ["Depth  info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
+            ["Depth info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
             [custom_float, str, custom_float, str],
             [True, True, True, False],
         ),
