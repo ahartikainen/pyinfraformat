@@ -116,7 +116,7 @@ def test_append_extend_slices():
         one_hole + "This is not a hole"
 
 
-def test_filter_by_coordinates():
+def test_get_endings():
     holes = get_object()
     endings_df = holes.get_endings(False)
     assert len(endings_df) <= len(holes)
