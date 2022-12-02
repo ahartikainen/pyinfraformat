@@ -373,9 +373,9 @@ class Holes:
     def get_endings(self, check_height=True):
         """Get dataframe with every holes last data row with soil observation."""
         if check_height:
-            if len(set([hole.fileheader.KJ["Height reference"] for hole in self])) != 1:
+            if len({hole.fileheader.KJ["Height reference"] for hole in self}) != 1:
                 raise ValueError("Holes must have uniform height reference.")
-            if any([hole.fileheader.KJ["Height reference"] in {"?", "Unknown"} for hole in self]):
+            if any((hole.fileheader.KJ["Height reference"] in {"?", "Unknown"} for hole in self)):
                 raise ValueError("Unknown height reference system.")
         soil_observations = []
         for hole in self:
@@ -418,7 +418,7 @@ class Holes:
                         (point_x, point_y, z_start, z_start - kallio, abbrev, ending)
                     )
             elif abbrev in ["NO", "NE"]:
-                if not ("Depth info 1 (m)" in hole.survey.data[-1]):
+                if "Depth info 1 (m)" not in hole.survey.data[-1]:
                     continue
                 kallio = max(
                     [
@@ -433,10 +433,8 @@ class Holes:
             elif abbrev in ["KE", "KR"]:
                 # Bedrock analysis drillings
                 pass
-                # kallio = max([hole.survey.data[-1][ "Final depth (m)"], hole.survey.data[-1]["Initial depth (m)"]])
-                # l_.append((x, y, z_start, z_start-kallio, abbrev, ending))
             else:
-                if not ("Depth (m)" in hole.survey.data[-1]):
+                if "Depth (m)" not in hole.survey.data[-1]:
                     continue
                 kallio = hole.survey.data[-1]["Depth (m)"]
                 soil_observations.append(
