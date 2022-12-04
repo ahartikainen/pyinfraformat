@@ -1,6 +1,7 @@
 """Core function for pyinfraformat."""
 import logging
 import os
+import pprint
 from datetime import datetime
 from gc import collect
 from numbers import Integral
@@ -318,13 +319,18 @@ class Holes:
         else:
             to_infraformat(self.holes, path)
 
-    def plot_map(self, render_holes=True):
+    def plot_map(self, render_holes=True, progress_bar=True, popup_size=(3, 3)):
         """Plot a leaflet map from holes with popup hole plots.
 
         Parameters
         ----------
+        holes : holes object
         render_holes : bool
             Render popup diagrams for holes
+        progress_bar : bool
+            Show tqdm progress bar while adding/rendering holes
+        popup_size : tuple
+            size in inches of popup figure
 
         Returns
         -------
@@ -332,7 +338,7 @@ class Holes:
         """
         from ..plots.maps import plot_map as _plot_map
 
-        return _plot_map(self, render_holes)
+        return _plot_map(self, render_holes, progress_bar, popup_size)
 
     def project(self, output="EPSG:4326", check="Finland", output_height=False):
         """Transform holes -objects coordinates.
@@ -364,6 +370,79 @@ class Holes:
 
         return project_holes(self, output, check, output_height)
 
+    def get_endings(self, check_height=True):
+        """Get dataframe with every holes last data row with soil observation."""
+        if check_height:
+            if len({hole.fileheader.KJ["Height reference"] for hole in self}) != 1:
+                raise ValueError("Holes must have uniform height reference.")
+            if any((hole.fileheader.KJ["Height reference"] in {"?", "Unknown"} for hole in self)):
+                raise ValueError("Unknown height reference system.")
+        soil_observations = []
+        for hole in self:
+            if not (
+                hasattr(hole, "header")
+                and hasattr(hole.header, "XY")
+                and ("X" in hole.header.XY)
+                and ("Y" in hole.header.XY)
+                and "Z-start" in hole.header.XY
+            ):
+                continue
+            if not (
+                hasattr(hole, "survey")
+                and hasattr(hole.survey, "data")
+                and len(hole.survey.data) > 0
+            ):
+                continue
+            point_x = hole.header.XY["X"]
+            point_y = hole.header.XY["Y"]
+            z_start = hole.header.XY["Z-start"]
+            abbrev = hole.header.TT["Survey abbreviation"].upper()
+            ending = hole.header["-1"]["Ending"].upper()
+            if abbrev == "PO" and ending == "KA":
+                df = hole.dataframe
+                if "data_Soil type" in df.columns:
+                    if df["data_Soil type"].str.upper().iloc[0] == "KA":
+                        if df["data_Depth (m)"].iloc[0] > 0.5:
+                            soil_depth = df["data_Depth (m)"].iloc[0]
+                        else:
+                            soil_depth = 0.0
+                    elif sum(df["data_Soil type"].str.upper() == "KA") == 0:
+                        logger.warning(
+                            "Hole enging 'KA' without any 'KA' soil observations, omitting."
+                        )
+                    else:
+                        slicer = df["data_Soil type"].str.upper() == "KA"
+                        slicer = slicer.shift(-1, fill_value=False)
+                        soil_depth = df[slicer]["data_Depth (m)"].iloc[-1]
+                    soil_observations.append(
+                        (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
+                    )
+            elif abbrev in ["NO", "NE"]:
+                if "Depth info 1 (m)" not in hole.survey.data[-1]:
+                    continue
+                soil_depth = max(
+                    [
+                        hole.survey.data[-1]["Depth info 1 (m)"],
+                        hole.survey.data[-1]["Depth info 2 (m)"],
+                    ]
+                )
+                soil_observations.append(
+                    (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
+                )
+
+            elif abbrev in ["KE", "KR"]:
+                # Bedrock analysis drillings
+                pass
+            else:
+                if "Depth (m)" not in hole.survey.data[-1]:
+                    continue
+                soil_depth = hole.survey.data[-1]["Depth (m)"]
+                soil_observations.append(
+                    (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
+                )
+        columns = ["X", "Y", "Z-start", "Last_soil", "Abbreviation", "Ending"]
+        return pd.DataFrame.from_records(soil_observations, columns=columns)
+
 
 class Hole:
     """Class to hold Hole information."""
@@ -376,9 +455,8 @@ class Hole:
         self._illegal = Illegal()
 
     def __str__(self):
-        from pprint import pformat
 
-        msg = pformat(self.header.__dict__)
+        msg = str(self.header).replace("\n", "\n  ")
         return "Infraformat Hole -object:\n  {}".format(msg)
 
     def __repr__(self):
@@ -483,7 +561,9 @@ class FileHeader:
         self.keys.add(key)
 
     def __str__(self):
-        msg = "FileHeader object - Fileheader contains {} items".format(len(self.keys))
+        msg = "FileHeader object - Fileheader contains {} items\n  {}".format(
+            len(self.keys), pprint.pformat(self.__dict__)
+        )
         return msg
 
     def __repr__(self):
@@ -521,6 +601,14 @@ class Header:
         setattr(self, key, values)
         self.keys.add(key)
 
+    def __str__(self):
+
+        msg = pprint.pformat(self.__dict__)
+        return "Hole Header -object:\n  {}".format(msg)
+
+    def __repr__(self):
+        return self.__str__()
+
     def __getitem__(self, attr):
         if attr in self.keys:
             return getattr(self, attr)
@@ -538,6 +626,14 @@ class InlineComment:
         """Add inline comments to object."""
         self.data.append((key, values))
 
+    def __str__(self):
+
+        msg = pprint.pformat(self.__dict__)
+        return "Hole InlineComment -object:\n  {}".format(msg)
+
+    def __repr__(self):
+        return self.__str__()
+
     def __getitem__(self, attr):
         return self.data[attr]
 
@@ -552,6 +648,14 @@ class Survey:
         """Add survey information to object."""
         self.data.append(values)
 
+    def __str__(self):
+
+        msg = pprint.pformat(self.__dict__)
+        return "Hole Survey -object:\n  {}".format(msg)
+
+    def __repr__(self):
+        return self.__str__()
+
     def __getitem__(self, attr):
         return self.data[attr]
 
@@ -565,6 +669,14 @@ class Illegal:
     def add(self, values):
         """Add illegal lines to object."""
         self.data.append(values)
+
+    def __str__(self):
+
+        msg = pprint.pformat(self.__dict__)
+        return "Hole Illegal -object:\n  {}".format(msg)
+
+    def __repr__(self):
+        return self.__str__()
 
     def __getitem__(self, attr):
         return self.data[attr]
