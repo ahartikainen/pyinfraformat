@@ -40,13 +40,13 @@ def test_iteration():
 def test_subobject_str():
     holes = get_object()
     hole = holes[0]
-    assert len(hole.__str__().splitlines()) == 54
+    assert len(hole.__str__().splitlines()) > 40
 
 
 def test_subobject_repr():
     holes = get_object()
     hole = holes[0]
-    assert len(hole.__repr__().splitlines()) == 54
+    assert len(hole.__repr__().splitlines()) > 40
 
 
 def test_subobject_pandas():
@@ -57,10 +57,10 @@ def test_subobject_pandas():
 
 def test_object_pandas():
     holes = get_object()
-    assert holes.dataframe.shape == (258, 95)
+    assert holes.dataframe.shape == (258, 94)
     holes = get_object()
     holes._lowmemory = True
-    assert holes._get_dataframe().shape == (258, 95)
+    assert holes._get_dataframe().shape == (258, 94)
 
 
 def test_drop_duplicates():
@@ -114,3 +114,9 @@ def test_append_extend_slices():
         holes + "This is a holes"
     with pytest.raises(ValueError):
         one_hole + "This is not a hole"
+
+
+def test_get_endings():
+    holes = get_object()
+    endings_df = holes.get_endings(False)
+    assert len(endings_df) <= len(holes)
