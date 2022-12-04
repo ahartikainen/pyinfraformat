@@ -484,6 +484,7 @@ def parse_hole(str_list, robust=False):
     """
 
     def handle_illegal(linenum, line, hole):
+        '''Log warnings, add illegals to holes, raise errors.'''
         msg = 'Illegal line found! Line {}: "{}"'.format(
             linenum, line if len(line) < 100 else line[:100] + "..."
         )
@@ -493,7 +494,6 @@ def parse_hole(str_list, robust=False):
         else:
             logger.critical(msg)
             raise ValueError(msg)
-        return
 
     _, header_identifiers, inline_identifiers, survey_identifiers = identifiers()
 
@@ -562,7 +562,7 @@ def parse_hole(str_list, robust=False):
             else:
                 illegal_line = True
                 handle_illegal(linenum, line, hole)  # pylint: disable=protected-access
-        except (ValueError, KeyError) as error:
+        except (ValueError, KeyError):
             if not illegal_line:
                 handle_illegal(linenum, line, hole)
             elif not robust:
