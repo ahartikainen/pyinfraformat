@@ -399,9 +399,9 @@ class Hole:
         """Add header to object."""
         self.header.add(key, header)
 
-    def add_inline_comment(self, key, comment):
-        """Add inline comment to object."""
-        self.inline_comment.add(key, comment)
+    def add_inline(self, key, inline):
+        """Add inline object to object."""
+        self.inline_comment.add(key, inline)
 
     def add_survey(self, survey):
         """Add survey information to object."""

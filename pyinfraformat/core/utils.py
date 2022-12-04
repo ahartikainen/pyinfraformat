@@ -132,6 +132,8 @@ def identifiers():
     inline_identifiers = {
         "HM": (["obs"], [str], [False]),
         "TX": (["free text"], [str], [False]),
+        "LB": (["test type", "test result", "unit"], [str, str, str], [True, True, False]),
+        "RK": (["sieve", "pass percentage"], [custom_float, custom_float], [True, True]),
         "HT": (["hidden text"], [str], [False]),
         "EM": (["Unofficial soil type"], [str], [False]),
         "VH": (["Water level observation"], [], [False]),
