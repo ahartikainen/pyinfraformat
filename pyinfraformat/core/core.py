@@ -403,9 +403,9 @@ class Holes:
                 if "data_Soil type" in df.columns:
                     if df["data_Soil type"].str.upper().iloc[0] == "KA":
                         if df["data_Depth (m)"].iloc[0] > 0.5:
-                            kallio = df["data_Depth (m)"].iloc[0]
+                            soil_depth = df["data_Depth (m)"].iloc[0]
                         else:
-                            kallio = 0.0
+                            soil_depth = 0.0
                     elif sum(df["data_Soil type"].str.upper() == "KA") == 0:
                         logger.warning(
                             "Hole enging 'KA' without any 'KA' soil observations, omitting."
@@ -413,21 +413,21 @@ class Holes:
                     else:
                         slicer = df["data_Soil type"].str.upper() == "KA"
                         slicer = slicer.shift(-1, fill_value=False)
-                        kallio = df[slicer]["data_Depth (m)"].iloc[-1]
+                        soil_depth = df[slicer]["data_Depth (m)"].iloc[-1]
                     soil_observations.append(
-                        (point_x, point_y, z_start, z_start - kallio, abbrev, ending)
+                        (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
                     )
             elif abbrev in ["NO", "NE"]:
                 if "Depth info 1 (m)" not in hole.survey.data[-1]:
                     continue
-                kallio = max(
+                soil_depth = max(
                     [
                         hole.survey.data[-1]["Depth info 1 (m)"],
                         hole.survey.data[-1]["Depth info 2 (m)"],
                     ]
                 )
                 soil_observations.append(
-                    (point_x, point_y, z_start, z_start - kallio, abbrev, ending)
+                    (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
                 )
 
             elif abbrev in ["KE", "KR"]:
@@ -436,9 +436,9 @@ class Holes:
             else:
                 if "Depth (m)" not in hole.survey.data[-1]:
                     continue
-                kallio = hole.survey.data[-1]["Depth (m)"]
+                soil_depth = hole.survey.data[-1]["Depth (m)"]
                 soil_observations.append(
-                    (point_x, point_y, z_start, z_start - kallio, abbrev, ending)
+                    (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
                 )
         columns = ["X", "Y", "Z-start", "Last_soil", "Abbreviation", "Ending"]
         return pd.DataFrame.from_records(soil_observations, columns=columns)

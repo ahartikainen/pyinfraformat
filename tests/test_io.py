@@ -139,10 +139,13 @@ def test_reading_empty():
 @pytest.mark.skipif(not ping_gtk(), reason="GTK DB not available")
 def test_gtk_wfs():
     bbox = (60.2, 24.8, 60.215, 24.83)
-    holes = from_gtk_wfs(bbox, "EPSG:4326")
+    holes = from_gtk_wfs(bbox, "EPSG:4326", progress_bar=True)
     assert len(Holes(holes[:10]).dataframe) > 0
     assert len(holes[0].dataframe) > 0
     assert isinstance(holes, Holes)
+    df_endings = holes.get_endings(False)
+    assert len(df_endings) > 0
+
 
     bbox = [6686269, 392073, 6686279, 392083]
     holes = from_gtk_wfs(bbox, "TM35fin", progress_bar=True)  # malformated json
