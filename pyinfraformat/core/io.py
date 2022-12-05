@@ -484,7 +484,7 @@ def parse_hole(str_list, robust=False):
     """
 
     def handle_illegal(linenum, line, hole):
-        '''Log warnings, add illegals to holes, raise errors.'''
+        """Log warnings, add illegals to holes, raise errors."""
         msg = 'Illegal line found! Line {}: "{}"'.format(
             linenum, line if len(line) < 100 else line[:100] + "..."
         )
