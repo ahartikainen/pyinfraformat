@@ -1,4 +1,5 @@
 """Core function for pyinfraformat."""
+import fnmatch
 import logging
 import os
 import pprint
@@ -443,6 +444,41 @@ class Holes:
         columns = ["X", "Y", "Z-start", "Last_soil", "Abbreviation", "Ending"]
         return pd.DataFrame.from_records(soil_observations, columns=columns)
 
+    def get_list(self):
+        """Get survey data, hole header and fileheader as list of dicts."""
+        return_list = []
+        for hole in self:
+            d_header = hole._get_header_dict()
+            dict_list = hole._get_data_list()
+            d_fileheader = hole._get_fileheader_dict()
+            return_list.append({"header": d_header, "fileheader": d_fileheader, "data": dict_list})
+        return return_list
+
+    def get_columns(self):
+        """Get survey data, header and fileheader columns."""
+        return_set = set()
+        for hole in self:
+            return_set = return_set.union(hole.get_columns())
+        return return_set
+
+    def get_dataframe(self, skip_columns=False):
+        """Get survey data, hole header and fileheader as DataFrame.
+
+        Paramaters
+        ----------
+        skip_columns : list, str or False
+            Columns that will be excluded. Not case sensitive.
+            Uses wildcards (* and ?) to match strings (see fnmatch).
+            See get_columns() for columns included.
+
+        Examples
+        --------
+        >>> holes.get_dataframe(skip_columns="*laboratory*")
+        >>> holes.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+        """
+        df_list = [hole.get_dataframe(skip_columns) for hole in self.holes]
+        return pd.concat(df_list, axis=0, sort=False)
+
 
 class Hole:
     """Class to hold Hole information."""
@@ -547,6 +583,100 @@ class Hole:
         from ..plots.holes import plot_hole
 
         return plot_hole(self, output, figsize)
+
+    def _get_header_dict(self):
+        d_header = {}
+        for key in self.header.keys:
+            for key_, item in getattr(self.header, key).items():
+                d_header["{}_{}".format(key, key_)] = item
+        return d_header
+
+    def _get_data_list(self):
+        dict_list = self.survey.data
+        return dict_list
+
+    def _get_fileheader_dict(self):
+        d_fileheader = {}
+        for key in self.fileheader.keys:
+            for key_, item in getattr(self.fileheader, key).items():
+                d_fileheader["{}_{}".format(key, key_)] = item
+        return d_fileheader
+
+    def get_dict(self):
+        """Get survey data, hole header and fileheader as dict."""
+        d_header = self._get_header_dict()
+        dict_list = self._get_data_list()
+        d_fileheader = self._get_fileheader_dict()
+        return {"header": d_header, "fileheader": d_fileheader, "data": dict_list}
+
+    def get_columns(self):
+        """Get survey data, header and fileheader columns."""
+        data = set("data_" + item for row in self.survey.data for item in row)
+        fileheader = {
+            f"fileheader_{key}_{item}"
+            for key in self.fileheader.keys
+            for item in getattr(self.fileheader, key).keys()
+        }
+        header = {
+            f"header_{key}_{item}"
+            for key in self.header.keys
+            for item in getattr(self.header, key).keys()
+        }
+        return data.union(fileheader).union(header)
+
+    def get_dataframe(self, skip_columns=False):
+        """Get survey data, hole header and fileheader as DataFrame.
+
+        Paramaters
+        ----------
+        skip_columns : list, str or False
+            Columns that will be excluded. Not case sensitive.
+            Uses wildcards (* and ?) to match strings (see fnmatch).
+            See get_columns() for columns included.
+
+        Examples
+        --------
+        >>> hole.get_dataframe(skip_columns="*laboratory*")
+        >>> hole.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+        """
+        if skip_columns:
+            skip_columns = (
+                [
+                    skip_columns,
+                ]
+                if isinstance(skip_columns, str)
+                else skip_columns
+            )
+        dict_list = self._get_data_list()
+        dict_list = [{"data_" + item: row[item] for item in row} for row in dict_list]
+        if skip_columns:
+            skip_data = []
+            for row in skip_columns:
+                for data in dict_list:
+                    keys = data.keys()
+                    for key in keys:
+                        skip_data.extend(fnmatch.filter(data, row))
+            dict_list = [
+                {item: row[item] for item in row if item not in skip_data} for row in dict_list
+            ]
+        dict_list = [item for item in dict_list if len(item) > 0]
+        df = pd.DataFrame(dict_list if len(dict_list) > 0 else [{"dummy": 0}])
+
+        d_header = self._get_header_dict()
+        d_header = {"header_" + key: d_header[key] for key in d_header}
+        for key in d_header:
+            if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
+                continue
+            df[key] = d_header[key]
+
+        d_fileheader = self._get_fileheader_dict()
+        d_fileheader = {"fileheader_" + key: d_header[key] for key in d_header}
+        for key in d_fileheader:
+            if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
+                continue
+            df[key] = d_fileheader[key]
+
+        return df if len(dict_list) > 0 else df.drop("dummy", axis=1)
 
 
 class FileHeader:
