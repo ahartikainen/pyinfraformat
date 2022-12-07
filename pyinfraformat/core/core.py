@@ -408,7 +408,7 @@ class Holes:
                             soil_depth = 0.0
                     elif sum(df["data_Soil type"].str.upper() == "KA") == 0:
                         logger.warning(
-                            "Hole enging 'KA' without any 'KA' soil observations, omitting."
+                            "Hole ending 'KA' without any 'KA' soil observations, omitting."
                         )
                     else:
                         slicer = df["data_Soil type"].str.upper() == "KA"

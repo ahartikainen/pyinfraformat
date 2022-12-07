@@ -49,6 +49,58 @@ ABBREVIATIONS = {
     "Missing survey abbreviation": "Missing survey abbreviation",
 }
 
+LAB_ABBREVIATIONS = {
+    "w": "Vesipitoisuus %",
+    "Hu": "Humuspitoisuus %",
+    "VG": "Tilavuuspaino kN/m3",
+    "Rs": "Kiintotiheys t/m3",
+    "n": "Huokoisuus -",
+    "e": "Huokosluku -",
+    "Sr": "Kyllästysaste %",
+    "D": "Tiiviysaste %",
+    "Wp": "Kieritysraja %",
+    "Wl": "Juoksuraja %",
+    "Ip": "Plastisuusluku -",
+    "k": "Vedenläpäisevyys m/s",
+    "Hc": "Kapillaarinen nousukorkeus m",
+    "d10": "Tehokas raekoko d10 -",
+    "U": "Tasaisuusluku d60:d10 -",
+    "KIRK": "Kivinäyte rakeisuus -",
+    "KIRs": "Kivinäyte kiintotiheys t/m3",
+    "KIR": "Kivinäyte irtotiheys t/m3",
+    "KIHu": "Kivinäyte humuspitoisuus %",
+    "KILP": "Kivinäyte lietepitoisuus %",
+    "KIS": "Kivinäyte muotoarvo -",
+    "KILA": "Kivinäyte Los Angeles-luku -",
+    "KIHA": "Kivinäyte parannettu haurausarvo -",
+    "KIHI": "Kivinäyte hioutuvuusluku cm3",
+    "KIMP": "Kivinäyte murtopintaluku -",
+    "m1": "Moduuliluku normaalisti konsolidoitunut -",
+    "m2": "Moduuliluku, ylikonsolidoitunut -",
+    "bet1": "Jännityseksponentti, normaalisti konsolidoitunut maakerros -",
+    "bet2": "Jännityseksponentti, ylikonsolidoitunut maakerros -",
+    "cv": "Konsolidaatiokerroin vertikaalinen m2 /a",
+    "ch": "Konsolidaatiokerroin horisontaalinen m2 /a",
+    "F": "Hienousluku %",
+    "sk": "Leikkauslujuus, kartiokoe kPa",
+    "St": "Sensitiivisyys -",
+    "sp": "Leikkauslujuus, puristuskoe kPa",
+    "rak": "Rakeisuus -",
+    "R": "Irtotiheys (t/m3 ) VG=R*g",
+    "Rd": "Kuivatiheys (t/m3 )",
+    "Vd": "Kuivatilavuus paino (kN/m3 ) Vd=Rd*g",
+    "Dr": "Suhteellinen tiiviys -",
+    "Ph": "Ph-arvo -",
+    "So": "Vallitseva jännitys (kN/m2 )",
+    "Sc": "Konsolidaatio jännitys (kN/m2 )",
+    "Mv": "Kokoonpuristuvuuskerroin (m2 /MN)",
+    "M": "Kokoonpuristuvuusmoduuli (MN/m2 )",
+    "Cc": "Kokoonpuristuvuusindeksi -",
+    "P": "Poissonin luku -",
+    "A": "Huokospaine parametri -",
+    "B": "Huokospaine parametri -",
+}
+
 
 def is_number(number_str):
     """Test if number_str is number including infraformat logic."""
@@ -660,6 +712,13 @@ def info_fi():
             F   Suuntakulma (aste)
             F   Pystykulma (aste)
             i   Halkaisija (mm)
+        LB: Laboratoriotutkimukset / Kallionäytetutkimus
+            T    Laboratoriolyhenne / Kallionäyteattribuutin nimi
+            T    Tutkimustulos
+            t    Yksikkö (esim. kg)
+        RK: Rakeisuuskäyrä
+            F    Seulamillimetri
+            F    Läpäisyprosentti
 
         TUTKIMUSTAPATUNNUKSET
         PA/WST: Painokairaus
@@ -798,13 +857,6 @@ def info_fi():
             T    Käyttäjän antama näytteen tunnus
             F    Näytteen syvyystieto2 (m)
             t    Maalaji
-        LB: Laboratoriotutkimukset / Kallionäytetutkimus
-            T    Laboratoriolyhenne / Kallionäyteattribuutin nimi
-            T    Tutkimustulos
-            t    Yksikkö (esim. kg)
-        RK: Rakeisuuskäyrä
-            F    Seulamillimetri
-            F    Läpäisyprosentti
     """
     return helper_str
 

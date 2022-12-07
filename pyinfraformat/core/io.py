@@ -561,7 +561,7 @@ def parse_hole(str_list, robust=False):
                 hole.add_survey(survey)
             else:
                 illegal_line = True
-                handle_illegal(linenum, line, hole)  # pylint: disable=protected-access
+                handle_illegal(linenum, line, hole)
         except (ValueError, KeyError):
             if not illegal_line:
                 handle_illegal(linenum, line, hole)
