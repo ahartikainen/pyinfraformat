@@ -228,30 +228,6 @@ class Holes:
         """Check if hole headers/datas are unique; drop duplicates."""
         raise NotImplementedError
 
-    @property
-    def dataframe(self):
-        """Create pandas.DataFrame."""
-        return self._get_dataframe()
-
-    # pylint: disable=protected-access, attribute-defined-outside-init
-    def _get_dataframe(self):
-        """Build and combine DataFrame."""
-        if not self.holes:
-            return pd.DataFrame()
-        elif self._lowmemory:
-            tmp_df = pd.DataFrame()
-            for hole in self.holes:
-                hole_df = hole._get_dataframe(update=True).copy()
-                tmp_df = pd.concat((tmp_df, hole_df), axis=0, sort=False)
-                del hole._dataframe, hole_df
-                collect()
-            self._dataframe = tmp_df
-        else:
-            df_list = [hole._get_dataframe(update=True) for hole in self.holes]
-            self._dataframe = pd.concat(df_list, axis=0, sort=False)
-        collect()
-        return self._dataframe
-
     def to_csv(self, path, **kwargs):
         """Save data in table format to CSV.
 
@@ -524,47 +500,6 @@ class Hole:
     def _add_illegal(self, illegal):
         """Add illegal lines to object."""
         self._illegal.add(illegal)
-
-    @property
-    def dataframe(self):
-        """Create pandas.DataFrame."""
-        return self._get_dataframe(update=False)
-
-    def _get_dataframe(self, update=False):
-        """Get pandas.DataFrame object.
-
-        Creates a new pandas.DataFrame if it doesn't exists of update is True
-
-        Paramaters
-        ----------
-        update : None or bool, optional, default None
-            None
-                Return earlier pandas.DataFrame if it exists and adds automatically new data
-            False
-                Return earlier pandas.DataFrame if it exists
-            True
-                Calculate a new pandas.DataFrame
-        """
-        if hasattr(self, "_dataframe") and not update:
-            if not self._dataframe.empty:  # pylint: disable=access-member-before-definition
-                return self._dataframe  # pylint: disable=access-member-before-definition
-
-        dict_list = self.survey.data
-        if not dict_list:
-            msg = "No data in Hole object. Header: {}".format(str(self))
-            logger.warning(msg)
-            return pd.DataFrame()
-        self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
-        self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
-        for key in self.header.keys:
-            self._dataframe.loc[:, "Date"] = self.header.date
-            for key_, item in getattr(self.header, key).items():
-                self._dataframe.loc[:, "header_{}_{}".format(key, key_)] = item
-        for key in self.fileheader.keys:
-            for key_, item in getattr(self.fileheader, key).items():
-                self._dataframe.loc[:, "fileheader_{}_{}".format(key, key_)] = item
-
-        return self._dataframe
 
     def plot(self, output="figure", figsize=(4, 4)):
         """Plot a diagram of a sounding with matplotlib.
