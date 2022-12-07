@@ -600,7 +600,7 @@ class Hole:
         df = pd.DataFrame(dict_list if len(dict_list) > 0 else [{"dummy": 0}])
 
         d_header = self.get_header_dict()
-        d_header = {"header_" + key: d_header[key] for key in d_header}
+        d_header = {"header_" + key: item for key, item in d_header.items()}
         for key in d_header:
             if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
                 continue
