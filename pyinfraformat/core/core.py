@@ -4,7 +4,6 @@ import logging
 import os
 import pprint
 from datetime import datetime
-from gc import collect
 from numbers import Integral
 
 import pandas as pd
@@ -424,9 +423,9 @@ class Holes:
         """Get survey data, hole header and fileheader as list of dicts."""
         return_list = []
         for hole in self:
-            d_header = hole._get_header_dict()
-            dict_list = hole._get_data_list()
-            d_fileheader = hole._get_fileheader_dict()
+            d_header = hole.get_header_dict()
+            dict_list = hole.get_data_list()
+            d_fileheader = hole.get_fileheader_dict()
             return_list.append({"header": d_header, "fileheader": d_fileheader, "data": dict_list})
         return return_list
 
@@ -519,18 +518,21 @@ class Hole:
 
         return plot_hole(self, output, figsize)
 
-    def _get_header_dict(self):
+    def get_header_dict(self):
+        """Get hole header as a dict."""
         d_header = {}
         for key in self.header.keys:
             for key_, item in getattr(self.header, key).items():
                 d_header["{}_{}".format(key, key_)] = item
         return d_header
 
-    def _get_data_list(self):
+    def get_data_list(self):
+        """Get survey data as a list of dict."""
         dict_list = self.survey.data
         return dict_list
 
-    def _get_fileheader_dict(self):
+    def get_fileheader_dict(self):
+        """Get fileheader as a dict."""
         d_fileheader = {}
         for key in self.fileheader.keys:
             for key_, item in getattr(self.fileheader, key).items():
@@ -539,9 +541,9 @@ class Hole:
 
     def get_dict(self):
         """Get survey data, hole header and fileheader as dict."""
-        d_header = self._get_header_dict()
-        dict_list = self._get_data_list()
-        d_fileheader = self._get_fileheader_dict()
+        d_header = self.get_header_dict()
+        dict_list = self.get_data_list()
+        d_fileheader = self.get_fileheader_dict()
         return {"header": d_header, "fileheader": d_fileheader, "data": dict_list}
 
     def get_columns(self):
@@ -582,7 +584,7 @@ class Hole:
                 if isinstance(skip_columns, str)
                 else skip_columns
             )
-        dict_list = self._get_data_list()
+        dict_list = self.get_data_list()
         dict_list = [{"data_" + item: row[item] for item in row} for row in dict_list]
         if skip_columns:
             skip_data = []
@@ -597,14 +599,14 @@ class Hole:
         dict_list = [item for item in dict_list if len(item) > 0]
         df = pd.DataFrame(dict_list if len(dict_list) > 0 else [{"dummy": 0}])
 
-        d_header = self._get_header_dict()
+        d_header = self.get_header_dict()
         d_header = {"header_" + key: d_header[key] for key in d_header}
         for key in d_header:
             if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
                 continue
             df[key] = d_header[key]
 
-        d_fileheader = self._get_fileheader_dict()
+        d_fileheader = self.get_fileheader_dict()
         d_fileheader = {"fileheader_" + key: d_header[key] for key in d_header}
         for key in d_fileheader:
             if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
