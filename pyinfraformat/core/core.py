@@ -592,7 +592,8 @@ class Hole:
                 for data in dict_list:
                     keys = data.keys()
                     for key in keys:
-                        skip_data.append(fnmatch.filter(key.lower(), row.lower()))
+                        if fnmatch.fnmatch(key.lower(), row.lower()):
+                            skip_data.append(key)
             dict_list = [
                 {item: row[item] for item in row if item not in skip_data} for row in dict_list
             ]
