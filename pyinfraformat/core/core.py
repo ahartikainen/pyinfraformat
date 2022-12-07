@@ -242,7 +242,7 @@ class Holes:
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with open(path, "w") as f:
-            self.dataframe.to_csv(f, **kwargs)
+            self.get_dataframe().to_csv(f, **kwargs)
 
     def to_excel(self, path, **kwargs):
         """Save data in table format to Excel.
@@ -259,7 +259,7 @@ class Holes:
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with pd.ExcelWriter(path) as writer:  # pylint: disable=abstract-class-instantiated
-            self.dataframe.to_excel(writer, **kwargs)
+            self.get_dataframe().to_excel(writer, **kwargs)
 
     def to_infraformat(self, path, split=False, namelist=None):
         """Save data in infraformat.
@@ -375,7 +375,7 @@ class Holes:
             abbrev = hole.header.TT["Survey abbreviation"].upper()
             ending = hole.header["-1"]["Ending"].upper()
             if abbrev == "PO" and ending == "KA":
-                df = hole.dataframe
+                df = hole.get_dataframe()
                 if "data_Soil type" in df.columns:
                     if df["data_Soil type"].str.upper().iloc[0] == "KA":
                         if df["data_Depth (m)"].iloc[0] > 0.5:

@@ -140,8 +140,8 @@ def test_reading_empty():
 def test_gtk_wfs():
     bbox = (60.2, 24.8, 60.215, 24.83)
     holes = from_gtk_wfs(bbox, "EPSG:4326", progress_bar=True)
-    assert len(Holes(holes[:10]).dataframe) > 0
-    assert len(holes[0].dataframe) > 0
+    assert len(Holes(holes[:3]).get_dataframe()) > 0
+    assert len(holes[0].get_dataframe()) > 0
     assert isinstance(holes, Holes)
     df_endings = holes.get_endings(False)
     assert len(df_endings) > 0
