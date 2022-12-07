@@ -146,7 +146,6 @@ def test_gtk_wfs():
     df_endings = holes.get_endings(False)
     assert len(df_endings) > 0
 
-
     bbox = [6686269, 392073, 6686279, 392083]
     holes = from_gtk_wfs(bbox, "TM35fin", progress_bar=True)  # malformated json
     assert len(holes) == 3

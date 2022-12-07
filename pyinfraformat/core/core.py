@@ -592,7 +592,7 @@ class Hole:
                 for data in dict_list:
                     keys = data.keys()
                     for key in keys:
-                        skip_data.extend(fnmatch.filter(data, row))
+                        skip_data.append(fnmatch.filter(key.lower(), row.lower()))
             dict_list = [
                 {item: row[item] for item in row if item not in skip_data} for row in dict_list
             ]
@@ -602,14 +602,18 @@ class Hole:
         d_header = self.get_header_dict()
         d_header = {"header_" + key: item for key, item in d_header.items()}
         for key in d_header:
-            if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
+            if skip_columns and any(
+                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+            ):
                 continue
             df[key] = d_header[key]
 
         d_fileheader = self.get_fileheader_dict()
         d_fileheader = {"fileheader_" + key: d_header[key] for key in d_header}
         for key in d_fileheader:
-            if skip_columns and any((fnmatch.fnmatch(key, item) for item in skip_columns)):
+            if skip_columns and any(
+                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+            ):
                 continue
             df[key] = d_fileheader[key]
 

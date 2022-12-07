@@ -59,10 +59,7 @@ def test_object_pandas():
     holes = get_object()
     assert holes.get_dataframe().shape == (258, 132)
     holes = get_object()
-    skip_columns=["*lab*", "*sieve*", "*header*"]
-    print(holes.get_dataframe(skip_columns).columns)
-    import warnings
-    warnings.warn(holes.get_dataframe(skip_columns).columns)
+    skip_columns = ["*lab*", "*sieve*", "*header*"]
     assert holes.get_dataframe(skip_columns).shape == (258, 43)
 
 
