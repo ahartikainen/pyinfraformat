@@ -24,8 +24,12 @@ logger.propagate = False
 
 __all__ = ["from_infraformat", "from_gtk_wfs"]
 
+TIMEOUT = 36_000
+
 # pylint: disable=redefined-argument-from-local
-def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
+def from_infraformat(
+    path=None, encoding="auto", extension=None, errors="ignore_holes", save_ignored=False
+):
     """Read inframodel file(s).
 
     Paramaters
@@ -37,8 +41,11 @@ def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
-    robust : bool, optional, default False
-        If True, enable reading files with ill-defined/illegal lines.
+    errors : 'ignore_lines', 'ignore_holes' or 'raise', default 'ignore_lines'
+        How to handle ill-defined/illegal lines or holes.
+    save_ignored : str, StringIO or False, default False
+        Append ignored holes or lines to a file. File path str or
+        a file-like object (stream) into built-in print function 'file' parameter.
 
     Returns
     -------
@@ -67,14 +74,14 @@ def from_infraformat(path=None, encoding="auto", extension=None, robust=True):
 
     hole_list = []
     for filepath in filelist:
-        holes = read(filepath, encoding=encoding, robust=robust)
+        holes = read(filepath, encoding=encoding, errors=errors, save_ignored=save_ignored)
         hole_list.extend(holes)
 
     return Holes(hole_list)
 
 
 def from_gtk_wfs(
-    bbox, coord_system, robust=True, maxholes=1000, progress_bar=False, timeout=36_000
+    bbox, coord_system, errors="ignore_holes", save_ignored=False, maxholes=1000, progress_bar=False
 ):
     """Get holes from GTK WFS.
 
@@ -85,9 +92,11 @@ def from_gtk_wfs(
         Is form (x1, y1, x2, y2).
     coord_system : str
         ESPG code of bbox, 'EPSG:XXXX' or name of the coordinate system.
-        Check pyinfraformat.coord_utils.EPSG_SYSTEMS for possible values.
-    robust : bool, optional, default False
-        If True, enable reading files with ill-defined/illegal lines.
+    errors : 'ignore_lines', 'ignore_holes' or 'raise', default 'ignore_lines'
+        How to handle ill-defined/illegal lines or holes.
+    save_ignored : str, StringIO or False, default False
+        Append ignored holes or lines to a file. File path str or
+        a file-like object (stream) into built-in print function 'file' parameter.
     maxholes : int, optional, default 1000
         Maximum number of points to get from wfs.
     progress_bar : bool
@@ -102,6 +111,12 @@ def from_gtk_wfs(
     holes = from_gtk_wfs(bbox, coord_system="EPSG:4326", robust=True)
     """
     # pylint: disable=invalid-name
+    if errors not in {"ignore_lines", "ignore_holes", "raise"}:
+        raise ValueError(
+            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes' or 'raise'."
+        )
+    collected_illegals = []
+
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
     wfs = WebFeatureService(url, version="2.0.0")
 
@@ -123,7 +138,7 @@ def from_gtk_wfs(
             "typenames": "Rajapinnat_GTK_Pohjatutkimukset_WFS:Pohjatutkimukset",
             "resultType": "hits",
         }
-        r = requests.get(url, params=params, timeout=timeout)
+        r = requests.get(url, params=params, timeout=TIMEOUT)
         for item in r.text.split():
             if "numberMatched" in item:
                 holes_found = int(item.split("=")[1].replace('"', ""))
@@ -133,7 +148,19 @@ def from_gtk_wfs(
 
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
             hole_str = line["properties"]["ALKUPERAINEN_DATA"].replace("\\r", "\n").splitlines()
-            hole = parse_hole(enumerate(hole_str), robust=robust)
+            if errors == "ignore_holes":
+                try:
+                    hole, illegal_rows = parse_hole(enumerate(hole_str), robust=False)
+                except ValueError:
+                    if save_ignored:
+                        collected_illegals.extend(hole_str)
+                    return False
+            elif errors == "ignore_lines":
+                hole, illegal_rows = parse_hole(enumerate(hole_str), robust=True)
+                if illegal_rows and save_ignored:
+                    collected_illegals.extend(illegal_rows)
+            else:
+                hole, illegal_rows = parse_hole(enumerate(hole_str), robust=False)
         else:
             hole = Hole()
         hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
@@ -162,7 +189,11 @@ def from_gtk_wfs(
             startindex=startindex,
             outputFormat="GEOJSON",
         )
-        data = wfs_io.read().decode("utf-8")
+        data = wfs_io.read()
+        # This is too slow, tested usually as utf-8
+        # encoding_dict = chardet.detect(data)
+        # data = data.decode(encoding=encoding_dict.get("encoding", "UTF-8"), errors="replace")
+        data = data.decode("UTF-8", errors="replace")
         data = (
             data.replace("\\", r"\\")
             .replace("strenght", "strength")
@@ -193,9 +224,9 @@ def from_gtk_wfs(
                     logger.warning(msg)
                 if hole:
                     holes.append(hole)
+                    if progress_bar:
+                        pbar.update(1)
                 i += 1
-                if progress_bar:
-                    pbar.update(1)
                 if len(holes) >= maxholes:
                     break
         else:
@@ -205,6 +236,16 @@ def from_gtk_wfs(
         startindex += page_size
     if progress_bar:
         pbar.close()
+    if collected_illegals and save_ignored:
+        if isinstance(save_ignored, str):
+            with open(save_ignored, "a") as f:
+                if errors == "ignore_holes":
+                    write_fileheader(holes, f, fo=None, kj=None)
+                f.write("\n".join(collected_illegals))
+        else:
+            if errors == "ignore_holes":
+                write_fileheader(holes, save_ignored, fo=None, kj=None)
+            print("\n".join(collected_illegals), file=save_ignored)
     return holes
 
 
@@ -407,7 +448,7 @@ def _open(path, *args, **kwargs):
             yield f
 
 
-def read(path, encoding="auto", robust=False):
+def read(path, encoding="auto", errors="ignore_holes", save_ignored=False):
     """Read input data.
 
     Paramaters
@@ -415,58 +456,94 @@ def read(path, encoding="auto", robust=False):
     path : str, optional, default None
         path to read data (file / folder / glob statement, see use_glob)
     encoding : str, optional, default 'auto'
-    robust : bool, optional, default False
-        If True, enable reading files with ill-defined/illegal lines.
+    errors : 'ignore_lines', 'ignore_holes' or 'raise', default 'ignore_lines'
+        How to handle ill-defined/illegal lines or holes.
+    save_ignored : str, StringIO or False, default False
+        Append ignored holes or lines to a file. File path str or
+        a file-like object (stream) into built-in print function 'file' parameter.
     """
+    if errors not in {"ignore_lines", "ignore_holes", "raise"}:
+        raise ValueError(
+            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes' or 'raise'."
+        )
+    collected_illegals = []
+
     file_header_identifiers, *_ = identifiers()
 
     fileheaders = {}
     holes = []
 
-    with _open(path, "rb") as f:
-        text_bytes = f.read()
-        if isinstance(text_bytes, bytes):
-            if encoding == "auto":
-                encoding_dict = chardet.detect(text_bytes)
-                lines = text_bytes.decode(
-                    encoding=encoding_dict.get("encoding", "ascii"), errors="replace"
-                ).splitlines()
-            else:
-                lines = text_bytes.decode(encoding=encoding).splitlines()
+    with _open(path, "rb") as file:
+        text_bytes = file.read()
+    if isinstance(text_bytes, bytes):
+        if encoding == "auto":
+            encoding_dict = chardet.detect(text_bytes)
+            lines = text_bytes.decode(
+                encoding=encoding_dict.get("encoding", "ascii"), errors="replace"
+            ).splitlines()
         else:
-            lines = text_bytes.splitlines()
-        holestr_list = []
-        for linenumber, line in enumerate(lines):
-            if not line.strip():
-                continue
-            head, *tail = line.split(maxsplit=1)
-            # Check if head is fileheader
-            if head.upper() in file_header_identifiers:
-                tail = tail[0].strip().split() if tail else []
-                names, dtypes, _ = file_header_identifiers[head.upper()]
-                fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
-                fileheaders[head.upper()] = fileheader
-            # make this robust check with peek
-            elif head == "-1":
-                hole_object = parse_hole(holestr_list, robust=robust)
-                # Add fileheaders to hole objects
-                if fileheaders:
-                    for key, value in fileheaders.items():
-                        hole_object.add_fileheader(key, value)
-                if tail:
-                    hole_object.add_header("-1", {"Ending": tail[0].strip()})
-                holes.append(hole_object)
-                holestr_list = []
+            lines = text_bytes.decode(encoding=encoding).splitlines()
+    else:
+        lines = text_bytes.splitlines()
+
+    holestr_list = []
+    for linenumber, line in enumerate(lines):
+        if not line.strip():
+            continue
+        head, *tail = line.split(maxsplit=1)
+        # Check if head is fileheader
+        if head.upper() in file_header_identifiers:
+            tail = tail[0].strip().split() if tail else []
+            names, dtypes, _ = file_header_identifiers[head.upper()]
+            fileheader = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
+            fileheaders[head.upper()] = fileheader
+        # make this robust check with peek
+        elif head == "-1":
+            if errors == "ignore_holes":
+                try:
+                    hole_object, illegal_rows = parse_hole(holestr_list, robust=False)
+                except ValueError:
+                    if save_ignored:
+                        collected_illegals.extend(holestr_list)
+                    hole_object = Hole()
+            elif errors == "ignore_lines":
+                hole_object, illegal_rows = parse_hole(holestr_list, robust=True)
+                if illegal_rows and save_ignored:
+                    collected_illegals.extend(illegal_rows)
             else:
-                holestr_list.append((linenumber, line.strip()))
-        # check incase that '-1' is not the last line
-        if holestr_list:
-            hole_object = parse_hole(holestr_list, robust=robust)
+                hole_object, illegal_rows = parse_hole(holestr_list, robust=False)
+            # Add fileheaders to hole objects
             if fileheaders:
                 for key, value in fileheaders.items():
                     hole_object.add_fileheader(key, value)
+            if tail:
+                hole_object.add_header("-1", {"Ending": tail[0].strip()})
             holes.append(hole_object)
             holestr_list = []
+        else:
+            holestr_list.append((linenumber, line.strip()))
+    # check incase that '-1' is not the last line
+    hole_object = None
+    if holestr_list:
+        if errors == "ignore_holes":
+            try:
+                hole_object, illegal_rows = parse_hole(holestr_list, robust=False)
+            except ValueError:
+                if save_ignored:
+                    collected_illegals.extend(holestr_list)
+                hole_object = Hole()
+        elif errors == "ignore_lines":
+            hole_object, illegal_rows = parse_hole(holestr_list, robust=True)
+            if illegal_rows and save_ignored:
+                collected_illegals.extend(illegal_rows)
+        else:
+            hole_object, illegal_rows = parse_hole(holestr_list, robust=False)
+        if fileheaders and hole_object:
+            for key, value in fileheaders.items():
+                hole_object.add_fileheader(key, value)
+        holestr_list = []
+        if hole_object:
+            holes.append(hole_object)
 
     return holes
 
@@ -482,9 +559,11 @@ def parse_hole(str_list, robust=False):
         If True, enable reading files with ill-defined/illegal lines.
 
     """
+    illegal_rows = []
 
-    def handle_illegal(linenum, line, hole):
+    def handle_illegal_row(linenum, line, hole):
         """Log warnings, add illegals to holes, raise errors."""
+        illegal_rows.append(line)
         msg = 'Illegal line found! Line {}: "{}"'.format(
             linenum, line if len(line) < 100 else line[:100] + "..."
         )
@@ -533,13 +612,13 @@ def parse_hole(str_list, robust=False):
                         lab_test = {f"Laboratory test {inline['test type']}": inline["test result"]}
                         hole.survey[-1].update(lab_test)
                     else:
-                        handle_illegal(linenum, line, hole)
+                        handle_illegal_row(linenum, line, hole)
                 elif head == "RK":
                     if len(hole.survey.data) > 0:
                         lab_test = {f"Sieve {inline['sieve']}": inline["pass percentage"]}
                         hole.survey[-1].update(lab_test)
                     else:
-                        handle_illegal(linenum, line, hole)
+                        handle_illegal_row(linenum, line, hole)
                 else:
                     inline["linenumber"] = linenum
                     hole.add_inline(head, inline)
@@ -561,11 +640,11 @@ def parse_hole(str_list, robust=False):
                 hole.add_survey(survey)
             else:
                 illegal_line = True
-                handle_illegal(linenum, line, hole)
-        except (ValueError, KeyError):
+                handle_illegal_row(linenum, line, hole)
+        except (ValueError, KeyError) as error:
             if not illegal_line:
-                handle_illegal(linenum, line, hole)
+                handle_illegal_row(linenum, line, hole)
             elif not robust:
-                raise
+                raise ValueError from error
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
-    return hole
+    return hole, illegal_rows
