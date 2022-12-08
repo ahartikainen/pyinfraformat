@@ -1,9 +1,9 @@
 """Core function for pyinfraformat."""
+import fnmatch
 import logging
 import os
 import pprint
 from datetime import datetime
-from gc import collect
 from numbers import Integral
 
 import pandas as pd
@@ -227,30 +227,6 @@ class Holes:
         """Check if hole headers/datas are unique; drop duplicates."""
         raise NotImplementedError
 
-    @property
-    def dataframe(self):
-        """Create pandas.DataFrame."""
-        return self._get_dataframe()
-
-    # pylint: disable=protected-access, attribute-defined-outside-init
-    def _get_dataframe(self):
-        """Build and combine DataFrame."""
-        if not self.holes:
-            return pd.DataFrame()
-        elif self._lowmemory:
-            tmp_df = pd.DataFrame()
-            for hole in self.holes:
-                hole_df = hole._get_dataframe(update=True).copy()
-                tmp_df = pd.concat((tmp_df, hole_df), axis=0, sort=False)
-                del hole._dataframe, hole_df
-                collect()
-            self._dataframe = tmp_df
-        else:
-            df_list = [hole._get_dataframe(update=True) for hole in self.holes]
-            self._dataframe = pd.concat(df_list, axis=0, sort=False)
-        collect()
-        return self._dataframe
-
     def to_csv(self, path, **kwargs):
         """Save data in table format to CSV.
 
@@ -266,7 +242,7 @@ class Holes:
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with open(path, "w") as f:
-            self.dataframe.to_csv(f, **kwargs)
+            self.get_dataframe().to_csv(f, **kwargs)
 
     def to_excel(self, path, **kwargs):
         """Save data in table format to Excel.
@@ -283,7 +259,7 @@ class Holes:
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
         with pd.ExcelWriter(path) as writer:  # pylint: disable=abstract-class-instantiated
-            self.dataframe.to_excel(writer, **kwargs)
+            self.get_dataframe().to_excel(writer, **kwargs)
 
     def to_infraformat(self, path, split=False, namelist=None):
         """Save data in infraformat.
@@ -399,7 +375,7 @@ class Holes:
             abbrev = hole.header.TT["Survey abbreviation"].upper()
             ending = hole.header["-1"]["Ending"].upper()
             if abbrev == "PO" and ending == "KA":
-                df = hole.dataframe
+                df = hole.get_dataframe()
                 if "data_Soil type" in df.columns:
                     if df["data_Soil type"].str.upper().iloc[0] == "KA":
                         if df["data_Depth (m)"].iloc[0] > 0.5:
@@ -408,7 +384,7 @@ class Holes:
                             soil_depth = 0.0
                     elif sum(df["data_Soil type"].str.upper() == "KA") == 0:
                         logger.warning(
-                            "Hole enging 'KA' without any 'KA' soil observations, omitting."
+                            "Hole ending 'KA' without any 'KA' soil observations, omitting."
                         )
                     else:
                         slicer = df["data_Soil type"].str.upper() == "KA"
@@ -442,6 +418,41 @@ class Holes:
                 )
         columns = ["X", "Y", "Z-start", "Last_soil", "Abbreviation", "Ending"]
         return pd.DataFrame.from_records(soil_observations, columns=columns)
+
+    def get_list(self):
+        """Get survey data, hole header and fileheader as list of dicts."""
+        return_list = []
+        for hole in self:
+            d_header = hole.get_header_dict()
+            dict_list = hole.get_data_list()
+            d_fileheader = hole.get_fileheader_dict()
+            return_list.append({"header": d_header, "fileheader": d_fileheader, "data": dict_list})
+        return return_list
+
+    def get_columns(self):
+        """Get survey data, header and fileheader columns."""
+        return_set = set()
+        for hole in self:
+            return_set = return_set.union(hole.get_columns())
+        return return_set
+
+    def get_dataframe(self, skip_columns=False):
+        """Get survey data, hole header and fileheader as DataFrame.
+
+        Paramaters
+        ----------
+        skip_columns : list, str or False
+            Columns that will be excluded. Not case sensitive.
+            Uses wildcards (* and ?) to match strings (see fnmatch).
+            See get_columns() for columns included.
+
+        Examples
+        --------
+        >>> holes.get_dataframe(skip_columns="*laboratory*")
+        >>> holes.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+        """
+        df_list = [hole.get_dataframe(skip_columns) for hole in self.holes]
+        return pd.concat(df_list, axis=0, sort=False)
 
 
 class Hole:
@@ -477,9 +488,9 @@ class Hole:
         """Add header to object."""
         self.header.add(key, header)
 
-    def add_inline_comment(self, key, comment):
-        """Add inline comment to object."""
-        self.inline_comment.add(key, comment)
+    def add_inline(self, key, inline):
+        """Add inline object to object."""
+        self.inline_comment.add(key, inline)
 
     def add_survey(self, survey):
         """Add survey information to object."""
@@ -488,47 +499,6 @@ class Hole:
     def _add_illegal(self, illegal):
         """Add illegal lines to object."""
         self._illegal.add(illegal)
-
-    @property
-    def dataframe(self):
-        """Create pandas.DataFrame."""
-        return self._get_dataframe(update=False)
-
-    def _get_dataframe(self, update=False):
-        """Get pandas.DataFrame object.
-
-        Creates a new pandas.DataFrame if it doesn't exists of update is True
-
-        Paramaters
-        ----------
-        update : None or bool, optional, default None
-            None
-                Return earlier pandas.DataFrame if it exists and adds automatically new data
-            False
-                Return earlier pandas.DataFrame if it exists
-            True
-                Calculate a new pandas.DataFrame
-        """
-        if hasattr(self, "_dataframe") and not update:
-            if not self._dataframe.empty:  # pylint: disable=access-member-before-definition
-                return self._dataframe  # pylint: disable=access-member-before-definition
-
-        dict_list = self.survey.data
-        if not dict_list:
-            msg = "No data in Hole object. Header: {}".format(str(self))
-            logger.warning(msg)
-            return pd.DataFrame()
-        self._dataframe = pd.DataFrame(dict_list)  # pylint: disable=attribute-defined-outside-init
-        self._dataframe.columns = ["data_{}".format(col) for col in self._dataframe.columns]
-        for key in self.header.keys:
-            self._dataframe.loc[:, "Date"] = self.header.date
-            for key_, item in getattr(self.header, key).items():
-                self._dataframe.loc[:, "header_{}_{}".format(key, key_)] = item
-        for key in self.fileheader.keys:
-            for key_, item in getattr(self.fileheader, key).items():
-                self._dataframe.loc[:, "fileheader_{}_{}".format(key, key_)] = item
-
-        return self._dataframe
 
     def plot(self, output="figure", figsize=(4, 4)):
         """Plot a diagram of a sounding with matplotlib.
@@ -547,6 +517,108 @@ class Hole:
         from ..plots.holes import plot_hole
 
         return plot_hole(self, output, figsize)
+
+    def get_header_dict(self):
+        """Get hole header as a dict."""
+        d_header = {}
+        for key in self.header.keys:
+            for key_, item in getattr(self.header, key).items():
+                d_header["{}_{}".format(key, key_)] = item
+        return d_header
+
+    def get_data_list(self):
+        """Get survey data as a list of dict."""
+        dict_list = self.survey.data
+        return dict_list
+
+    def get_fileheader_dict(self):
+        """Get fileheader as a dict."""
+        d_fileheader = {}
+        for key in self.fileheader.keys:
+            for key_, item in getattr(self.fileheader, key).items():
+                d_fileheader["{}_{}".format(key, key_)] = item
+        return d_fileheader
+
+    def get_dict(self):
+        """Get survey data, hole header and fileheader as dict."""
+        d_header = self.get_header_dict()
+        dict_list = self.get_data_list()
+        d_fileheader = self.get_fileheader_dict()
+        return {"header": d_header, "fileheader": d_fileheader, "data": dict_list}
+
+    def get_columns(self):
+        """Get survey data, header and fileheader columns."""
+        data = set("data_" + item for row in self.survey.data for item in row)
+        fileheader = {
+            f"fileheader_{key}_{item}"
+            for key in self.fileheader.keys
+            for item in getattr(self.fileheader, key).keys()
+        }
+        header = {
+            f"header_{key}_{item}"
+            for key in self.header.keys
+            for item in getattr(self.header, key).keys()
+        }
+        return data.union(fileheader).union(header)
+
+    def get_dataframe(self, skip_columns=False):
+        """Get survey data, hole header and fileheader as DataFrame.
+
+        Paramaters
+        ----------
+        skip_columns : list, str or False
+            Columns that will be excluded. Not case sensitive.
+            Uses wildcards (* and ?) to match strings (see fnmatch).
+            See get_columns() for columns included.
+
+        Examples
+        --------
+        >>> hole.get_dataframe(skip_columns="*laboratory*")
+        >>> hole.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+        """
+        if skip_columns:
+            skip_columns = (
+                [
+                    skip_columns,
+                ]
+                if isinstance(skip_columns, str)
+                else skip_columns
+            )
+        dict_list = self.get_data_list()
+        dict_list = [{"data_" + item: row[item] for item in row} for row in dict_list]
+        if skip_columns:
+            skip_data = []
+            for row in skip_columns:
+                for data in dict_list:
+                    keys = data.keys()
+                    for key in keys:
+                        if fnmatch.fnmatch(key.lower(), row.lower()):
+                            skip_data.append(key)
+            dict_list = [
+                {item: row[item] for item in row if item not in skip_data} for row in dict_list
+            ]
+        dict_list = [item for item in dict_list if len(item) > 0]
+        df = pd.DataFrame(dict_list if len(dict_list) > 0 else [{"dummy": 0}])
+
+        d_header = self.get_header_dict()
+        d_header = {"header_" + key: item for key, item in d_header.items()}
+        for key in d_header:
+            if skip_columns and any(
+                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+            ):
+                continue
+            df[key] = d_header[key]
+
+        d_fileheader = self.get_fileheader_dict()
+        d_fileheader = {"fileheader_" + key: d_header[key] for key in d_header}
+        for key in d_fileheader:
+            if skip_columns and any(
+                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+            ):
+                continue
+            df[key] = d_fileheader[key]
+
+        return df if len(dict_list) > 0 else df.drop("dummy", axis=1)
 
 
 class FileHeader:

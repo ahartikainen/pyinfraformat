@@ -482,6 +482,19 @@ def parse_hole(str_list, robust=False):
         If True, enable reading files with ill-defined/illegal lines.
 
     """
+
+    def handle_illegal(linenum, line, hole):
+        """Log warnings, add illegals to holes, raise errors."""
+        msg = 'Illegal line found! Line {}: "{}"'.format(
+            linenum, line if len(line) < 100 else line[:100] + "..."
+        )
+        if robust:
+            logger.warning(msg)
+            hole._add_illegal((linenum, line))  # pylint: disable=protected-access
+        else:
+            logger.critical(msg)
+            raise ValueError(msg)
+
     _, header_identifiers, inline_identifiers, survey_identifiers = identifiers()
 
     hole = Hole()
@@ -514,11 +527,22 @@ def parse_hole(str_list, robust=False):
                     tail = [tail[0].strip()] if tail else []
                 else:
                     tail = tail[0].strip().split() if tail else []
-                inline_comment = {
-                    key: format(value) for key, format, value in zip(names, dtypes, tail)
-                }
-                inline_comment["linenumber"] = linenum
-                hole.add_inline_comment(head, inline_comment)
+                inline = {key: format(value) for key, format, value in zip(names, dtypes, tail)}
+                if head == "LB":
+                    if len(hole.survey.data) > 0:
+                        lab_test = {f"Laboratory test {inline['test type']}": inline["test result"]}
+                        hole.survey[-1].update(lab_test)
+                    else:
+                        handle_illegal(linenum, line, hole)
+                elif head == "RK":
+                    if len(hole.survey.data) > 0:
+                        lab_test = {f"Sieve {inline['sieve']}": inline["pass percentage"]}
+                        hole.survey[-1].update(lab_test)
+                    else:
+                        handle_illegal(linenum, line, hole)
+                else:
+                    inline["linenumber"] = linenum
+                    hole.add_inline(head, inline)
             elif (is_number(head) and survey_type) or survey_type in ("LB",):
                 if survey_type != "HP":
                     names, dtypes, _ = survey_identifiers[survey_type]
@@ -537,25 +561,10 @@ def parse_hole(str_list, robust=False):
                 hole.add_survey(survey)
             else:
                 illegal_line = True
-                msg = 'Illegal line found! Line {}: "{}"'.format(
-                    linenum, line if len(line) < 100 else line[:100] + "..."
-                )
-                if robust:
-                    logger.warning(msg)
-                else:
-                    logger.critical(msg)
-                    raise ValueError(msg)
-                hole._add_illegal((linenum, line))  # pylint: disable=protected-access
-        except (ValueError, KeyError) as error:
+                handle_illegal(linenum, line, hole)
+        except (ValueError, KeyError):
             if not illegal_line:
-                msg = 'Illegal line found! Line {}: "{}"'.format(
-                    linenum, line if len(line) < 100 else line[:100] + "..."
-                )
-                if robust:
-                    logger.warning(msg)
-                else:
-                    logger.critical(msg)
-                    raise ValueError(msg) from error
+                handle_illegal(linenum, line, hole)
             elif not robust:
                 raise
             hole._add_illegal((linenum, line))  # pylint: disable=protected-access
