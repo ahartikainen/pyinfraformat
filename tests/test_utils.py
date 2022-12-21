@@ -40,6 +40,7 @@ def test_info_bad(language):
     with pytest.raises(NotImplementedError):
         print_info(language)
 
+
 '''
 @pytest.mark.parametrize("nums", [("1", 1), ("1_000", 1000), ("0", 0)])
 def test_custom_int_pure(nums):

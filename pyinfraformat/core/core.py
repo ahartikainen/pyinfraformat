@@ -504,16 +504,46 @@ class Hole:
         self.illegals = []
         self.raw_str = ""
 
+    def get_raw(self):
+        """Get raw input fileheader and hole as string."""
+        hole_str = []
+        hole_str.extend(self.fileheader.raw_str.split("\n"))
+        hole_str.extend(self.raw_str.split("\n"))
+        if hasattr(self.header, "-1"):
+            ending = self.header["-1"].get("Ending", None)
+            if ending:
+                hole_str.append(f"-1 {ending}")
+        return "\n".join(hole_str)
+
     def print_raw(self, linenumbers=True, illegals=True):
+        """Print raw input fileheader and hole as text."""
+        fileheader = self.fileheader.raw_str.split("\n")
+        for linenumber, line in enumerate(fileheader, start=-len(fileheader)):
+            print(f"{linenumber}:\t" if linenumbers else "", line)
+
         illegals_dict = {
             item["linenumber"]: item["line_highlighted"] + "  # " + item["error"]
             for item in self.illegals
         }
-        for ln, line in enumerate(self.raw_str.split("\n")):
-            if illegals and ln in illegals_dict:
-                print(f"{ln}:" if linenumbers else "", illegals_dict[ln])
+        for linenumber, line in enumerate(self.raw_str.split("\n")):
+            if illegals and linenumber in illegals_dict:
+                if linenumbers:
+                    print(f"{linenumber}:\t", illegals_dict[linenumber])
+                else:
+                    print(illegals_dict[linenumber])
             else:
-                print(f"{ln}:" if linenumbers else "", line)
+                if linenumbers:
+                    print(f"{linenumber}:\t", line)
+                else:
+                    print(line)
+
+        if hasattr(self.header, "-1"):
+            ending = self.header["-1"].get("Ending", None)
+            if ending:
+                if linenumbers:
+                    print(f"{linenumber+1}:\t", f"-1 {ending}")
+                else:
+                    print(f"-1 {ending}")
 
     def __str__(self):
         items = {i: j for i, j in self.header.__dict__.items() if i not in {"keys"}}
@@ -753,6 +783,8 @@ class FileHeader:
 
     def __init__(self):
         self.keys = set()
+        self.illegals = []
+        self.raw_str = ""
 
     def add(self, key, values):
         """Add member to class."""
@@ -760,8 +792,9 @@ class FileHeader:
         self.keys.add(key)
 
     def __str__(self):
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys", "raw_str", "illegals"}}
         msg = "FileHeader object - Fileheader contains {} items\n  {}".format(
-            len(self.keys), pprint.pformat(self.__dict__)
+            len(self.keys), pprint.pformat(items)
         )
         return msg
 
@@ -826,8 +859,8 @@ class InlineComment:
         self.data.append((key, values))
 
     def __str__(self):
-
-        msg = pprint.pformat(self.__dict__)
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items)
         return "Hole InlineComment -object:\n  {}".format(msg)
 
     def __repr__(self):

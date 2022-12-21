@@ -18,7 +18,7 @@ from tqdm.auto import tqdm
 from ..exceptions import PathNotFoundError
 from .coord_utils import project_points
 from .core import Hole, Holes
-from .utils import identifiers, is_number, is_nan
+from .utils import identifiers, is_nan, is_number
 
 logger = logging.getLogger("pyinfraformat")
 logger.propagate = False
@@ -117,9 +117,8 @@ def from_gtk_wfs(
     """
     # pylint: disable=invalid-name
     if errors not in {"ignore_lines", "ignore_holes", "raise", "force"}:
-        raise ValueError(
-            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
-        )
+        msg = "Argument errors must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
+        raise ValueError(msg)
     collected_illegals = []
 
     url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
@@ -159,7 +158,7 @@ def from_gtk_wfs(
                     if save_ignored:
                         collected_illegals.extend(hole_str)
                     return False
-            elif errors == "ignore_lines" or errors=='raise':
+            elif errors in {"ignore_lines", "raise"}:
                 hole, illegal_rows = parse_hole(enumerate(hole_str), force=False)
                 if illegal_rows and save_ignored:
                     collected_illegals.extend(illegal_rows)
@@ -170,18 +169,17 @@ def from_gtk_wfs(
 
             if illegal_rows:
                 hole_id = hole.get("header_XY_Point ID", "-")
-                hole_index = len(holes) if hole else "-"
-                logger.warning(
-                    f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
-                )
+                index = len(holes) if hole else "-"
+                msg = f"Hole {index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
+                logger.warning(msg)
                 for row in illegal_rows:
                     linenumber = row.get("linenumber", "Unknown")
                     error_txt = row.get("error", "Exception")
                     line_highlighted = row.get("line_highlighted", "")
-                    logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
-
+                    msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
+                    logger.warning(msg)
             if errors == "raise" and illegal_rows:
-                raise ValueError(f"Illegal/Il-defined hole detected!")
+                raise ValueError("Illegal/Il-defined hole detected!")
         else:
             hole = Hole()
         hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
@@ -503,14 +501,15 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
         a file-like object (stream) into built-in print function 'file' parameter.
     """
     if errors not in {"ignore_lines", "ignore_holes", "raise", "force"}:
-        raise ValueError(
-            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
-        )
+        msg = "Argument errors must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
+        raise ValueError(msg)
     collected_illegals = []
 
     file_header_identifiers, *_ = identifiers()
 
     fileheaders = {}
+    fileheader_raw = []
+    fileheader_illegals = []
     holes = []
 
     with _open(path, "rb") as file:
@@ -537,7 +536,14 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                 line, head=head.upper(), restrict_fields=True, force=False
             )
             fileheaders[head.upper()] = fileheader
-            # TODO handle line errors error
+            fileheader_raw.append(line)
+            fileheader_illegals.extend(line_errors)
+            for row in line_errors:
+                linenumber = row.get("linenumber", "Unknown")
+                error_txt = row.get("error", "Exception")
+                line_highlighted = row.get("line_highlighted", "")
+                msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
+                logger.warning(msg)
 
         # make this robust check with peek
         elif head == "-1":
@@ -548,32 +554,35 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                     collected_illegals.extend(holestr_list)
                     hole = Hole()
                     illegal_rows = None
-            elif errors == "ignore_lines" or errors=='raise':
+            elif errors in {"ignore_lines", "raise"}:
                 hole, illegal_rows = parse_hole(holestr_list, force=False)
                 collected_illegals.extend(illegal_rows)
             elif errors == "force":
                 hole, illegal_rows = parse_hole(holestr_list, force=True)
                 collected_illegals.extend(illegal_rows)
-            
+
             if illegal_rows:
                 hole_id = hole.get("header_XY_Point ID", "-")
-                hole_index = len(holes) if hole else "-"
-                logger.warning(
-                    f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
-                )
+                index = len(holes) if hole else "-"
+                msg = f"Hole {index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
+                logger.warning(msg)
                 for row in illegal_rows:
                     linenumber = row.get("linenumber", "Unknown")
                     error_txt = row.get("error", "Exception")
                     line_highlighted = row.get("line_highlighted", "")
-                    logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
+                    msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
+                    logger.warning(msg)
 
-            if illegal_rows and errors=='raise':
+            if illegal_rows and errors == "raise":
                 raise ValueError("Illegal/Il-defined hole detected!")
-            
+
             # Add fileheaders to hole objects
             if fileheaders:
                 for key, value in fileheaders.items():
                     hole.add_fileheader(key, value)
+                hole.fileheader.raw_str = "\n".join(fileheader_raw)
+            if fileheader_illegals:
+                hole.fileheader.illegals.extend(fileheader_illegals)
             if tail:
                 hole.add_header("-1", {"Ending": tail[0].strip()})
             holes.append(hole)
@@ -582,41 +591,53 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
             holestr_list.append((linenumber, line.strip()))
 
     # check incase that '-1' is not the last line
-    # TODO add error
     hole = None
     if holestr_list:
+        logger.warning("File has to end on -1 row.")
         if errors == "ignore_holes":
             hole, illegal_rows = parse_hole(holestr_list, force=False)
             if illegal_rows:
                 collected_illegals.extend(holestr_list)
                 hole = None
-        elif errors == "ignore_lines" or errors=='raise':
+        elif errors in {"ignore_lines", "raise"}:
             hole, illegal_rows = parse_hole(holestr_list, force=False)
             collected_illegals.extend(illegal_rows)
         elif errors == "force":
             hole, illegal_rows = parse_hole(holestr_list, force=True)
             collected_illegals.extend(illegal_rows)
-            
         if illegal_rows:
             hole_id = hole.get("header_XY_Point ID", "-")
-            hole_index = len(holes) if hole else "-"
-            logger.warning(
-                f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
-            )
+            index = len(holes) if hole else "-"
+            msg = f"Hole {index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
+            logger.warning( msg)
             for row in illegal_rows:
                 linenumber = row.get("linenumber", "Unknown")
                 error_txt = row.get("error", "Exception")
                 line_highlighted = row.get("line_highlighted", "")
-                logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
-                
-        if illegal_rows and errors=='raise':
-            raise ValueError("Illegal/Il-defined hole detected!")
+                msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
+                logger.warning(msg)
+
+        if errors == "raise":
+            raise ValueError("File has to end on -1 row.")
         if fileheaders and hole:
             for key, value in fileheaders.items():
                 hole.add_fileheader(key, value)
+        if fileheader_illegals and hole:
+            hole.fileheader.illegals.extend(fileheader_illegals)
         holestr_list = []
         if hole:
             holes.append(hole)
+
+    if collected_illegals and save_ignored:
+        if isinstance(save_ignored, str):
+            with open(save_ignored, "a") as f:
+                if errors == "ignore_holes":
+                    write_fileheader(holes, f, fo=None, kj=None)
+                f.write("\n".join(collected_illegals))
+        else:
+            if errors == "ignore_holes":
+                write_fileheader(holes, save_ignored, fo=None, kj=None)
+            print("\n".join(collected_illegals), file=save_ignored)
 
     return holes
 
@@ -624,25 +645,25 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
 def split_with_whitespace(string, maxsplit=None):
     """Split string with whitespaces, maxsplit defines maximum non white-space items.
 
-    >>> split_with_whitespace("   Yeah this is an example", maxsplit=2)
-    ['', '   ', 'Yeah', ' ', 'this is an example']
+    >>> split_with_whitespace("   This is an example", maxsplit=2)
+    ['', '   ', 'This', ' ', 'is an example']
     """
     return_string = []
+    last_item = []
     count = 0
     splitted = re.split(r"(\s+)", string)
     if maxsplit is None or maxsplit < 0:
         return splitted
     if maxsplit == 0:
         return [string]
-    for index, item in enumerate(splitted):
-        if str.isspace(item) == False:
+    for item in splitted:
+        if not str.isspace(item) and item:
             count += 1
-        if maxsplit and count > maxsplit:
-            break
-        return_string.append(item)
-    if splitted[-1] == return_string[-1]:
-        return return_string
-    return return_string + ["".join(splitted[index:])]
+        if count >= maxsplit:
+            last_item.append(item)
+        else:
+            return_string.append(item)
+    return return_string + ["".join(last_item)]
 
 
 def highlight_item(string, indexes=None, marker="**", maxsplit=None):
@@ -657,7 +678,7 @@ def highlight_item(string, indexes=None, marker="**", maxsplit=None):
         indexes = [indexes]
     if indexes is None:
         return marker + string + marker
-    if all([item is None for item in indexes]):
+    if all(item is None for item in indexes):
         return marker + string + marker
     highlighted = []
     for i, value in enumerate(split_with_whitespace(string, maxsplit)):
@@ -681,9 +702,8 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
     line_errors : list
         (error_string, 'split_with_whitespace' index)
     """
-    if head == None:
+    if head is None:
         head = line.split()[0].strip()
-
     (
         file_header_identifiers,
         header_identifiers,
@@ -709,17 +729,20 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
     else:
         raise ValueError(f"Head '{head}' not recognized")
 
-    line_splitted = split_with_whitespace(line, maxsplit=len(dtypes) if restrict_fields else None)
+    maxsplit = len(dtypes)
+    if head.upper() == line.split()[0].strip().upper():
+        maxsplit += 1
+    line_splitted = split_with_whitespace(line, maxsplit=maxsplit if restrict_fields else None)
     count = 0
     line_dict = {}
     line_errors = []
 
-    items = [item for item in enumerate(line_splitted) if item[1] and str.isspace(item[1]) == False]
+    items = [item for item in enumerate(line_splitted) if item[1] and not str.isspace(item[1])]
     if items[0][1] == head:
         items = items[1:]
     for index, value in items:
         if count >= len(names):
-            line_errors.append((f"Line has too many values", index))
+            line_errors.append(("Line has too many values", index))
         else:
             key = names[count]
             value_type = dtypes[count]
@@ -733,8 +756,9 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
             else:
                 try:
                     line_dict[key] = value_type(value)
-                except Exception:
-                    msg = f"Could not convert '{key}' value '{value}' to type '{str(value_type.__name__)}'."
+                except ValueError:
+                    value_name = str(value_type.__name__)
+                    msg = f"Could not convert '{key}' value '{value}' to '{value_name}'."
                     line_errors.append((msg, index))
                     if force:
                         line_dict[key] = str(value)
@@ -749,18 +773,19 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
     return line_dict, line_errors
 
 
-def strip_header(line, head, restrict_fields=True):
-    header, line_errors = dictify_line(line, head, restrict_fields)
+def strip_header(line, head=None, restrict_fields=True, force=False):
+    """Strip header line, returns (hole, error_dict).
 
-    # if "TT" in header and "Survey abbreviation" in header['TT']:
-    #    survey_type = header.get('TT').get('Survey abbreviation')
-    #    *_, survey_identifiers = identifiers()
-    #    if survey_type not in survey_identifiers:
-    #        error_dict = {
-    #            "linenumber": linenumber,
-    #            "error": f"Cannot parse survey as survey identifier '{survey_type}'is invalid.",
-    #            "line_highlighted": highlight_item(line, indexes=None),
-    #        }
+    Examples
+    --------
+    >>> header_dict, errors = strip_header("XY 6674772.0 NOT_COORD 15.0 01011999 1")
+    >>> errors
+    {'error': "1. Could not convert 'Y' value 'NOT_COORD' to 'custom_float'.",
+     'line_highlighted': 'XY 6674772.0 **NOT_COORD** 15.0 01011999 1'}
+    """
+    if head is None:
+        head = line.split()[0].strip()
+    header, line_errors = dictify_line(line, head, restrict_fields, force=force)
 
     error_dict = {}
     if line_errors:
@@ -776,8 +801,17 @@ def strip_header(line, head, restrict_fields=True):
     return header, error_dict
 
 
-def strip_inline(line, head, restrict_fields=True, force=False):
-    inline, line_errors = dictify_line(line, head, restrict_fields)
+def strip_inline(line, head=None, restrict_fields=True, force=False):
+    """Strip inline line, returns (hole, error_dict).
+
+    Examples
+    --------
+    >>> strip_inline("LB w 12 kg/m3")
+    ({'Laboratory w': '12'}, {})
+    """
+    if head is None:
+        head = line.split()[0].strip()
+    inline, line_errors = dictify_line(line, head, restrict_fields, force=force)
 
     error_dict = {}
     if line_errors:
@@ -802,15 +836,22 @@ def strip_inline(line, head, restrict_fields=True, force=False):
 
 
 def strip_survey(line, survey_type, restrict_fields=True, force=False):
+    """Strip survey line as survey_type, returns (hole, error_dict).
+
+    Examples
+    --------
+    >>> strip_survey("     1.50   42  Ka", "PO")
+    ({'Depth (m)': 1.5, 'Time (s)': 42, 'Soil type': 'Ka'}, {})
+    """
     *_, survey_identifiers = identifiers()
     if survey_type not in survey_identifiers:
         error_dict = {
-            "error": f"Cannot parse survey as survey identifier '{survey_type}'is invalid.",
+            "error": f"Cannot parse survey as survey identifier '{survey_type}' is invalid.",
             "line_highlighted": highlight_item(line, indexes=None),
         }
         return (None, error_dict)
 
-    survey, line_errors = dictify_line(line, survey_type, restrict_fields)
+    survey, line_errors = dictify_line(line, survey_type, restrict_fields, force=force)
     error_dict = {}
     if line_errors:
         line_highlighted = highlight_item(line, [index for _, index in line_errors], marker="**")
@@ -848,14 +889,7 @@ def parse_hole(str_list, force=False):
     str_list = list(str_list)
     errors = []
 
-    def handle_illegal_row(linenumber, line, hole, msg_title="Illegal line found!"):
-        """Log warnings, add illegals to holes, raise errors."""
-        msg = '{} Line {}: "{}"'.format(
-            msg_title, linenumber, line if len(line) < 100 else line[:100] + "..."
-        )
-        logger.warning(msg)
-
-    _, header_identifiers, inline_identifiers, survey_identifiers = identifiers()
+    _, header_identifiers, inline_identifiers, _ = identifiers()
 
     hole = Hole()
     hole.raw_str = "\n".join([line for _, line in str_list])
@@ -863,7 +897,7 @@ def parse_hole(str_list, force=False):
     for linenumber, line in str_list:
         if not line.strip():
             continue
-        head, *tail = line.split(maxsplit=1)
+        head, *_ = line.split(maxsplit=1)
         head = head.upper()
 
         if survey_type is None and hasattr(hole.header, "TT"):
@@ -873,7 +907,7 @@ def parse_hole(str_list, force=False):
 
         try:
             if head in header_identifiers:
-                header, error_dict = strip_header(line, head)
+                header, error_dict = strip_header(line, head, force=force)
                 header["linenumber"] = linenumber
                 if error_dict:
                     error_dict["linenumber"] = linenumber
@@ -881,7 +915,7 @@ def parse_hole(str_list, force=False):
                     errors.append(error_dict)
                 hole.add_header(head, header)
             elif head in inline_identifiers:
-                inline, error_dict = strip_inline(line, head)
+                inline, error_dict = strip_inline(line, head, force=force)
                 inline["linenumber"] = linenumber
                 if error_dict:
                     error_dict["linenumber"] = linenumber
@@ -891,14 +925,16 @@ def parse_hole(str_list, force=False):
                     if len(hole.survey.data) > 0 and inline:
                         hole.survey[-1].update(inline)
                     else:
-                        handle_illegal_row(
-                            linenumber, line, hole, "LB inline without previous data!"
-                        )
+                        error_dict = {
+                            "linenumber": linenumber,
+                            "error": "LB inline without previous data!",
+                            "line_highlighted": highlight_item(line, None),
+                        }
                         errors.append(error_dict)
                 else:
                     hole.add_inline(head, inline)
             elif (is_number(head) and survey_type) or survey_type in ("LB",):
-                survey, error_dict = strip_survey(line, survey_type)
+                survey, error_dict = strip_survey(line, survey_type, force=force)
                 if error_dict:
                     error_dict["linenumber"] = linenumber
                     hole.illegals.append(error_dict)
@@ -919,7 +955,7 @@ def parse_hole(str_list, force=False):
 
             # traceback.print_exc()
             error = str(repr(error))
-            logger.warning(f"Unexpected error {error}")
+            logger.warning("Unexpected error %s", error)
             error_dict = {
                 "linenumber": linenumber,
                 "error": error,

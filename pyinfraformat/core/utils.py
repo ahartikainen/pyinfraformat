@@ -111,7 +111,7 @@ NANS = {"-", "_", "﹣", "－󠀭"}
 
 
 def is_number(number_str):
-    """Test if number_str is number including infraformat logic."""
+    """Test if number_str is number according to infraformat logic."""
     try:
         complex(number_str)
     except ValueError:
@@ -122,6 +122,7 @@ def is_number(number_str):
 
 
 def is_nan(number_str):
+    """Test if number_str is nan according to infraformat logic."""
     if not number_str:  # Empty string or None
         return True
     if number_str in NANS:

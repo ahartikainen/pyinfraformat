@@ -21,12 +21,12 @@ def get_object():
 
 def test_str():
     holes = get_object()
-    assert len(holes.__str__().splitlines()) == 40
+    assert len(holes.__str__().splitlines()) == 38
 
 
 def test_repr():
     holes = get_object()
-    assert len(holes.__repr__().splitlines()) == 40
+    assert len(holes.__repr__().splitlines()) == 38
     hole = holes[0]
     assert len(repr(hole.fileheader)) > 10
 
@@ -57,11 +57,11 @@ def test_subobject_pandas():
 
 def test_object_pandas():
     holes = get_object()
-    assert holes.get_dataframe().shape == (248, 88)
+    assert holes.get_dataframe().shape == (246, 101)
     holes = get_object()
     columns = ["*lab*", "*sieve*", "*header*"]
-    assert holes.get_dataframe(skip_columns=columns).shape == (248, 40)
-    assert holes.get_dataframe(include_columns=columns).shape == (49, 48)
+    assert holes.get_dataframe(skip_columns=columns).shape == (246, 40)
+    assert holes.get_dataframe(include_columns=columns).shape == (48, 61)
     assert holes.get_dataframe().shape[1] == (
         holes.get_dataframe(include_columns=columns).shape[1]
         + holes.get_dataframe(skip_columns=columns).shape[1]
