@@ -196,7 +196,7 @@ def test_output():
 def test_set_logger():
     pif.set_logger_level(10)
     pif.log_to_file("test_log.log")
-    for path in get_datafiles("good"):
+    for path in get_datafiles("bad"):
         holes = from_infraformat(path)
     with open("test_log.log") as f:
         length = len(f.read())
