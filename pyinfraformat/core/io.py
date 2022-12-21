@@ -609,7 +609,7 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
             hole_id = hole.get("header_XY_Point ID", "-")
             index = len(holes) if hole else "-"
             msg = f"Hole {index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
-            logger.warning( msg)
+            logger.warning(msg)
             for row in illegal_rows:
                 linenumber = row.get("linenumber", "Unknown")
                 error_txt = row.get("error", "Exception")
