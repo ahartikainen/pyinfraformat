@@ -571,7 +571,7 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                     error_txt = row.get("error", "Exception")
                     line_highlighted = row.get("line_highlighted", "")
                     msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
-                    logger.warning(msg
+                    logger.warning(msg)
             if illegal_rows and errors == "raise":
                 raise ValueError("Illegal/Il-defined hole detected!")
 
