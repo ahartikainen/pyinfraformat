@@ -42,6 +42,7 @@ def test_reading_good(errors):
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
 
+
 @pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes"])
 @pytest.mark.parametrize("encoding", ["utf-16", "auto"])
 def test_reading_good_encoding(errors, encoding):

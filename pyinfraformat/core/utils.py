@@ -1,8 +1,6 @@
 """General information concerning Finnish Infraformat."""
 import logging
 
-import numpy as np
-
 __all__ = ["identifiers", "print_info"]
 
 logger = logging.getLogger("pyinfraformat")
@@ -102,107 +100,135 @@ LAB_ABBREVIATIONS = {
 }
 
 
+def custom_str(string, strict=True):
+    """Custom string"""
+    if strict:
+        return str(string)
+    return str(string)
+
+
+NANS = {"-", "_", "﹣", "－󠀭"}
+
+
 def is_number(number_str):
     """Test if number_str is number including infraformat logic."""
     try:
         complex(number_str)
     except ValueError:
-        if number_str == "-":
+        if number_str in NANS:
             return True
         return False
     return True
 
 
+def is_nan(number_str):
+    if not number_str:  # Empty string or None
+        return True
+    if number_str in NANS:
+        return True
+    return False
+
+
 def custom_int(number):
     """Test if number is integer."""
+    floating_number = float(str(number).replace(",", "."))
+    integer_number = int(floating_number)
+    if integer_number == floating_number:
+        return integer_number
+    else:
+        msg = "Non-integer value detected, a floating point number is returned"
+        logger.warning(msg)
+        return floating_number
+        """
     try:
-        return int(number)
+        floating_number = float(str(number).replace(",", "."))
+        integer_number = int(floating_number)
+        if integer_number == floating_number:
+            return integer_number
+        else:
+            msg = "Non-integer value detected, a floating point number is returned"
+            logger.warning(msg)
+            return floating_number
     except ValueError:
-        try:
-            floating_number = float(number.replace(",", "."))
-            integer_number = int(floating_number)
-            if integer_number == floating_number:
-                return integer_number
-            else:
-                msg = "Non-integer value detected, a floating point number is returned"
-                logger.debug(msg)
-                return floating_number
-        except ValueError:
-            msg = "Not a Number (NaN) value detected, a NaN is returned"
-            logger.debug(msg)
-            return np.nan
+        if number in NANS:
+            return "-"
+        raise"""
 
 
 def custom_float(number):
     """Test if number is floating point number."""
-    try:
+    return float(number.replace(",", "."))
+    """try:
         return float(number.replace(",", "."))
     except ValueError:
-        msg = "Not a Number (NaN) value detected, a NaN is returned"
-        logger.debug(msg)
-        return np.nan
+        if number in NANS:
+            return "-"
+        raise"""
 
 
 def identifiers():
     """Return header identifiers.
 
     Identifier key: (names, dtype, mandatory)
-
+        mandatory Falsy or
     Returns
     -------
-    tuple
-        file_header_identifiers,
-        header_identifiers,
-        inline_identifiers,
-        survey_identifiers,
+    file_header_identifiers: dict
+    header_identifiers: dict
+    inline_identifiers: dict
+    survey_identifiers: dict
     """
     file_header_identifiers = {
         "FO": (
             ["Format version", "Software", "Software version"],
-            [str, str, str],
+            [custom_str, custom_str, custom_str],
             [False, False, False],
         ),
-        "KJ": (["Coordinate system", "Height reference"], [str, str], [True, False]),
+        "KJ": (["Coordinate system", "Height reference"], [custom_str, custom_str], [True, False]),
     }
 
     # point specific
     header_identifiers = {
-        "OM": (["Owner"], [str], [False]),
-        "ML": (["Soil or rock classification"], [str], [False]),
-        "OR": (["Research organization"], [str], [False]),
-        "TY": (["Work number", "Work name"], [str, str], [True, False]),
+        "OM": (["Owner"], [custom_str], [False]),
+        "ML": (["Soil or rock classification"], [custom_str], [False]),
+        "OR": (["Research organization"], [custom_str], [False]),
+        "TY": (["Work number", "Work name"], [custom_str, custom_str], [True, False]),
         "PK": (
             ["Record number", "Driller", "Inspector", "Handler"],
-            [custom_int, str, str, str],
+            [custom_int, custom_str, custom_str, custom_str],
             [False, False, False, False, False],
         ),
         "TT": (
             ["Survey abbreviation", "Class", "Survey ID", "Used standard", "Sampler"],
-            [str, custom_int, str, str, str],
+            [custom_str, custom_int, custom_str, custom_str, custom_str],
             [True, False, True, False, False, False],
         ),
         "LA": (
             ["Device number", "Device description text"],
-            [custom_int, str],
+            [custom_int, custom_str],
             [False, False, False],
         ),
         "XY": (
             ["X", "Y", "Z-start", "Date", "Point ID"],
-            [custom_float, custom_float, custom_float, str, str],
+            [custom_float, custom_float, custom_float, custom_str, custom_str],
             [True, True, True, True, False],
         ),
         "LN": (
             ["Line name or number", "Pole", "Distance"],
-            [str, custom_float, custom_float],
+            [custom_str, custom_float, custom_float],
             [True, False, False],
         ),
-        "-1": (["Ending"], [str], [True]),
-        "GR": (["Software name", "Date", "Programmer"], [str, str, str], [False, False, False]),
-        "GL": (["Survey info"], [str], [False]),
-        "AT": (["Rock sample attribute", "Possible value"], [str, str], [True, True]),
+        "-1": (["Ending"], [custom_str], [True]),
+        "GR": (
+            ["Software name", "Date", "Programmer"],
+            [custom_str, custom_str, custom_str],
+            [False, False, False],
+        ),
+        "GL": (["Survey info"], [custom_str], [False]),
+        "AT": (["Rock sample attribute", "Possible value"], [custom_str, custom_str], [True, True]),
         "AL": (
             ["Initial boring depth", "Initial boring method", "Initial boring soil type"],
-            [custom_float, str, str],
+            [custom_float, custom_str, custom_str],
             [True, False, False],
         ),
         "ZP": (
@@ -212,30 +238,34 @@ def identifiers():
         ),
         "TP": (
             ["TP1", "TP2", "TP3", "TP4", "TP5"],
-            [str, custom_float, str, str, str],
+            [custom_str, custom_float, custom_str, custom_str, custom_str],
             [False, False, False, False, False],
         ),
         "LP": (
             ["LP1", "LP2", "LP3", "LP4", "LP5"],
-            [str, str, str, str, str],
+            [custom_str, custom_str, custom_str, custom_str, custom_str],
             [False, False, False, False, False],
         ),
     }
     # line specific
     # inline comment / info
     inline_identifiers = {
-        "HM": (["obs"], [str], [False]),
-        "TX": (["free text"], [str], [False]),
-        "LB": (["test type", "test result", "unit"], [str, str, str], [True, True, False]),
-        "RK": (["sieve", "pass percentage"], [custom_float, custom_float], [True, True]),
-        "HT": (["hidden text"], [str], [False]),
-        "EM": (["Unofficial soil type"], [str], [False]),
+        "HM": (["obs"], [custom_str], [False]),
+        "TX": (["free text"], [custom_str], [False]),
+        "HT": (["hidden text"], [custom_str], [False]),
+        "EM": (["Unofficial soil type"], [custom_str], [False]),
         "VH": (["Water level observation"], [], [False]),
         "KK": (
             ["Azimuth (degrees)", "Inclination (degrees)", "Diameter (mm)"],
             [custom_float, custom_float, custom_int],
             [True, True, False],
         ),
+        "LB": (
+            ["Laboratory", "Result", "Unit"],
+            [custom_str, custom_str, custom_str],
+            [True, True, False],
+        ),
+        "RK": (["Sieve size", "Passing percentage"], [custom_float, custom_float], [True, True]),
     }
 
     # datatypes
@@ -244,23 +274,23 @@ def identifiers():
     survey_identifiers = {
         "PA/WST": (
             ["Depth (m)", "Load (kN)", "Rotation of half turns (-)", "Soil type"],
-            [custom_float, custom_float, custom_int, str],
+            [custom_float, custom_float, custom_int, custom_str],
             [True, False, False, False],
         ),
         "PA": (
             ["Depth (m)", "Load (kN)", "Rotation of half turns (-)", "Soil type"],
-            [custom_float, custom_float, custom_int, str],
+            [custom_float, custom_float, custom_int, custom_str],
             [True, False, False, False],
         ),
         "WST": (
             ["Depth (m)", "Load (kN)", "Rotation of half turns (-)", "Soil type"],
-            [custom_float, custom_float, custom_int, str],
+            [custom_float, custom_float, custom_int, custom_str],
             [True, False, False, False],
         ),
-        "PI": (["Depth (m)", "Soil type"], [custom_float, str], [True, False]),
+        "PI": (["Depth (m)", "Soil type"], [custom_float, custom_str], [True, False]),
         "LY": (
             ["Depth (m)", "Load (kN)", "Blows", "Soil type"],
-            [custom_float, custom_float, custom_int, str],
+            [custom_float, custom_float, custom_int, custom_str],
             [True, False, False, False],
         ),
         "SI/FVT": (
@@ -298,31 +328,31 @@ def identifiers():
         ),
         "HE/DP": (
             ["Depth (m)", "Blows", "Soil type"],
-            [custom_float, custom_int, str],
+            [custom_float, custom_int, custom_str],
             [True, False, False],
         ),
         "HE": (
             ["Depth (m)", "Blows", "Soil type"],
-            [custom_float, custom_int, str],
+            [custom_float, custom_int, custom_str],
             [True, False, False],
         ),
         # 'DP' : (),
         "HK/DP": (
             ["Depth (m)", "Blows", "Torque (Nm)", "Soil type"],
-            [custom_float, custom_int, custom_float, str],
+            [custom_float, custom_int, custom_float, custom_str],
             [True, False, False, False],
         ),
         "HK": (
             ["Depth (m)", "Blows", "Torque (Nm)", "Soil type"],
-            [custom_float, custom_int, custom_float, str],
+            [custom_float, custom_int, custom_float, custom_str],
             [True, False, False, False],
         ),
         # 'DP' : (),
-        "PT": (["Depth (m)", "Soil type"], [custom_float, str], [True, False]),
-        "TR": (["Depth (m)", "Soil type"], [custom_float, str], [True, False]),
+        "PT": (["Depth (m)", "Soil type"], [custom_float, custom_str], [True, False]),
+        "TR": (["Depth (m)", "Soil type"], [custom_float, custom_str], [True, False]),
         "PR": (
             ["Depth (m)", "Total resistance (MN/m^2)", "Sleeve friction (kN/m^2)", "Soil type"],
-            [custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False],
         ),
         "CP/CPT": (
@@ -333,7 +363,7 @@ def identifiers():
                 "Cone resistance (MN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False],
         ),
         "CP": (
@@ -344,7 +374,7 @@ def identifiers():
                 "Cone resistance (MN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False],
         ),
         "CPT": (
@@ -355,7 +385,7 @@ def identifiers():
                 "Cone resistance (MN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False],
         ),
         "CU/CPTU": (
@@ -367,7 +397,7 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False, False],
         ),
         "CU": (
@@ -379,7 +409,7 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False, False],
         ),
         "CPTU": (
@@ -391,24 +421,24 @@ def identifiers():
                 "Pore pressure (kN/m^2)",
                 "Soil type",
             ],
-            [custom_float, custom_float, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_float, custom_float, custom_float, custom_float, custom_str],
             [True, False, False, False, False, False],
         ),
         "HP": {
             "H": (
                 ["Depth (m)", "Blows", "Torque (Nm)", "Survey type", "Soil type"],
-                [custom_float, custom_int, custom_float, str, str],
+                [custom_float, custom_int, custom_float, custom_str, custom_str],
                 [True, False, False, True, False],
             ),
             "P": (
                 ["Depth (m)", "Pressure (MN/m^2)", "Torque (Nm)", "Survey type", "Soil type"],
-                [custom_float, custom_float, custom_float, str, str],
+                [custom_float, custom_float, custom_float, custom_str, custom_str],
                 [True, False, False, True, False],
             ),
         },
         "PO": (
             ["Depth (m)", "Time (s)", "Soil type"],
-            [custom_float, custom_int, str],
+            [custom_float, custom_int, custom_str],
             [True, False, False],
         ),
         "MW": (
@@ -431,8 +461,8 @@ def identifiers():
                 custom_float,
                 custom_float,
                 custom_float,
-                str,
-                str,
+                custom_str,
+                custom_str,
             ],
             [True, True, True, False, False, False, False, True, False],
         ),
@@ -445,7 +475,7 @@ def identifiers():
                 "Lenght of the sieve(m)",
                 "Inspector",
             ],
-            [custom_float, str, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_str, custom_float, custom_float, custom_float, custom_str],
             [True, True, False, False, False, False],
         ),
         "VO": (
@@ -457,19 +487,23 @@ def identifiers():
                 "Lenght of the sieve(m)",
                 "Inspector",
             ],
-            [custom_float, str, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_str, custom_float, custom_float, custom_float, custom_str],
             [True, True, False, False, False, False],
         ),
-        "VK": (["Water level", "Date", "Type"], [custom_float, str, str], [True, True, False]),
-        "VPK": (["Water level", "Date"], [custom_float, str], [True, True, False]),
+        "VK": (
+            ["Water level", "Date", "Type"],
+            [custom_float, custom_str, custom_str],
+            [True, True, False],
+        ),
+        "VPK": (["Water level", "Date"], [custom_float, custom_str], [True, True, False]),
         "HV": (
             ["Depth (m)", "Pressure (kN/m^2)", "Date", "Measurer"],
-            [custom_float, custom_float, str, str],
+            [custom_float, custom_float, custom_str, custom_str],
             [False, False, False, False],
         ),
         "HU": (
             ["Height", "Date", "Pipe top level", "Pipe bottom level", "Filter lenght", "Measurer"],
-            [custom_float, str, custom_float, custom_float, custom_float, str],
+            [custom_float, custom_str, custom_float, custom_float, custom_float, custom_str],
             [False, False, False, False, False, False],
         ),
         "PS/PMT": (
@@ -487,10 +521,14 @@ def identifiers():
             [custom_float, custom_float, custom_float],
             [False, False, False],
         ),
-        "PM": (["Height", "Date", "Measurer"], [custom_float, str, str], [False, False, False]),
+        "PM": (
+            ["Height", "Date", "Measurer"],
+            [custom_float, custom_str, custom_str],
+            [False, False, False],
+        ),
         "KO": (
             ["Depth (m)", "Soil type", "rock", "rock", "Maximum width", "Minimum width"],
-            [custom_float, str, custom_float, custom_int, custom_float, custom_float],
+            [custom_float, custom_str, custom_float, custom_int, custom_float, custom_float],
             [False, False, False, False, False, False],
         ),
         "KE": (
@@ -505,16 +543,14 @@ def identifiers():
         ),
         "NO": (
             ["Depth info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
-            [custom_float, str, custom_float, str],
+            [custom_float, custom_str, custom_float, custom_str],
             [True, True, True, False],
         ),
         "NE": (
             ["Depth info 1 (m)", "Sample ID", "Depth info 2 (m)", "Soil type"],
-            [custom_float, str, custom_float, str],
+            [custom_float, custom_str, custom_float, custom_str],
             [True, True, True, False],
         ),
-        "LB": (["Laboratory", "Result", "Unit"], [str, str, str], [True, True, False]),
-        "RK": (["Sieve size", "Passing percentage"], [custom_float, custom_float], [True, True]),
     }
     # common_survey_mistakes = {'KK' : ['KE', 'KR'],
     #                          'DP' : ['HE', 'HK']}
@@ -868,7 +904,7 @@ def print_info(language="fi"):
 
     Parameters
     ----------
-    language : str, {"fi"}
+    language : custom_str, {"fi"}
         short format for language.
     """
     if language.lower() != "fi":

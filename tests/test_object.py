@@ -52,15 +52,20 @@ def test_subobject_repr():
 def test_subobject_pandas():
     holes = get_object()
     hole = holes[0]
-    assert hole.get_dataframe().shape == (6, 91)
+    assert hole.get_dataframe().shape == (6, 52)
 
 
 def test_object_pandas():
     holes = get_object()
-    assert holes.get_dataframe().shape == (258, 132)
+    assert holes.get_dataframe().shape == (248, 88)
     holes = get_object()
-    skip_columns = ["*lab*", "*sieve*", "*header*"]
-    assert holes.get_dataframe(skip_columns).shape == (258, 43)
+    columns = ["*lab*", "*sieve*", "*header*"]
+    assert holes.get_dataframe(skip_columns=columns).shape == (248, 40)
+    assert holes.get_dataframe(include_columns=columns).shape == (49, 48)
+    assert holes.get_dataframe().shape[1] == (
+        holes.get_dataframe(include_columns=columns).shape[1]
+        + holes.get_dataframe(skip_columns=columns).shape[1]
+    )
 
 
 def test_drop_duplicates():
