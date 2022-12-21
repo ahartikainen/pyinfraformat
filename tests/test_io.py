@@ -43,7 +43,7 @@ def test_reading_good(errors):
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes"])
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
 @pytest.mark.parametrize("encoding", ["utf-16", "auto"])
 def test_reading_good_encoding(errors, encoding):
     for path in get_datafiles("good", "utf-16"):
@@ -52,7 +52,7 @@ def test_reading_good_encoding(errors, encoding):
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes"])
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
 def test_reading_good_stringio(errors):
     for path in get_datafiles("good", "ascii"):
         with StringIO() as text:
@@ -65,7 +65,7 @@ def test_reading_good_stringio(errors):
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes"])
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
 def test_reading_good_bytesio(errors):
     for path in get_datafiles("good"):
         with BytesIO() as text:

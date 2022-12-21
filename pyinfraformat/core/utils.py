@@ -139,31 +139,11 @@ def custom_int(number):
         msg = "Non-integer value detected, a floating point number is returned"
         logger.warning(msg)
         return floating_number
-        """
-    try:
-        floating_number = float(str(number).replace(",", "."))
-        integer_number = int(floating_number)
-        if integer_number == floating_number:
-            return integer_number
-        else:
-            msg = "Non-integer value detected, a floating point number is returned"
-            logger.warning(msg)
-            return floating_number
-    except ValueError:
-        if number in NANS:
-            return "-"
-        raise"""
 
 
 def custom_float(number):
     """Test if number is floating point number."""
-    return float(number.replace(",", "."))
-    """try:
-        return float(number.replace(",", "."))
-    except ValueError:
-        if number in NANS:
-            return "-"
-        raise"""
+    return float(str(number).replace(",", "."))
 
 
 def identifiers():

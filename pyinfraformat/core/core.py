@@ -516,7 +516,8 @@ class Hole:
                 print(f"{ln}:" if linenumbers else "", line)
 
     def __str__(self):
-        msg = pprint.pformat(self.header.__dict__).replace("\n", "\n  ")
+        items = {i: j for i, j in self.header.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items).replace("\n", "\n  ")
         return "Infraformat Hole -object, hole header:\n  {}".format(msg)
 
     def __repr__(self):
@@ -800,8 +801,8 @@ class Header:
         self.keys.add(key)
 
     def __str__(self):
-
-        msg = pprint.pformat(self.__dict__)
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items)
         return "Hole Header -object:\n  {}".format(msg)
 
     def __repr__(self):

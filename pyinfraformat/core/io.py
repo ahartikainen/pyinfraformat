@@ -29,7 +29,7 @@ TIMEOUT = 36_000
 
 # pylint: disable=redefined-argument-from-local
 def from_infraformat(
-    path=None, encoding="auto", extension=None, errors="ignore_holes", save_ignored=False
+    path=None, encoding="auto", extension=None, errors="ignore_lines", save_ignored=False
 ):
     """Read inframodel file(s).
 
@@ -42,8 +42,10 @@ def from_infraformat(
     use_glob : bool, optional, default False
         path is a glob string
     extension : bool, optional, default None
-    errors : 'ignore_lines', 'ignore_holes' or 'raise', default 'ignore_lines'
+    errors : 'ignore_lines', 'ignore_holes', 'force' or 'raise', default 'ignore_lines'
         How to handle ill-defined/illegal lines or holes.
+        'force' forces ill-defined values as str and adds error,
+        'ignore_lines' passes line as a whole if there is ill-defined values.
     save_ignored : str, StringIO or False, default False
         Append ignored holes or lines to a file. File path str or
         a file-like object (stream) into built-in print function 'file' parameter.
@@ -114,11 +116,9 @@ def from_gtk_wfs(
     holes = from_gtk_wfs(bbox, coord_system="EPSG:4326")
     """
     # pylint: disable=invalid-name
-    if errors == "force":
-        raise NotImplementedError
-    if errors not in {"ignore_lines", "ignore_holes", "raise"}:
+    if errors not in {"ignore_lines", "ignore_holes", "raise", "force"}:
         raise ValueError(
-            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes' or 'raise'."
+            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
         )
     collected_illegals = []
 
@@ -159,7 +159,7 @@ def from_gtk_wfs(
                     if save_ignored:
                         collected_illegals.extend(hole_str)
                     return False
-            elif errors == "ignore_lines":
+            elif errors == "ignore_lines" or errors=='raise':
                 hole, illegal_rows = parse_hole(enumerate(hole_str), force=False)
                 if illegal_rows and save_ignored:
                     collected_illegals.extend(illegal_rows)
@@ -167,13 +167,6 @@ def from_gtk_wfs(
                 hole, illegal_rows = parse_hole(enumerate(hole_str), force=True)
                 if illegal_rows and save_ignored:
                     collected_illegals.extend(illegal_rows)
-            elif errors == "raise":
-                hole, illegal_rows = parse_hole(enumerate(hole_str), force=False)
-                if illegal_rows:
-                    print(illegal_rows)
-                    print("\n".join(hole_str))
-                    error = ", ".join(illegal_rows)
-                    raise ValueError(f"Illegal/Il-defined hole detected. '{error}'")
 
             if illegal_rows:
                 hole_id = hole.get("header_XY_Point ID", "-")
@@ -181,11 +174,14 @@ def from_gtk_wfs(
                 logger.warning(
                     f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
                 )
-            for row in illegal_rows:
-                linenumber = row.get("linenumber", "Unknown")
-                error_txt = row.get("error", "Exception")
-                line_highlighted = row.get("line_highlighted", "")
-                logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
+                for row in illegal_rows:
+                    linenumber = row.get("linenumber", "Unknown")
+                    error_txt = row.get("error", "Exception")
+                    line_highlighted = row.get("line_highlighted", "")
+                    logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
+
+            if errors == "raise" and illegal_rows:
+                raise ValueError(f"Illegal/Il-defined hole detected!")
         else:
             hole = Hole()
         hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
@@ -506,11 +502,9 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
         Append ignored holes or lines to a file. File path str or
         a file-like object (stream) into built-in print function 'file' parameter.
     """
-    if errors == "force":
-        raise NotImplementedError
-    if errors not in {"ignore_lines", "ignore_holes", "raise"}:
+    if errors not in {"ignore_lines", "ignore_holes", "raise", "force"}:
         raise ValueError(
-            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes' or 'raise'."
+            f"Argument errors '{errors}' must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
         )
     collected_illegals = []
 
@@ -549,58 +543,80 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
         elif head == "-1":
             if errors == "ignore_holes":
                 try:
-                    hole_object, illegal_rows = parse_hole(holestr_list, force=False)
+                    hole, illegal_rows = parse_hole(holestr_list, force=False)
                 except ValueError:
                     collected_illegals.extend(holestr_list)
-                    hole_object = Hole()
-            elif errors == "ignore_lines":
-                hole_object, illegal_rows = parse_hole(holestr_list, force=False)
+                    hole = Hole()
+                    illegal_rows = None
+            elif errors == "ignore_lines" or errors=='raise':
+                hole, illegal_rows = parse_hole(holestr_list, force=False)
                 collected_illegals.extend(illegal_rows)
             elif errors == "force":
-                hole_object, illegal_rows = parse_hole(holestr_list, force=True)
+                hole, illegal_rows = parse_hole(holestr_list, force=True)
                 collected_illegals.extend(illegal_rows)
-            else:
-                hole_object, illegal_rows = parse_hole(holestr_list, force=False)
-                if illegal_rows:
-                    error = ", ".join(illegal_rows)
-                    raise ValueError(f"Illegal/Il-defined hole detected. '{error}'")
+            
+            if illegal_rows:
+                hole_id = hole.get("header_XY_Point ID", "-")
+                hole_index = len(holes) if hole else "-"
+                logger.warning(
+                    f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
+                )
+                for row in illegal_rows:
+                    linenumber = row.get("linenumber", "Unknown")
+                    error_txt = row.get("error", "Exception")
+                    line_highlighted = row.get("line_highlighted", "")
+                    logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
+
+            if illegal_rows and errors=='raise':
+                raise ValueError("Illegal/Il-defined hole detected!")
+            
             # Add fileheaders to hole objects
             if fileheaders:
                 for key, value in fileheaders.items():
-                    hole_object.add_fileheader(key, value)
+                    hole.add_fileheader(key, value)
             if tail:
-                hole_object.add_header("-1", {"Ending": tail[0].strip()})
-            holes.append(hole_object)
+                hole.add_header("-1", {"Ending": tail[0].strip()})
+            holes.append(hole)
             holestr_list = []
         else:
             holestr_list.append((linenumber, line.strip()))
 
     # check incase that '-1' is not the last line
     # TODO add error
-    hole_object = None
+    hole = None
     if holestr_list:
         if errors == "ignore_holes":
-            hole_object, illegal_rows = parse_hole(holestr_list, force=False)
+            hole, illegal_rows = parse_hole(holestr_list, force=False)
             if illegal_rows:
                 collected_illegals.extend(holestr_list)
-                hole_object = None
-        elif errors == "ignore_lines":
-            hole_object, illegal_rows = parse_hole(holestr_list, force=False)
+                hole = None
+        elif errors == "ignore_lines" or errors=='raise':
+            hole, illegal_rows = parse_hole(holestr_list, force=False)
             collected_illegals.extend(illegal_rows)
         elif errors == "force":
-            hole_object, illegal_rows = parse_hole(holestr_list, force=True)
+            hole, illegal_rows = parse_hole(holestr_list, force=True)
             collected_illegals.extend(illegal_rows)
-        else:
-            hole_object, illegal_rows = parse_hole(holestr_list, force=False)
-            if illegal_rows:
-                error = ", ".join(illegal_rows)
-                raise ValueError(f"Illegal/Il-defined hole detected. '{error}'")
-        if fileheaders and hole_object:
+            
+        if illegal_rows:
+            hole_id = hole.get("header_XY_Point ID", "-")
+            hole_index = len(holes) if hole else "-"
+            logger.warning(
+                f"Hole {hole_index} / Point ID: {hole_id} has {len(illegal_rows)} illegal rows."
+            )
+            for row in illegal_rows:
+                linenumber = row.get("linenumber", "Unknown")
+                error_txt = row.get("error", "Exception")
+                line_highlighted = row.get("line_highlighted", "")
+                logger.warning(f"Line {linenumber}: {line_highlighted} # {error_txt}")
+                
+        if illegal_rows and errors=='raise':
+            raise ValueError("Illegal/Il-defined hole detected!")
+        if fileheaders and hole:
             for key, value in fileheaders.items():
-                hole_object.add_fileheader(key, value)
+                hole.add_fileheader(key, value)
         holestr_list = []
-        if hole_object:
-            holes.append(hole_object)
+        if hole:
+            holes.append(hole)
 
     return holes
 
@@ -709,11 +725,9 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
             value_type = dtypes[count]
             mandatory = strict[count]
             value = value.strip()
-
-            # TODO: consider float number when on int, now truncates decimals
-            # TODO: consider , as decimal separator
-            if mandatory and is_nan(value):
-                line_errors.append((f"Value for '{key}' is mandatory", index))
+            if is_nan(value):
+                if mandatory:
+                    line_errors.append((f"Value for '{key}' is mandatory", index))
                 if force:
                     line_dict[key] = "-"
             else:
@@ -721,17 +735,9 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
                     line_dict[key] = value_type(value)
                 except Exception:
                     msg = f"Could not convert '{key}' value '{value}' to type '{str(value_type.__name__)}'."
-                    line_errors.append(
-                        (
-                            msg,
-                            index,
-                        )
-                    )
+                    line_errors.append((msg, index))
                     if force:
-                        if is_nan(value):
-                            line_dict[key] = "-"
-                        else:
-                            line_dict[key] = str(value)
+                        line_dict[key] = str(value)
             count += 1
     while count < len(dtypes):
         key = names[count]
