@@ -153,6 +153,7 @@ class Holes:
 
     def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
+        # pylint: disable=no-self-use
         xmin, xmax, ymin, ymax = bbox
         filtered_holes = []
         for hole in holes:
@@ -173,6 +174,7 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
+        # pylint: disable=no-self-use
         filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
@@ -187,6 +189,7 @@ class Holes:
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
+        # pylint: disable=no-self-use
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
         elif isinstance(start, str) and fmt is not None:
@@ -767,7 +770,7 @@ class Hole:
             df[key] = d_header[key]
 
         d_fileheader = self.get_fileheader_dict()
-        d_fileheader = {"fileheader_" + key: d_fileheader[key] for key in d_fileheader}
+        d_fileheader = {"fileheader_" + key: item for key, item in d_fileheader.items()}
         for key in d_fileheader:
             if skip_columns and any(
                 (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
