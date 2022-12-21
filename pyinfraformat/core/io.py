@@ -571,8 +571,7 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                     error_txt = row.get("error", "Exception")
                     line_highlighted = row.get("line_highlighted", "")
                     msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
-                    logger.warning(msg)
-
+                    logger.warning(msg
             if illegal_rows and errors == "raise":
                 raise ValueError("Illegal/Il-defined hole detected!")
 
@@ -590,7 +589,7 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
         else:
             holestr_list.append((linenumber, line.strip()))
 
-    # check incase that '-1' is not the last line
+    # Check if '-1' is not the last line
     hole = None
     if holestr_list:
         logger.warning("File has to end on -1 row.")
