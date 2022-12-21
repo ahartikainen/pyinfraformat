@@ -101,7 +101,7 @@ LAB_ABBREVIATIONS = {
 
 
 def custom_str(string):
-    """String as custom string."""
+    """Create a new cumstom string object from the given object."""
     return str(string)
 
 
