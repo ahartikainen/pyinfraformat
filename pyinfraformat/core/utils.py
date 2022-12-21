@@ -100,10 +100,8 @@ LAB_ABBREVIATIONS = {
 }
 
 
-def custom_str(string, strict=True):
-    """Custom string"""
-    if strict:
-        return str(string)
+def custom_str(string):
+    """String as custom string."""
     return str(string)
 
 

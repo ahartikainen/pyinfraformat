@@ -689,10 +689,7 @@ def highlight_item(string, indexes=None, marker="**", maxsplit=None):
 
 
 def dictify_line(line, head=None, restrict_fields=True, force=False):
-    """
-    >>> head = "LB"
-    >>> line = "LB w 12 kg"
-    >>> dictify_line
+    """Parse line into dict as infraformat line.
 
     Returns
     -------
