@@ -243,10 +243,10 @@ def from_gtk_wfs(
                     logger.warning(msg)
                 if hole:
                     holes.append(hole)
-                if progress_bar:
-                    pbar.update(1)
+                    if progress_bar:
+                        pbar.update(1)
                 i += 1
-                if i >= maxholes:
+                if len(holes) >= maxholes:
                     break
         else:
             msg = f"No features returned at page {startindex//page_size}."
