@@ -4,8 +4,10 @@ import logging
 import os
 import pprint
 from datetime import datetime
+from functools import cached_property
 from numbers import Integral
 
+import numpy as np
 import pandas as pd
 
 from ..exceptions import FileExtensionMissingError
@@ -151,6 +153,7 @@ class Holes:
 
     def _filter_coordinates(self, holes, bbox):
         """Filter object by coordinates."""
+        # pylint: disable=no-self-use
         xmin, xmax, ymin, ymax = bbox
         filtered_holes = []
         for hole in holes:
@@ -171,6 +174,7 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
+        # pylint: disable=no-self-use
         filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
@@ -185,6 +189,7 @@ class Holes:
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
+        # pylint: disable=no-self-use
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
         elif isinstance(start, str) and fmt is not None:
@@ -226,6 +231,36 @@ class Holes:
     def drop_duplicates(self):
         """Check if hole headers/datas are unique; drop duplicates."""
         raise NotImplementedError
+
+    def _get_bounds(self):
+        """Get bounding box of holes object as array."""
+        coordinates = []
+        systems = []
+        for hole in self:
+            if hasattr(hole, "header") and hasattr(hole.header, "XY"):
+                if "X" in hole.header.XY and "Y" in hole.header.XY:
+                    x = hole.header.XY["X"]
+                    y = hole.header.XY["Y"]
+                    coordinates.append((x, y))
+
+            if (
+                hasattr(hole, "fileheader")
+                and hasattr(hole.fileheader, "KJ")
+                and "Coordinate system" in hole.fileheader["KJ"]
+            ):
+                systems.append(hole.fileheader["KJ"]["Coordinate system"])
+
+        if len(systems) != len(self):
+            logger.warning("Some holes do not have a coordinate system!")
+        if len(set(systems)) > 1:
+            logger.warning("Holes objects coordinate systems are not uniform!")
+        coordinates = np.array(coordinates)
+        return np.ravel((coordinates.min(axis=0), coordinates.max(axis=0)))
+
+    @property
+    def bounds(self):
+        """Get bounding box of holes object as array."""
+        return self._get_bounds()
 
     def to_csv(self, path, **kwargs):
         """Save data in table format to CSV.
@@ -420,38 +455,44 @@ class Holes:
         return pd.DataFrame.from_records(soil_observations, columns=columns)
 
     def get_list(self):
-        """Get survey data, hole header and fileheader as list of dicts."""
+        """Get survey data, hole header, fileheader, comments and illegals as list of dicts."""
         return_list = []
         for hole in self:
-            d_header = hole.get_header_dict()
-            dict_list = hole.get_data_list()
-            d_fileheader = hole.get_fileheader_dict()
-            return_list.append({"header": d_header, "fileheader": d_fileheader, "data": dict_list})
+            return_list.append(hole.get_dict())
         return return_list
 
-    def get_columns(self):
+    def _get_columns(self):
         """Get survey data, header and fileheader columns."""
         return_set = set()
         for hole in self:
-            return_set = return_set.union(hole.get_columns())
+            return_set = return_set.union(hole.columns)
         return return_set
 
-    def get_dataframe(self, skip_columns=False):
+    @cached_property
+    def columns(self):
+        """Get all holes data columns, named as in .get_dataframe()."""
+        return self._get_columns()
+
+    def get_dataframe(self, include_columns="all", skip_columns=False):
         """Get survey data, hole header and fileheader as DataFrame.
 
         Paramaters
         ----------
+        include_columns : 'all' or list, default 'all'
+            Which columns to include. Uses wildcards (* and ?) to
+            match strings (see fnmatch). Not case sensitive.
+            See get_columns() for columns included.
         skip_columns : list, str or False
-            Columns that will be excluded. Not case sensitive.
-            Uses wildcards (* and ?) to match strings (see fnmatch).
+            Columns that will be excluded. Uses wildcards (* and ?) to
+            match strings (see fnmatch). Not case sensitive.
             See get_columns() for columns included.
 
         Examples
         --------
-        >>> holes.get_dataframe(skip_columns="*laboratory*")
+        >>> holes.get_dataframe(include_columns="*laboratory*")
         >>> holes.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
         """
-        df_list = [hole.get_dataframe(skip_columns) for hole in self.holes]
+        df_list = [hole.get_dataframe(include_columns, skip_columns) for hole in self.holes]
         return pd.concat(df_list, axis=0, sort=False)
 
 
@@ -463,12 +504,54 @@ class Hole:
         self.header = Header()
         self.inline_comment = InlineComment()
         self.survey = Survey()
-        self._illegal = Illegal()
+        self.illegals = []
+        self.raw_str = ""
+
+    def get_raw(self):
+        """Get raw input fileheader and hole as string."""
+        hole_str = []
+        hole_str.extend(self.fileheader.raw_str.split("\n"))
+        hole_str.extend(self.raw_str.split("\n"))
+        if hasattr(self.header, "-1"):
+            ending = self.header["-1"].get("Ending", None)
+            if ending:
+                hole_str.append(f"-1 {ending}")
+        return "\n".join(hole_str)
+
+    def print_raw(self, linenumbers=True, illegals=True):
+        """Print raw input fileheader and hole as text."""
+        fileheader = self.fileheader.raw_str.split("\n")
+        for linenumber, line in enumerate(fileheader, start=-len(fileheader)):
+            print(f"{linenumber}:\t" if linenumbers else "", line)
+
+        illegals_dict = {
+            item["linenumber"]: item["line_highlighted"] + "  # " + item["error"]
+            for item in self.illegals
+        }
+        for linenumber, line in enumerate(self.raw_str.split("\n")):
+            if illegals and linenumber in illegals_dict:
+                if linenumbers:
+                    print(f"{linenumber}:\t", illegals_dict[linenumber])
+                else:
+                    print(illegals_dict[linenumber])
+            else:
+                if linenumbers:
+                    print(f"{linenumber}:\t", line)
+                else:
+                    print(line)
+
+        if hasattr(self.header, "-1"):
+            ending = self.header["-1"].get("Ending", None)
+            if ending:
+                if linenumbers:
+                    print(f"{linenumber+1}:\t", f"-1 {ending}")
+                else:
+                    print(f"-1 {ending}")
 
     def __str__(self):
-
-        msg = str(self.header).replace("\n", "\n  ")
-        return "Infraformat Hole -object:\n  {}".format(msg)
+        items = {i: j for i, j in self.header.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items).replace("\n", "\n  ")
+        return "Infraformat Hole -object, hole header:\n  {}".format(msg)
 
     def __repr__(self):
         return self.__str__()
@@ -479,6 +562,36 @@ class Hole:
         if isinstance(other, Hole):
             return Holes([self] + [other])
         raise ValueError("Only Holes or Hole -objects can be added.")
+
+    def __getitem__(self, input_key):
+        keys = input_key.split("_")
+        if keys[0] == "data":
+            item = self.survey
+        else:
+            item = self
+        for key in keys[:-1]:
+            item = getattr(item, key)
+        if isinstance(item, list):
+            return [row[keys[-1]] for row in item]
+        return item[keys[-1]]
+
+    def get(self, key, default=None):
+        """Return the value for key if key is in the object, else default."""
+        try:
+            return self[key]
+        except (KeyError, AttributeError):
+            return default
+
+    def __setitem__(self, input_key, input_item):
+        keys = input_key.split("_")
+        if keys[0] == "data":
+            raise TypeError(
+                "Hole object does not support item assignment into survey, see .survey."
+            )
+        item = self
+        for key in keys[:-1]:
+            item = getattr(item, key)
+        item[keys[-1]] = input_item
 
     def add_fileheader(self, key, fileheader):
         """Add fileheader to object."""
@@ -539,14 +652,32 @@ class Hole:
                 d_fileheader["{}_{}".format(key, key_)] = item
         return d_fileheader
 
-    def get_dict(self):
-        """Get survey data, hole header and fileheader as dict."""
-        d_header = self.get_header_dict()
-        dict_list = self.get_data_list()
-        d_fileheader = self.get_fileheader_dict()
-        return {"header": d_header, "fileheader": d_fileheader, "data": dict_list}
+    def get_comments_list(self):
+        """Get fileheader as a dict."""
+        dict_list = self.inline_comment.data
+        return dict_list
 
-    def get_columns(self):
+    def get_illegals_list(self):
+        """Get fileheader as a dict."""
+        dict_list = self._illegal.data
+        return dict_list
+
+    def get_dict(self):
+        """Get survey data, hole header, fileheader, comments and illegals as list of dicts."""
+        d_header = self.get_header_dict()
+        data_list = self.get_data_list()
+        d_fileheader = self.get_fileheader_dict()
+        comment_list = self.get_comments_list()
+        illegals_list = self.get_illegals_list()
+        return {
+            "header": d_header,
+            "fileheader": d_fileheader,
+            "data": data_list,
+            "comments": comment_list,
+            "illegals": illegals_list,
+        }
+
+    def _get_columns(self):
         """Get survey data, header and fileheader columns."""
         data = set("data_" + item for row in self.survey.data for item in row)
         fileheader = {
@@ -561,19 +692,28 @@ class Hole:
         }
         return data.union(fileheader).union(header)
 
-    def get_dataframe(self, skip_columns=False):
+    @property
+    def columns(self):
+        """Get hole columns, as in .get_dataframe()."""
+        return self._get_columns()
+
+    def get_dataframe(self, include_columns="all", skip_columns=False):
         """Get survey data, hole header and fileheader as DataFrame.
 
         Paramaters
         ----------
+        include_columns : 'all' or list, default 'all'
+            Which columns to include. Uses wildcards (* and ?) to
+            match strings (see fnmatch). Not case sensitive.
+            See get_columns() for columns included.
         skip_columns : list, str or False
-            Columns that will be excluded. Not case sensitive.
-            Uses wildcards (* and ?) to match strings (see fnmatch).
+            Columns that will be excluded. Uses wildcards (* and ?) to
+            match strings (see fnmatch). Not case sensitive.
             See get_columns() for columns included.
 
         Examples
         --------
-        >>> hole.get_dataframe(skip_columns="*laboratory*")
+        >>> hole.get_dataframe(include_columns="*laboratory*")
         >>> hole.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
         """
         if skip_columns:
@@ -582,8 +722,28 @@ class Hole:
                     skip_columns,
                 ]
                 if isinstance(skip_columns, str)
-                else skip_columns
+                else skip_columns.copy()
             )
+        else:
+            skip_columns = []
+        if include_columns == "all" or isinstance(include_columns, list):
+            pass
+        elif isinstance(include_columns, str):
+            include_columns = [include_columns]
+        else:
+            raise ValueError("Parameter include_columns must be list or str 'all'.")
+        if include_columns != "all":
+            columns = self.columns
+            include_slicer = [False] * len(columns)
+            for index, col in enumerate(columns):
+                for include_item in include_columns:
+                    if fnmatch.fnmatch(col.lower(), include_item.lower()):
+                        include_slicer[index] = True
+                        break
+            for boolen, col in zip(include_slicer, columns):
+                if boolen is False:
+                    skip_columns.append(col)
+
         dict_list = self.get_data_list()
         dict_list = [{"data_" + item: row[item] for item in row} for row in dict_list]
         if skip_columns:
@@ -610,7 +770,7 @@ class Hole:
             df[key] = d_header[key]
 
         d_fileheader = self.get_fileheader_dict()
-        d_fileheader = {"fileheader_" + key: d_header[key] for key in d_header}
+        d_fileheader = {"fileheader_" + key: item for key, item in d_fileheader.items()}
         for key in d_fileheader:
             if skip_columns and any(
                 (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
@@ -626,6 +786,8 @@ class FileHeader:
 
     def __init__(self):
         self.keys = set()
+        self.illegals = []
+        self.raw_str = ""
 
     def add(self, key, values):
         """Add member to class."""
@@ -633,8 +795,9 @@ class FileHeader:
         self.keys.add(key)
 
     def __str__(self):
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys", "raw_str", "illegals"}}
         msg = "FileHeader object - Fileheader contains {} items\n  {}".format(
-            len(self.keys), pprint.pformat(self.__dict__)
+            len(self.keys), pprint.pformat(items)
         )
         return msg
 
@@ -674,8 +837,8 @@ class Header:
         self.keys.add(key)
 
     def __str__(self):
-
-        msg = pprint.pformat(self.__dict__)
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items)
         return "Hole Header -object:\n  {}".format(msg)
 
     def __repr__(self):
@@ -699,8 +862,8 @@ class InlineComment:
         self.data.append((key, values))
 
     def __str__(self):
-
-        msg = pprint.pformat(self.__dict__)
+        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        msg = pprint.pformat(items)
         return "Hole InlineComment -object:\n  {}".format(msg)
 
     def __repr__(self):
@@ -724,28 +887,6 @@ class Survey:
 
         msg = pprint.pformat(self.__dict__)
         return "Hole Survey -object:\n  {}".format(msg)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __getitem__(self, attr):
-        return self.data[attr]
-
-
-class Illegal:
-    """Class to contain illegal lines."""
-
-    def __init__(self):
-        self.data = list()
-
-    def add(self, values):
-        """Add illegal lines to object."""
-        self.data.append(values)
-
-    def __str__(self):
-
-        msg = pprint.pformat(self.__dict__)
-        return "Hole Illegal -object:\n  {}".format(msg)
 
     def __repr__(self):
         return self.__str__()

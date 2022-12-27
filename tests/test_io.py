@@ -35,44 +35,44 @@ def get_datafiles(quality=None, encoding=None):
     return datafiles
 
 
-@pytest.mark.parametrize("robust", [True, False])
-def test_reading_good(robust):
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes"])
+def test_reading_good(errors):
     for path in get_datafiles("good"):
-        holes = from_infraformat(path, robust=robust)
+        holes = from_infraformat(path, errors=errors)
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("robust", [True, False])
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
 @pytest.mark.parametrize("encoding", ["utf-16", "auto"])
-def test_reading_good_encoding(robust, encoding):
+def test_reading_good_encoding(errors, encoding):
     for path in get_datafiles("good", "utf-16"):
-        holes = from_infraformat(path, robust=robust, encoding=encoding)
+        holes = from_infraformat(path, errors=errors, encoding=encoding)
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("robust", [True, False])
-def test_reading_good_stringio(robust):
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
+def test_reading_good_stringio(errors):
     for path in get_datafiles("good", "ascii"):
         with StringIO() as text:
             with open(path, "r") as f:
                 text.write(f.read())
             text.seek(0)
-            holes = from_infraformat(text, robust=robust)
+            holes = from_infraformat(text, errors=errors)
 
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
 
 
-@pytest.mark.parametrize("robust", [True, False])
-def test_reading_good_bytesio(robust):
+@pytest.mark.parametrize("errors", ["raise", "ignore_lines", "ignore_holes", "force"])
+def test_reading_good_bytesio(errors):
     for path in get_datafiles("good"):
         with BytesIO() as text:
             with open(path, "rb") as f:
                 text.write(f.read())
             text.seek(0)
-            holes = from_infraformat(text, robust=robust)
+            holes = from_infraformat(text, errors=errors)
 
         assert isinstance(holes, Holes)
         assert isinstance(holes.holes, list)
@@ -81,7 +81,7 @@ def test_reading_good_bytesio(robust):
 def test_reading_bad():
     for path in get_datafiles("bad"):
         with pytest.raises(Exception):
-            from_infraformat(path, robust=False)
+            from_infraformat(path, errors="raise")
     with pytest.raises(Exception):
         from_infraformat("../ImaginaryFolder")
 
@@ -90,7 +90,7 @@ def test_reading_bad():
 def test_reading_bad_encoding(encoding):
     for path in get_datafiles(None, "utf-16"):
         with pytest.raises(UnicodeDecodeError):
-            from_infraformat(path, robust=False, encoding=encoding)
+            from_infraformat(path, errors="raise", encoding=encoding)
 
 
 def test_reading_bad_stringio():
@@ -100,7 +100,7 @@ def test_reading_bad_stringio():
                 text.write(f.read())
             text.seek(0)
             with pytest.raises(Exception):
-                from_infraformat(text, robust=False)
+                from_infraformat(text, errors="raise")
 
 
 def test_reading_bad_bytesio():
@@ -110,7 +110,7 @@ def test_reading_bad_bytesio():
                 text.write(f.read())
             text.seek(0)
             with pytest.raises(Exception):
-                from_infraformat(text, robust=False)
+                from_infraformat(text, errors="raise")
 
 
 def test_reading_dir():
@@ -196,7 +196,7 @@ def test_output():
 def test_set_logger():
     pif.set_logger_level(10)
     pif.log_to_file("test_log.log")
-    for path in get_datafiles("good"):
+    for path in get_datafiles("bad"):
         holes = from_infraformat(path)
     with open("test_log.log") as f:
         length = len(f.read())
