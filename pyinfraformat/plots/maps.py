@@ -1,4 +1,5 @@
 """Plot a html folium map from holes object."""
+
 from itertools import cycle
 from pathlib import Path
 

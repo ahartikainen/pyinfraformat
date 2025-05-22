@@ -1,4 +1,5 @@
 """General information concerning Finnish Infraformat."""
+
 import logging
 
 __all__ = ["identifiers", "print_info"]

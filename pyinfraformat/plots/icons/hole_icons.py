@@ -19,6 +19,7 @@ FUNCTIONS : dict
 run main() for creation.
 
 """
+
 import numpy as np
 import svgwrite
 

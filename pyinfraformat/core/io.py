@@ -27,6 +27,7 @@ __all__ = ["from_infraformat", "from_gtk_wfs"]
 
 TIMEOUT = 36_000
 
+
 # pylint: disable=redefined-argument-from-local
 def from_infraformat(
     path=None, encoding="auto", extension=None, errors="ignore_lines", save_ignored=False

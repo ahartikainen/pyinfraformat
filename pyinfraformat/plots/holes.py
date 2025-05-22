@@ -1,4 +1,5 @@
 """Plot diagrams for a single hole."""
+
 import gc
 import io
 import logging

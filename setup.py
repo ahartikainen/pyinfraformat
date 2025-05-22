@@ -1,4 +1,5 @@
 """Python setup information."""
+
 import codecs
 import os
 import re
