@@ -65,13 +65,13 @@ jobs:
         if: success() && matrix.os == 'ubuntu-latest'
         run: |
           bash <(curl -s https://codecov.io/bash) -n "${{ matrix.os }} ${{ matrix.python-version }}"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: success() && matrix.os == 'ubuntu-latest'
         with:
           name: pyinfraformat_wheel
           path: dist/*.whl
       - name: Upload wheel to release
-        uses: svenstaro/upload-release-action@v2
+        uses: svenstaro/upload-release-action@v4
         if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
