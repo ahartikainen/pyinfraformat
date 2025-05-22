@@ -174,7 +174,6 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
-
         filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
@@ -189,7 +188,6 @@ class Holes:
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
         """Filter object by datetime."""
-
         if isinstance(start, str) and fmt is None:
             start = pd.to_datetime(start)
         elif isinstance(start, str) and fmt is not None:
