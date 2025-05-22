@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --no-cache-dir --upgrade pip
+          python -m pip install --no-cache-dir --upgrade pip setuptools
           python -m pip install --no-cache-dir wheel
           python -m pip install --no-cache-dir -r requirements.txt
       - name: Show libraries
