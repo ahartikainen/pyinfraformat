@@ -3,6 +3,6 @@ numpydoc
 openpyxl
 xlrd
 pydocstyle
-pylint<2.10
+pylint
 pytest
 pytest-cov
