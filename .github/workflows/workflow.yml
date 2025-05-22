@@ -71,7 +71,7 @@ jobs:
           name: pyinfraformat_wheel
           path: dist/*.whl
       - name: Upload wheel to release
-        uses: svenstaro/upload-release-action@v4
+        uses: svenstaro/upload-release-action@v2
         if: success() && startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
