@@ -1,5 +1,122 @@
-[tool.black]
-line-length = 100
+[build-system]
+requires = ["setuptools >= 40.9.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.isort]
-profile = "black"
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+]
+extend-exclude = ["tests"]
+# Same as Black.
+line-length = 100
+indent-width = 4
+# Assume Python 3.12
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["ALL"]
+ignore = [
+  "CPY001",
+  "D203",
+  "D212",
+  "ANN003",
+  "PLR0913",
+  "PLW2901",
+  "S101",
+  "COM812",
+  "ISC001",
+  "FBT001",
+  "FBT002",
+  "PLR0912",
+  "C901",
+  "D205",
+  "N813",
+  "SLF001",
+  "T201",
+  "PLR0914",
+  "PLR0915",
+  "PLR0917",
+  "PLC2701",
+  "BLE001",
+  "PLR6104",
+  "PD011",
+  "ANN401",
+  "ANN202",
+  "ANN001",
+  "ANN204",
+  "PLR2004",
+  "D105",
+  "DOC501",
+  "TRY004",
+  "DTZ007",
+  "PD901",
+  "DOC201",
+  "PLC0415",
+  "PLR0904",
+  "ANN201",
+  "PTH122",
+  "PTH123",
+  "SIM102",
+  "PD003",
+  "PLR6301",
+  "D417",
+  "N806",
+  "E741",
+  "ERA001",
+  "DOC402",
+  "ANN002",
+  "E722",
+  "PTH118",
+  "PTH207",
+  "PTH112",
+  "RUF001",
+  "FURB101",
+  "PLC0206",
+  "UP031",
+  "INP001",
+  "SIM108"
+]
+extend-select = []
+preview = true
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

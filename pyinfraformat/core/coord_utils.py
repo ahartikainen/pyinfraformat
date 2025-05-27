@@ -89,15 +89,16 @@ def flip_xy(holes):
                 hole_copy.header.XY["X"],
             )
         return hole_copy
-    raise ValueError("Inappropriate argument.")
+    msg = "Inappropriate argument."
+    raise ValueError(msg)
 
 
 def proj_espoo(x, y):
-    """Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
-
-    https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen/Kiinteiston_muodostus/Koordinaattiuudistus(19923)  # pylint: disable=line-too-long
     """
-    # pylint: disable=invalid-name
+    Project Espoo vvj coordinates into ETRS-GK24 (EPSG:3878).
+
+    https://www.espoo.fi/fi-FI/Asuminen_ja_ymparisto/Rakentaminen/Kiinteiston_muodostus/Koordinaattiuudistus(19923)
+    """
     output_epsg = "EPSG:3878"
     a = 6599858.007479810200000
     b = 24499824.978235636000000
@@ -110,11 +111,11 @@ def proj_espoo(x, y):
 
 
 def proj_helsinki(x, y):
-    """Project Helsinki coordinates into ETRS-GK25 (EPSG:3879).
-
-    https://www.hel.fi/helsinki/fi/kartat-ja-liikenne/kartat-ja-paikkatieto/paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat # pylint: disable=line-too-long
     """
-    # pylint: disable=invalid-name
+    Project Helsinki coordinates into ETRS-GK25 (EPSG:3879).
+
+    https://www.hel.fi/helsinki/fi/kartat-ja-liikenne/kartat-ja-paikkatieto/paikkatiedot+ja+-aineistot/koordinaatistot_ja+_korkeudet/koordinaatti_ja_korkeusjarjestelmat
+    """
     output_epsg = "EPSG:3879"
     a = 6654650.14636
     b = 25447166.49457
@@ -127,11 +128,11 @@ def proj_helsinki(x, y):
 
 
 def proj_porvoo(x, y):
-    """Project Porvoo coordinates into KKJ3 (EPSG:2393).
+    """
+    Project Porvoo coordinates into KKJ3 (EPSG:2393).
 
     https://www.porvoo.fi/koordinaatti-ja-korkeusjarjestelma
     """
-    # pylint: disable=invalid-name
     output_epsg = "EPSG:2393"
     P = x - 6699461.017
     I = y - 427129.490
@@ -145,7 +146,8 @@ LOCAL_SYSTEMS = {"HELSINKI": proj_helsinki, "ESPOO": proj_espoo, "PORVOO": proj_
 
 
 def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
-    """Transform coordinate points from input to output, default output WGS84.
+    """
+    Transform coordinate points from input to output, default output WGS84.
 
     Parameters
     ----------
@@ -160,6 +162,7 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     -------
     x : list or float
     y : list or float
+
     """
     input_system = str(input_system).upper()
     if "EPSG" in input_system:
@@ -167,32 +170,27 @@ def project_points(x, y, input_system="EPSG:3067", output_system="EPSG:4326"):
     else:
         input_epsg = coord_str_recognize(input_system)
         if "unrecognized format" in input_epsg.lower():
-            raise ValueError(
-                "Unrecognized format / unknown name for input_system parameter {}".format(
-                    input_epsg
-                )
-            )
+            msg = f"Unrecognized format / unknown name for input_system parameter {input_epsg}"
+            raise ValueError(msg)
     output_system = str(output_system).upper()
     if "EPSG" in output_system:
         output_epsg = output_system
     else:
         output_epsg = coord_str_recognize(output_system)
         if "unrecognized format" in output_epsg.lower():
-            raise ValueError(
-                "Unrecognized format / unknown name for output_system parameter {}".format(
-                    input_epsg
-                )
-            )
+            msg = f"Unrecognized format / unknown name for output_system parameter {input_epsg}"
+            raise ValueError(msg)
 
     if input_epsg == output_epsg:
         return x, y
     transf = get_transformer(input_epsg, output_epsg)
-    y, x = transf.transform(y, x)  # pylint: disable=unpacking-non-sequence
+    y, x = transf.transform(y, x)
     return x, y
 
 
 def check_hole_inside_bbox(hole, bbox):
-    """Check if hole point is inside bbox.
+    """
+    Check if hole point is inside bbox.
 
     Returns boolean.
     """
@@ -203,7 +201,8 @@ def check_hole_inside_bbox(hole, bbox):
 
 
 def check_hole_in_country(holes, country="FI"):
-    """Check if holes or hole points are inside country bbox. Has to be in some system with EPSG.
+    """
+    Check if holes or hole points are inside country bbox. Has to be in some system with EPSG.
 
     Returns boolean.
     """
@@ -212,32 +211,34 @@ def check_hole_in_country(holes, country="FI"):
             return True
         input_str = holes[0].fileheader.KJ["Coordinate system"]
         if not all(hole.fileheader.KJ["Coordinate system"] == input_str for hole in holes):
-            raise ValueError("Input not in uniform coordinate system")
+            msg = "Input not in uniform coordinate system"
+            raise ValueError(msg)
     elif isinstance(holes, Hole):
         input_str = holes.fileheader.KJ["Coordinate system"]
     else:
-        raise ValueError("holes -parameter is unknown input type")
+        msg = "holes -parameter is unknown input type"
+        raise ValueError(msg)
     input_str = coord_str_recognize(input_str)
 
     bbox = COUNTRY_BBOX[country][1].copy()
     if input_str != "EPSG:4326":
         transf = get_transformer("EPSG:4326", input_str)
-        # pylint: disable=unpacking-non-sequence
+
         bbox[0], bbox[1] = transf.transform(bbox[0], bbox[1])
-        # pylint: disable=unpacking-non-sequence
+
         bbox[2], bbox[3] = transf.transform(bbox[2], bbox[3])
 
     else:
-        raise ValueError("Input has to be in known epsg system.", input_str)
+        msg = "Input has to be in known epsg system."
+        raise ValueError(msg, input_str)
     if isinstance(holes, Holes):
         return all(check_hole_inside_bbox(hole, bbox) for hole in holes)
-    else:
-        return check_hole_inside_bbox(holes, bbox)
+    return check_hole_inside_bbox(holes, bbox)
 
 
 def get_n43_n60_points():
     """Get MML reference points for height systems n43-n60."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationVertices.txt"  # pylint: disable=line-too-long
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationVertices.txt"
     df = pd.read_csv(url, delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "diff", "Karttalehden numero"]
     df.index = df.iloc[:, 0]
@@ -248,9 +249,8 @@ def get_n43_n60_points():
 
 def get_n43_n60_triangulation():
     """Get MML triangles for height systems n43-n60."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationNetwork.txt"  # pylint: disable=line-too-long
-    df = pd.read_csv(url, delim_whitespace=True, header=None)
-    return df
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n43n60triangulationNetwork.txt"
+    return pd.read_csv(url, delim_whitespace=True, header=None)
 
 
 def get_n43_n60_interpolator():
@@ -261,26 +261,23 @@ def get_n43_n60_interpolator():
         df_points.index.values, np.arange(df_points.shape[0], dtype=int)
     ).values
     interpolator_ = Triangulation(df_points["X"], df_points["Y"], triangles)
-    interpolator = LinearTriInterpolator(interpolator_, df_points["diff"])
-    return interpolator
+    return LinearTriInterpolator(interpolator_, df_points["diff"])
 
 
 def get_n60_n2000_points():
     """Get MML reference points for height systems n60-n2000."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationVertices.txt"  # pylint: disable=line-too-long
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationVertices.txt"
     df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
     df.columns = ["Point", "X", "Y", "N60", "N2000"]
     df.index = df.iloc[:, 0]
     df["diff"] = df["N2000"] - df["N60"]
-    df = df.loc[:, ["X", "Y", "diff"]]
-    return df
+    return df.loc[:, ["X", "Y", "diff"]]
 
 
 def get_n60_n2000_triangulation():
     """Get MML triangles for height systems n60-n2000."""
-    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationNetwork.txt"  # pylint: disable=line-too-long
-    df = pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
-    return df
+    url = r"https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2019/02/n60n2000triangulationNetwork.txt"
+    return pd.read_csv(url, encoding="latin-1", delim_whitespace=True, header=None)
 
 
 def get_n60_n2000_interpolator():
@@ -291,12 +288,12 @@ def get_n60_n2000_interpolator():
         df_points.index.values, np.arange(df_points.shape[0], dtype=int)
     ).values
     interpolator_ = Triangulation(df_points["X"], df_points["Y"], triangles)
-    interpolator = LinearTriInterpolator(interpolator_, df_points["diff"])
-    return interpolator
+    return LinearTriInterpolator(interpolator_, df_points["diff"])
 
 
 def height_systems_diff(points, input_system, output_system):
-    """Get difference between systems at certain point.
+    """
+    Get difference between systems at certain point.
 
     Calculates the difference for height systems at points based on MML reference points
     and triangulation. Coordinate system is KKJ3 (EPSG:2393).
@@ -314,12 +311,14 @@ def height_systems_diff(points, input_system, output_system):
     -------
     ndarray
         list of height differences (mm). Nan for points outside triangulation.
+
     """
     points = np.asarray(points)
     if len(points.shape) == 1 and len(points) == 2:
         points = points[None, :]
     if points.shape[1] != 2:
-        raise ValueError("Points has to be 2D -array with shape=(n, 2)")
+        msg = "Points has to be 2D -array with shape=(n, 2)"
+        raise ValueError(msg)
     input_system = input_system.upper()
     output_system = output_system.upper()
     if input_system == output_system:
@@ -328,7 +327,7 @@ def height_systems_diff(points, input_system, output_system):
         diff = height_systems_diff(points, "N43", "N60")
         diff += height_systems_diff(points, "N60", "N2000")
         return diff
-    elif output_system == "N43" and input_system == "N2000":
+    if output_system == "N43" and input_system == "N2000":
         diff = -height_systems_diff(points, "N43", "N60")
         diff -= height_systems_diff(points, "N60", "N2000")
         return diff
@@ -354,17 +353,17 @@ def height_systems_diff(points, input_system, output_system):
             INTERPOLATORS[key] = get_n60_n2000_interpolator()
         diff = -INTERPOLATORS[key](*points.T).data
     else:
-        raise ValueError(
-            (
-                "input_system ({}) or output_system ({}) invalid."
-                " Possible values are N43, N60, N2000."
-            ).format(input_system, output_system)
+        msg = (
+            f"input_system ({input_system}) or output_system ({output_system}) invalid."
+            " Possible values are N43, N60, N2000."
         )
+        raise ValueError(msg)
     return -diff
 
 
 def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
-    """Transform hole -objects coordinates.
+    """
+    Transform hole -objects coordinates.
 
     Parameters
     ----------
@@ -379,14 +378,17 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     -------
     hole : Hole -object
         Copy of hole with coordinates transformed
+
     """
     hole_copy = deepcopy(hole)
     if not isinstance(hole, Hole):
-        raise ValueError("hole -parameter invalid")
+        msg = "hole -parameter invalid"
+        raise ValueError(msg)
 
     output_epsg = coord_str_recognize(output_epsg)
     if "unrecognized format" in output_epsg.lower():
-        raise ValueError("Unrecognized format / unknown name as output_epsg")
+        msg = "Unrecognized format / unknown name as output_epsg"
+        raise ValueError(msg)
     if (
         hasattr(hole_copy, "fileheader")
         and hasattr(hole_copy.fileheader, "KJ")
@@ -397,7 +399,8 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
         input_str = coord_str_recognize(input_str)
 
     else:
-        raise ValueError("Hole has no coordinate system")
+        msg = "Hole has no coordinate system"
+        raise ValueError(msg)
 
     if (
         hasattr(hole_copy.header, "XY")
@@ -406,18 +409,21 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     ):
         x, y = hole_copy.header.XY["X"], hole_copy.header.XY["Y"]
         if not np.isfinite(x) or not np.isfinite(y):
-            raise ValueError("Coordinates are not finite")
+            msg = "Coordinates are not finite"
+            raise ValueError(msg)
     else:
-        raise ValueError("Hole has no coordinates")
+        msg = "Hole has no coordinates"
+        raise ValueError(msg)
 
     if input_str in LOCAL_SYSTEMS:
         func = LOCAL_SYSTEMS[input_str]
         x, y, input_str = func(x, y)
     elif "unrecognized format" in input_str.lower():
-        raise ValueError("Unrecognized format / unknown name EPSG in holes {}".format(input_str))
+        msg = f"Unrecognized format / unknown name EPSG in holes {input_str}"
+        raise ValueError(msg)
 
     transf = get_transformer(input_str, output_epsg)
-    y, x = transf.transform(y, x)  # pylint: disable=unpacking-non-sequence
+    y, x = transf.transform(y, x)
     hole_copy.header.XY["X"], hole_copy.header.XY["Y"] = x, y
 
     hole_copy.fileheader.KJ["Coordinate system"] = output_epsg
@@ -431,10 +437,12 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
     try:
         input_system = hole.fileheader["KJ"]["Height reference"]
     except KeyError as error:
-        raise ValueError("Hole has no height system") from error
+        msg = "Hole has no height system"
+        raise ValueError(msg) from error
 
-    if input_system not in ["N43", "N60", "N2000"]:
-        raise ValueError("Hole has unknown heigth system:", input_system)
+    if input_system not in {"N43", "N60", "N2000"}:
+        msg = "Hole has unknown heigth system:"
+        raise ValueError(msg, input_system)
 
     diff = height_systems_diff(point, input_system, output_height)
     hole_copy.header.XY["Z-start"] += round(float(diff), 3)
@@ -443,7 +451,8 @@ def project_hole(hole, output_epsg="EPSG:4326", output_height=False):
 
 
 def project_holes(holes, output="EPSG:4326", check="Finland", output_height=False):
-    """Transform holes -objects coordinates.
+    """
+    Transform holes -objects coordinates.
 
     Transform holes coordinates, drops invalid holes.
 
@@ -468,13 +477,13 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
     --------
     holes_gk25 = project_holes(holes, output_epsg="EPSG:3879", check="Finland")
     one_hole_gk24 = project_holes(one_hole, output_epsg="EPSG:3878", check="Estonia")
+
     """
     output = str(output).upper()
     output_epsg = coord_str_recognize(output)
     if "unknown" in output_epsg.lower():
-        raise ValueError(
-            "Unrecognized format / unknown name for output parameter {}".format(output)
-        )
+        msg = f"Unrecognized format / unknown name for output parameter {output}"
+        raise ValueError(msg)
     if isinstance(holes, Holes):
         proj_holes = []
         for hole in holes:
@@ -498,7 +507,8 @@ def project_holes(holes, output="EPSG:4326", check="Finland", output_height=Fals
         hole = deepcopy(holes)
         return_value = project_hole(hole, output_epsg, output_height)
     else:
-        raise ValueError("holes -parameter is unknown input type")
+        msg = "holes -parameter is unknown input type"
+        raise ValueError(msg)
 
     if check and check.upper() == "FINLAND":
         if not check_hole_in_country(return_value, "FI"):

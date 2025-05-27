@@ -1,4 +1,5 @@
-"""Create hole icons {abbreviation}.svg.
+"""
+Create hole icons {abbreviation}.svg.
 
 Creates to current path svg files with svgwrite.
 Change Globals for options like icon size and stroke width.
@@ -92,13 +93,12 @@ def get_arc_command(point1, point2, radius, sweep=0):
 def get_arc(point1, point2, radius, width=3, stroke="black", fill="black", sweep=0):
     """Return an path -object that bulges to the right (sweep=0) or left (sweep=1)."""
     command = get_arc_command(point1, point2, radius, sweep=sweep)
-    path = svgwrite.path.Path(
+    return svgwrite.path.Path(
         d=command,
         fill=fill,
         stroke=stroke,
         stroke_width=width,
     )
-    return path
 
 
 def po_icon():
@@ -232,7 +232,7 @@ def hp_icon():
     point2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
     arc = get_arc(point2, point1, radius, width=1e-5, fill="black")
     point3 = (DRAWING_SIZE / 2).tolist()
-    arc.push("L {} {}".format(point3[0], point3[1]))
+    arc.push(f"L {point3[0]} {point3[1]}")
     dwg.add(arc)
     dwg.attribs["height"] += STROKE_WIDTH
     return dwg
@@ -269,7 +269,7 @@ def he_icon():
     point2 = (DRAWING_SIZE[0] / 2, DRAWING_SIZE[1] / 2 - radius)
     arc = get_arc(point2, point1, radius, width=1e-5, fill="black")
     point3 = (DRAWING_SIZE / 2).tolist()
-    arc.push("L {} {}".format(point3[0], point3[1]))
+    arc.push(f"L {point3[0]} {point3[1]}")
     dwg.add(arc)
     return dwg
 
@@ -429,7 +429,7 @@ def ne_icon():
     arc = get_arc(point1, point2, radius, width=1e-9, stroke="none", fill="black")
 
     point3 = (width / 2 + radius, width / 2)
-    arc.push("L {} {}".format(point3[0], point3[1]))
+    arc.push(f"L {point3[0]} {point3[1]}")
 
     point4 = (width / 2 - radius, width / 2)
     arc_arg = get_arc_command(point3, point4, radius, sweep=1)

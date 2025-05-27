@@ -114,9 +114,7 @@ def is_number(number_str):
     try:
         complex(number_str)
     except ValueError:
-        if number_str in NANS:
-            return True
-        return False
+        return number_str in NANS
     return True
 
 
@@ -124,9 +122,7 @@ def is_nan(number_str):
     """Test if number_str is nan according to infraformat logic."""
     if not number_str:  # Empty string or None
         return True
-    if number_str in NANS:
-        return True
-    return False
+    return number_str in NANS
 
 
 def custom_int(number):
@@ -135,10 +131,9 @@ def custom_int(number):
     integer_number = int(floating_number)
     if integer_number == floating_number:
         return integer_number
-    else:
-        msg = "Non-integer value detected, a floating point number is returned"
-        logger.warning(msg)
-        return floating_number
+    msg = "Non-integer value detected, a floating point number is returned"
+    logger.warning(msg)
+    return floating_number
 
 
 def custom_float(number):
@@ -147,16 +142,19 @@ def custom_float(number):
 
 
 def identifiers():
-    """Return header identifiers.
+    """
+    Return header identifiers.
 
     Identifier key: (names, dtype, mandatory)
         mandatory Falsy or
+
     Returns
     -------
     file_header_identifiers: dict
     header_identifiers: dict
     inline_identifiers: dict
     survey_identifiers: dict
+
     """
     file_header_identifiers = {
         "FO": (
@@ -535,23 +533,23 @@ def identifiers():
     # common_survey_mistakes = {'KK' : ['KE', 'KR'],
     #                          'DP' : ['HE', 'HK']}
 
-    result_tuple = (
+    return (
         file_header_identifiers,
         header_identifiers,
         inline_identifiers,
         survey_identifiers,
         # common_survey_mistakes
     )
-    return result_tuple
 
 
 def info_fi():
-    """Print class info in Finnish, infraformaatti 2.3.
+    """
+    Print class info in Finnish, infraformaatti 2.3.
 
     Main site: http://www.citygeomodel.fi/
     Link to file: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
     """
-    helper_str = """    tiedot kerätty infraformaatti 2.3
+    return """    tiedot kerätty infraformaatti 2.3
         Pääsivu: http://www.citygeomodel.fi/
         Linkki tiedostoon: http://www.citygeomodel.fi/Infra_formaatti_v2.3_211215.pdf
 
@@ -874,11 +872,11 @@ def info_fi():
             F    Näytteen syvyystieto2 (m)
             t    Maalaji
     """
-    return helper_str
 
 
 def print_info(language="fi"):
-    """Print out information about the finnish infraformat.
+    """
+    Print out information about the finnish infraformat.
 
     Currently defined only in Finnish.
 
@@ -886,8 +884,10 @@ def print_info(language="fi"):
     ----------
     language : custom_str, {"fi"}
         short format for language.
+
     """
     if language.lower() != "fi":
         logger.critical("Only 'fi' info is implemented")
-        raise NotImplementedError("Only 'fi' info is implemented")
+        msg = "Only 'fi' info is implemented"
+        raise NotImplementedError(msg)
     print(info_fi())

@@ -1,8 +1,5 @@
-black
-numpydoc
+ruff
 openpyxl
 xlrd
-pydocstyle
-pylint
 pytest
 pytest-cov

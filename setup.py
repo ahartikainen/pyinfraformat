@@ -26,10 +26,10 @@ def get_long_description():
 
 def get_version():
     """Read version info from __init__.py."""
-    lines = open(VERSION_FILE, "rt").readlines()
+    lines = open(VERSION_FILE).readlines()
     version_regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in lines:
-        version_search = re.search(version_regex, line, re.M)
+        version_search = re.search(version_regex, line, re.MULTILINE)
         if version_search:
             return version_search.group(1)
     raise RuntimeError("Unable to find version in %s." % (VERSION_FILE,))
