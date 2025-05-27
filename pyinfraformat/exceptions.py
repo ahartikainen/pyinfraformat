@@ -7,6 +7,7 @@ class FileExtensionMissingError(Exception):
     """Exception class for missing file extension."""
 
     def __init__(self, message, errors=None):
+        """Initialize exception class."""
         self.message = message
         self.errors = errors
         super().__init__(message)
@@ -16,6 +17,7 @@ class PathNotFoundError(Exception):
     """Exception class for invalid path."""
 
     def __init__(self, message, errors=None):
+        """Initialize exception class."""
         self.message = message
         self.errors = errors
         super().__init__(message)

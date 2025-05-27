@@ -6,14 +6,19 @@ import logging
 from datetime import datetime
 
 import matplotlib.dates as mdates
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import patches
 
 __all__ = ["plot_hole"]
 
-BBOX = dict(facecolor="white", alpha=0.75, edgecolor="none", boxstyle="round,pad=0.1")  # text boxes
+BBOX = {
+    "facecolor": "white",
+    "alpha": 0.75,
+    "edgecolor": "none",
+    "boxstyle": "round,pad=0.1",
+}  # text boxes
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -34,7 +39,8 @@ def strip_date(x):
 
 
 def fig_to_hmtl(fig, clear_memory=True):
-    """Transform matplotlib figure to html with mpld3.
+    """
+    Transform matplotlib figure to html with mpld3.
 
     Parameters
     ----------
@@ -44,6 +50,7 @@ def fig_to_hmtl(fig, clear_memory=True):
     Returns
     -------
     html
+
     """
     str_io = io.StringIO()
     fig.savefig(str_io, format="svg")
@@ -56,7 +63,8 @@ def fig_to_hmtl(fig, clear_memory=True):
 
 
 def plot_po(one_survey):
-    """Plot a diagram of PO (Porakonekairaus) with matplotlib.
+    """
+    Plot a diagram of PO (Porakonekairaus) with matplotlib.
 
     Parameters
     ----------
@@ -65,6 +73,7 @@ def plot_po(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -107,7 +116,8 @@ def plot_po(one_survey):
 
 
 def plot_pa(one_survey):
-    """Plot a diagram of PA (Painokairaus) with matplotlib.
+    """
+    Plot a diagram of PA (Painokairaus) with matplotlib.
 
     Parameters
     ----------
@@ -116,6 +126,7 @@ def plot_pa(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
     df.loc[df["Load (kN)"] >= 100, "Load (kN)"] = 0
@@ -152,7 +163,8 @@ def plot_pa(one_survey):
 
 
 def plot_hp(one_survey):
-    """Plot a diagram of HP (Puristinheijarikairaus) with matplotlib.
+    """
+    Plot a diagram of HP (Puristinheijarikairaus) with matplotlib.
 
     Parameters
     ----------
@@ -161,6 +173,7 @@ def plot_hp(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
 
@@ -179,7 +192,7 @@ def plot_hp(one_survey):
     ax_left.set_xlim([200, 0])
     ax_left.set_xticks([200, 100, 0])
     ax_right.barh(
-        [0] + list(df["Depth (m)"])[:-1],
+        [0, *list(df["Depth (m)"])[:-1]],
         df["Blows"],
         align="edge",
         fill=False,
@@ -201,7 +214,7 @@ def plot_hp(one_survey):
     y_min, y_max = ax_right.get_ylim()
     y = y_min + (y_max - y_min) * 0.005
     for x in locs[1:]:
-        ax_right.text(x, y, s="{:.0f}".format(x / 5), ha="center", va="bottom")
+        ax_right.text(x, y, s=f"{x / 5:.0f}", ha="center", va="bottom")
 
     ax_right.spines["top"].set_visible(False)
     ax_right.spines["right"].set_visible(False)
@@ -217,7 +230,8 @@ def plot_hp(one_survey):
 
 
 def plot_si(one_survey):
-    """Plot a diagram of SI (Siipikairaus) with matplotlib.
+    """
+    Plot a diagram of SI (Siipikairaus) with matplotlib.
 
     Parameters
     ----------
@@ -226,6 +240,7 @@ def plot_si(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
 
@@ -272,7 +287,8 @@ def plot_si(one_survey):
 
 
 def plot_tr(one_survey):
-    """Plot a diagram of TR (Tärykairaus) with matplotlib.
+    """
+    Plot a diagram of TR (Tärykairaus) with matplotlib.
 
     Parameters
     ----------
@@ -281,6 +297,7 @@ def plot_tr(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -325,7 +342,8 @@ def plot_tr(one_survey):
 
 
 def plot_he(one_survey):
-    """Plot a diagram of HE (Heijarikairaus) with matplotlib.
+    """
+    Plot a diagram of HE (Heijarikairaus) with matplotlib.
 
     Parameters
     ----------
@@ -334,6 +352,7 @@ def plot_he(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
     if "Soil type" in df.columns:  # pylint: disable=unsupported-membership-test
@@ -351,7 +370,7 @@ def plot_he(one_survey):
     plt.setp(ax_left.get_yticklabels(), visible=False)
     ax_left.set_xticks([])
     ax_right.barh(
-        [0] + list(df["Depth (m)"])[:-1],
+        [0, *list(df["Depth (m)"])[:-1]],
         df["Blows"],
         align="edge",
         fill=False,
@@ -384,7 +403,8 @@ def plot_he(one_survey):
 
 
 def plot_vp(one_survey):
-    """Plot a diagram of VP (Pohjavesiputki) or VO (Orsivesiptki) with matplotlib.
+    """
+    Plot a diagram of VP (Pohjavesiputki) or VO (Orsivesiptki) with matplotlib.
 
     Parameters
     ----------
@@ -393,6 +413,7 @@ def plot_vp(one_survey):
     Returns
     -------
     figure : matplotlib figure
+
     """
     df = pd.DataFrame(one_survey.survey.data)
 
@@ -422,16 +443,15 @@ def plot_vp(one_survey):
         level_min = 1
     if bottom_level > level_min:
         ax_left.set_ylim(level_min, top_level)
+    elif bottom_level < top_level:
+        ax_left.set_ylim(bottom_level, top_level)
     else:
-        if bottom_level < top_level:
-            ax_left.set_ylim(bottom_level, top_level)
-        else:
-            ax_left.set_ylim(top_level - 2, top_level)
+        ax_left.set_ylim(top_level - 2, top_level)
 
     ax_left.set_xlim(0, 1.5)
     ax_left.add_patch(rect_sieve)
     ax_left.add_patch(rect_rest)
-    ax_left.set_title("{:+.2f}".format(ground_level))
+    ax_left.set_title(f"{ground_level:+.2f}")
     ax_left.plot(ax_left.get_xlim(), [ground_level, ground_level], c="k")
     ax_left.set_xticks([])
     plt.setp(ax_left.get_yticklabels(), visible=False)
@@ -443,7 +463,7 @@ def plot_vp(one_survey):
         ax_right.text(
             0.02,
             0.01,
-            "Dates missing, n: {}".format(len(dates)),
+            f"Dates missing, n: {len(dates)}",
             transform=ax_right.transAxes,
             bbox=BBOX,
         )
@@ -460,7 +480,8 @@ def plot_vp(one_survey):
 
 
 def plot_hole(one_survey, output="figure", figsize=(4, 4)):
-    """Plot a diagram of a sounding with matplotlib.
+    """
+    Plot a diagram of a sounding with matplotlib.
 
     Parameters
     ----------
@@ -473,6 +494,7 @@ def plot_hole(one_survey, output="figure", figsize=(4, 4)):
     Returns
     -------
     figure : figure or svg
+
     """
 
     def _plot_hole(one_survey):
@@ -492,12 +514,11 @@ def plot_hole(one_survey, output="figure", figsize=(4, 4)):
             fig = plot_tr(one_survey)
         elif hole_type == "HE":
             fig = plot_he(one_survey)
-        elif hole_type == "VP":
-            fig = plot_vp(one_survey)
-        elif hole_type == "VO":
+        elif hole_type in {"VP", "VO"}:
             fig = plot_vp(one_survey)
         else:
-            raise NotImplementedError('Hole object "{}" not supported'.format(hole_type))
+            msg = f'Hole object "{hole_type}" not supported'
+            raise NotImplementedError(msg)
         fig.tight_layout()
         fig.set_size_inches(figsize)
         return fig
@@ -511,7 +532,7 @@ def plot_hole(one_survey, output="figure", figsize=(4, 4)):
 
     if output == "figure":
         return fig
-    elif output == "svg":
+    if output == "svg":
         return fig_to_hmtl(fig)
-    else:
-        raise NotImplementedError("Plotting backend {} not implemented".format(output))
+    msg = f"Plotting backend {output} not implemented"
+    raise NotImplementedError(msg)

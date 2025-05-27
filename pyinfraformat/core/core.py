@@ -7,11 +7,12 @@ import pprint
 from datetime import datetime
 from functools import cached_property
 from numbers import Integral
+from typing import Never
 
 import numpy as np
 import pandas as pd
 
-from ..exceptions import FileExtensionMissingError
+from pyinfraformat.exceptions import FileExtensionMissingError
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -22,7 +23,8 @@ class Holes:
     """Container for multiple infraformat hole information."""
 
     def __init__(self, holes=None, lowmemory=False):
-        """Container for multiple infraformat hole information.
+        """
+        Container for multiple infraformat hole information.
 
         Parameters
         ----------
@@ -30,6 +32,7 @@ class Holes:
             list of infraformat hole information
         lowmemory : bool, optional
             Create Pandas DataFrame one by one minimizing memory use.
+
         """
         if holes is None:
             holes = []
@@ -38,18 +41,18 @@ class Holes:
         self.n = None
 
     def __str__(self):
-        msg = "Infraformat Holes -object:\n  Total of {n} holes".format(n=len(self.holes))
+        msg = f"Infraformat Holes -object:\n  Total of {len(self.holes)} holes"
         value_counts = self.value_counts()
         if self.holes:
             max_length = max(len(str(values)) for values in value_counts.values()) + 1
             counts = "\n".join(
                 "    - {key:.<10}{value:.>6}".format(
-                    key="{} ".format(key),
-                    value=("{:>" + "{}".format(max_length) + "}").format(value),
+                    key=f"{key} ",
+                    value=("{:>" + f"{max_length}" + "}").format(value),
                 )
                 for key, value in value_counts.items()
             )
-            msg = "\n".join((msg, counts))
+            msg = f"{msg}\n{counts}"
         return msg
 
     def __repr__(self):
@@ -69,35 +72,38 @@ class Holes:
             result = self.holes[self.n]
             self.n += 1
             return result
-        else:
-            raise StopIteration
+        raise StopIteration
 
     def __add__(self, other):
         if isinstance(other, Holes):
             return Holes(self.holes + other.holes)
         if isinstance(other, Hole):
-            return Holes(self.holes + [other])
-        raise ValueError("Only Holes or Hole -objects can be added.")
+            return Holes([*self.holes, other])
+        msg = "Only Holes or Hole -objects can be added."
+        raise ValueError(msg)
 
     def __len__(self):
         return len(self.holes)
 
-    def append(self, hole):
+    def append(self, hole) -> None:
         """Append Hole object to holes."""
         if isinstance(hole, Hole):
             self.holes += [hole]
         else:
-            raise ValueError("Only Hole -object can be appended.")
+            msg = "Only Hole -object can be appended."
+            raise ValueError(msg)
 
-    def extend(self, holes):
+    def extend(self, holes) -> None:
         """Extend with Holes -object."""
         if isinstance(holes, Holes):
             self.holes += holes
         else:
-            raise ValueError("Only Holes -object can be extended.")
+            msg = "Only Holes -object can be extended."
+            raise ValueError(msg)
 
     def filter_holes(self, *, bbox=None, hole_type=None, start=None, end=None, fmt=None, **kwargs):
-        """Filter holes.
+        """
+        Filter holes.
 
         Parameters
         ----------
@@ -142,6 +148,7 @@ class Holes:
             _filter_coordinates(bbox, **kwargs)
             _filter_type(hole_type, **kwargs)
             _filter_date(start=None, end=None, fmt=None, **kwargs)
+
         """
         filtered_holes = self.holes
         if bbox is not None:
@@ -157,11 +164,7 @@ class Holes:
         xmin, xmax, ymin, ymax = bbox
         filtered_holes = []
         for hole in holes:
-            if not (
-                hasattr(hole.header, "XY")
-                and "X" in hole.header.XY.keys()
-                and "Y" in hole.header.XY.keys()
-            ):
+            if not (hasattr(hole.header, "XY") and "X" in hole.header.XY and "Y" in hole.header.XY):
                 continue
             if (
                 hole.header.XY["X"] >= xmin
@@ -174,16 +177,15 @@ class Holes:
 
     def _filter_type(self, holes, hole_type):
         """Filter object by survey abbreviation (type)."""
-        filtered_holes = []
         if isinstance(hole_type, str):
             hole_type = [hole_type]
-        for hole in holes:
-            if (
-                hasattr(hole.header, "TT")
-                and ("Survey abbreviation" in hole.header.TT)
-                and any(item == hole.header.TT["Survey abbreviation"] for item in hole_type)
-            ):
-                filtered_holes.append(hole)
+        filtered_holes = [
+            hole
+            for hole in holes
+            if hasattr(hole.header, "TT")
+            and ("Survey abbreviation" in hole.header.TT)
+            and any(item == hole.header.TT["Survey abbreviation"] for item in hole_type)
+        ]
         return Holes(filtered_holes)
 
     def _filter_date(self, holes, start=None, end=None, fmt=None):
@@ -226,7 +228,7 @@ class Holes:
                 counts["Missing survey abbreviation"] += 1
         return counts
 
-    def drop_duplicates(self):
+    def drop_duplicates(self) -> Never:
         """Check if hole headers/datas are unique; drop duplicates."""
         raise NotImplementedError
 
@@ -260,8 +262,9 @@ class Holes:
         """Get bounding box of holes object as array."""
         return self._get_bounds()
 
-    def to_csv(self, path, **kwargs):
-        """Save data in table format to CSV.
+    def to_csv(self, path, **kwargs) -> None:
+        """
+        Save data in table format to CSV.
 
         Paramaters
         ----------
@@ -270,15 +273,16 @@ class Holes:
             Passed to `pandas.DataFrame.to_csv` function.
         """
         _, ext = os.path.splitext(path)
-        if ext not in (".txt", ".csv"):
-            msg = "Found extension {}, use '.csv' or '.txt'.".format(path)
+        if ext not in {".txt", ".csv"}:
+            msg = f"Found extension {path}, use '.csv' or '.txt'."
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             self.get_dataframe().to_csv(f, **kwargs)
 
-    def to_excel(self, path, **kwargs):
-        """Save data in table format to Excel.
+    def to_excel(self, path, **kwargs) -> None:
+        """
+        Save data in table format to Excel.
 
         Paramaters
         ----------
@@ -287,15 +291,16 @@ class Holes:
             Passed to `pandas.DataFrame.to_csv` function.
         """
         _, ext = os.path.splitext(path)
-        if ext not in (".xlsx", ".xls"):
-            msg = "ext not in ('.xlsx', '.xls'): {}".format(path)
+        if ext not in {".xlsx", ".xls"}:
+            msg = f"ext not in ('.xlsx', '.xls'): {path}"
             logger.critical(msg)
             raise FileExtensionMissingError(msg)
-        with pd.ExcelWriter(path) as writer:  # pylint: disable=abstract-class-instantiated
+        with pd.ExcelWriter(path) as writer:
             self.get_dataframe().to_excel(writer, **kwargs)
 
-    def to_infraformat(self, path, split=False, namelist=None):
-        """Save data in infraformat.
+    def to_infraformat(self, path, split=False, namelist=None) -> None:
+        """
+        Save data in infraformat.
 
         Parameters
         ----------
@@ -306,13 +311,14 @@ class Holes:
         namelist : list, optional
             filenames for each file
             valid only if split is True
+
         """
-        from .io import to_infraformat  # pylint: disable=cyclic-import
+        from .io import to_infraformat
 
         if split:
             use_format = False
             if namelist is None:
-                if not "{}" in path:
+                if "{}" not in path:
                     msg = "Use either a {} or a namelist for filenames"
                     logger.critical(msg)
                     raise ValueError(msg)
@@ -320,16 +326,14 @@ class Holes:
             else:
                 assert len(namelist) == len(self.holes)
             for i, hole in self.holes:
-                if use_format:
-                    path_ = path.format(i)
-                else:
-                    path_ = namelist[i]
+                path_ = path.format(i) if use_format else namelist[i]
                 to_infraformat([hole], path_)
         else:
             to_infraformat(self.holes, path)
 
     def plot_map(self, render_holes=True, progress_bar=True, popup_size=(3, 3)):
-        """Plot a leaflet map from holes with popup hole plots.
+        """
+        Plot a leaflet map from holes with popup hole plots.
 
         Parameters
         ----------
@@ -344,13 +348,15 @@ class Holes:
         Returns
         -------
         map_fig : folium map object
+
         """
-        from ..plots.maps import plot_map as _plot_map
+        from pyinfraformat.plots.maps import plot_map as _plot_map
 
         return _plot_map(self, render_holes, progress_bar, popup_size)
 
     def project(self, output="EPSG:4326", check="Finland", output_height=False):
-        """Transform holes -objects coordinates.
+        """
+        Transform holes -objects coordinates.
 
         Creates deepcopy of holes and drops invalid holes. Warns into logger.
 
@@ -374,8 +380,9 @@ class Holes:
         Examples
         --------
         holes_gk25 = holes.project(output="GK25", check="Finland", output_height="N2000")
+
         """
-        from ..core.coord_utils import project_holes
+        from pyinfraformat.core.coord_utils import project_holes
 
         return project_holes(self, output, check, output_height)
 
@@ -383,9 +390,11 @@ class Holes:
         """Get dataframe with every holes last data row with soil observation."""
         if check_height:
             if len({hole.fileheader.KJ["Height reference"] for hole in self}) != 1:
-                raise ValueError("Holes must have uniform height reference.")
-            if any((hole.fileheader.KJ["Height reference"] in {"?", "Unknown"} for hole in self)):
-                raise ValueError("Unknown height reference system.")
+                msg = "Holes must have uniform height reference."
+                raise ValueError(msg)
+            if any(hole.fileheader.KJ["Height reference"] in {"?", "Unknown"} for hole in self):
+                msg = "Unknown height reference system."
+                raise ValueError(msg)
         soil_observations = []
         for hole in self:
             if not (
@@ -419,6 +428,7 @@ class Holes:
                         logger.warning(
                             "Hole ending 'KA' without any 'KA' soil observations, omitting."
                         )
+                        continue
                     else:
                         slicer = df["data_Soil type"].str.upper() == "KA"
                         slicer = slicer.shift(-1, fill_value=False)
@@ -426,7 +436,7 @@ class Holes:
                     soil_observations.append(
                         (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
                     )
-            elif abbrev in ["NO", "NE"]:
+            elif abbrev in {"NO", "NE"}:
                 if "Depth info 1 (m)" not in hole.survey.data[-1]:
                     continue
                 soil_depth = max(
@@ -439,7 +449,7 @@ class Holes:
                     (point_x, point_y, z_start, z_start - soil_depth, abbrev, ending)
                 )
 
-            elif abbrev in ["KE", "KR"]:
+            elif abbrev in {"KE", "KR"}:
                 # Bedrock analysis drillings
                 pass
             else:
@@ -454,10 +464,7 @@ class Holes:
 
     def get_list(self):
         """Get survey data, hole header, fileheader, comments and illegals as list of dicts."""
-        return_list = []
-        for hole in self:
-            return_list.append(hole.get_dict())
-        return return_list
+        return [hole.get_dict() for hole in self]
 
     def _get_columns(self):
         """Get survey data, header and fileheader columns."""
@@ -472,7 +479,8 @@ class Holes:
         return self._get_columns()
 
     def get_dataframe(self, include_columns="all", skip_columns=False):
-        """Get survey data, hole header and fileheader as DataFrame.
+        """
+        Get survey data, hole header and fileheader as DataFrame.
 
         Paramaters
         ----------
@@ -489,6 +497,7 @@ class Holes:
         --------
         >>> holes.get_dataframe(include_columns="*laboratory*")
         >>> holes.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+
         """
         df_list = [hole.get_dataframe(include_columns, skip_columns) for hole in self.holes]
         return pd.concat(df_list, axis=0, sort=False)
@@ -532,41 +541,38 @@ class Hole:
                     print(f"{linenumber}:\t", illegals_dict[linenumber])
                 else:
                     print(illegals_dict[linenumber])
+            elif linenumbers:
+                print(f"{linenumber}:\t", line)
             else:
-                if linenumbers:
-                    print(f"{linenumber}:\t", line)
-                else:
-                    print(line)
+                print(line)
 
         if hasattr(self.header, "-1"):
             ending = self.header["-1"].get("Ending", None)
             if ending:
                 if linenumbers:
-                    print(f"{linenumber+1}:\t", f"-1 {ending}")
+                    print(f"{linenumber + 1}:\t", f"-1 {ending}")
                 else:
                     print(f"-1 {ending}")
 
     def __str__(self):
-        items = {i: j for i, j in self.header.__dict__.items() if i not in {"keys"}}
+        items = {i: j for i, j in self.header.__dict__.items() if i != "keys"}
         msg = pprint.pformat(items).replace("\n", "\n  ")
-        return "Infraformat Hole -object, hole header:\n  {}".format(msg)
+        return f"Infraformat Hole -object, hole header:\n  {msg}"
 
     def __repr__(self):
         return self.__str__()
 
     def __add__(self, other):
         if isinstance(other, Holes):
-            return Holes([self] + other.holes)
+            return Holes([self, *other.holes])
         if isinstance(other, Hole):
-            return Holes([self] + [other])
-        raise ValueError("Only Holes or Hole -objects can be added.")
+            return Holes([self, other])
+        msg = "Only Holes or Hole -objects can be added."
+        raise ValueError(msg)
 
     def __getitem__(self, input_key):
         keys = input_key.split("_")
-        if keys[0] == "data":
-            item = self.survey
-        else:
-            item = self
+        item = self.survey if keys[0] == "data" else self
         for key in keys[:-1]:
             item = getattr(item, key)
         if isinstance(item, list):
@@ -583,9 +589,8 @@ class Hole:
     def __setitem__(self, input_key, input_item):
         keys = input_key.split("_")
         if keys[0] == "data":
-            raise TypeError(
-                "Hole object does not support item assignment into survey, see .survey."
-            )
+            msg = "Hole object does not support item assignment into survey, see .survey."
+            raise TypeError(msg)
         item = self
         for key in keys[:-1]:
             item = getattr(item, key)
@@ -612,7 +617,8 @@ class Hole:
         self._illegal.add(illegal)
 
     def plot(self, output="figure", figsize=(4, 4)):
-        """Plot a diagram of a sounding with matplotlib.
+        """
+        Plot a diagram of a sounding with matplotlib.
 
         Parameters
         ----------
@@ -624,8 +630,9 @@ class Hole:
         Returns
         -------
         figure : matplotlib figure or svg
+
         """
-        from ..plots.holes import plot_hole
+        from pyinfraformat.plots.holes import plot_hole
 
         return plot_hole(self, output, figsize)
 
@@ -634,31 +641,28 @@ class Hole:
         d_header = {}
         for key in self.header.keys:
             for key_, item in getattr(self.header, key).items():
-                d_header["{}_{}".format(key, key_)] = item
+                d_header[f"{key}_{key_}"] = item
         return d_header
 
     def get_data_list(self):
         """Get survey data as a list of dict."""
-        dict_list = self.survey.data
-        return dict_list
+        return self.survey.data
 
     def get_fileheader_dict(self):
         """Get fileheader as a dict."""
         d_fileheader = {}
         for key in self.fileheader.keys:
             for key_, item in getattr(self.fileheader, key).items():
-                d_fileheader["{}_{}".format(key, key_)] = item
+                d_fileheader[f"{key}_{key_}"] = item
         return d_fileheader
 
     def get_comments_list(self):
         """Get fileheader as a dict."""
-        dict_list = self.inline_comment.data
-        return dict_list
+        return self.inline_comment.data
 
     def get_illegals_list(self):
         """Get fileheader as a dict."""
-        dict_list = self._illegal.data
-        return dict_list
+        return self._illegal.data
 
     def get_dict(self):
         """Get survey data, hole header, fileheader, comments and illegals as list of dicts."""
@@ -677,16 +681,14 @@ class Hole:
 
     def _get_columns(self):
         """Get survey data, header and fileheader columns."""
-        data = set("data_" + item for row in self.survey.data for item in row)
+        data = {"data_" + item for row in self.survey.data for item in row}
         fileheader = {
             f"fileheader_{key}_{item}"
             for key in self.fileheader.keys
-            for item in getattr(self.fileheader, key).keys()
+            for item in getattr(self.fileheader, key)
         }
         header = {
-            f"header_{key}_{item}"
-            for key in self.header.keys
-            for item in getattr(self.header, key).keys()
+            f"header_{key}_{item}" for key in self.header.keys for item in getattr(self.header, key)
         }
         return data.union(fileheader).union(header)
 
@@ -696,7 +698,8 @@ class Hole:
         return self._get_columns()
 
     def get_dataframe(self, include_columns="all", skip_columns=False):
-        """Get survey data, hole header and fileheader as DataFrame.
+        """
+        Get survey data, hole header and fileheader as DataFrame.
 
         Paramaters
         ----------
@@ -713,6 +716,7 @@ class Hole:
         --------
         >>> hole.get_dataframe(include_columns="*laboratory*")
         >>> hole.get_dataframe(skip_columns=["*lab*", "*sieve*", "*header*"])
+
         """
         if skip_columns:
             skip_columns = (
@@ -729,7 +733,8 @@ class Hole:
         elif isinstance(include_columns, str):
             include_columns = [include_columns]
         else:
-            raise ValueError("Parameter include_columns must be list or str 'all'.")
+            msg = "Parameter include_columns must be list or str 'all'."
+            raise ValueError(msg)
         if include_columns != "all":
             columns = self.columns
             include_slicer = [False] * len(columns)
@@ -738,7 +743,7 @@ class Hole:
                     if fnmatch.fnmatch(col.lower(), include_item.lower()):
                         include_slicer[index] = True
                         break
-            for boolen, col in zip(include_slicer, columns):
+            for boolen, col in zip(include_slicer, columns, strict=False):
                 if boolen is False:
                     skip_columns.append(col)
 
@@ -749,9 +754,9 @@ class Hole:
             for row in skip_columns:
                 for data in dict_list:
                     keys = data.keys()
-                    for key in keys:
-                        if fnmatch.fnmatch(key.lower(), row.lower()):
-                            skip_data.append(key)
+                    skip_data.extend(
+                        key for key in keys if fnmatch.fnmatch(key.lower(), row.lower())
+                    )
             dict_list = [
                 {item: row[item] for item in row if item not in skip_data} for row in dict_list
             ]
@@ -762,7 +767,7 @@ class Hole:
         d_header = {"header_" + key: item for key, item in d_header.items()}
         for key in d_header:
             if skip_columns and any(
-                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+                fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns
             ):
                 continue
             df[key] = d_header[key]
@@ -771,7 +776,7 @@ class Hole:
         d_fileheader = {"fileheader_" + key: item for key, item in d_fileheader.items()}
         for key in d_fileheader:
             if skip_columns and any(
-                (fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns)
+                fnmatch.fnmatch(key.lower(), item.lower()) for item in skip_columns
             ):
                 continue
             df[key] = d_fileheader[key]
@@ -794,10 +799,10 @@ class FileHeader:
 
     def __str__(self):
         items = {i: j for i, j in self.__dict__.items() if i not in {"keys", "raw_str", "illegals"}}
-        msg = "FileHeader object - Fileheader contains {} items\n  {}".format(
-            len(self.keys), pprint.pformat(items)
+        return (
+            f"FileHeader object - Fileheader contains {len(self.keys)} items"
+            f"\n  {pprint.pformat(items)}"
         )
-        return msg
 
     def __repr__(self):
         return self.__str__()
@@ -805,8 +810,8 @@ class FileHeader:
     def __getitem__(self, attr):
         if attr in self.keys:
             return getattr(self, attr)
-        else:
-            raise TypeError("Attribute not found: {}".format(attr))
+        msg = f"Attribute not found: {attr}"
+        raise TypeError(msg)
 
 
 class Header:
@@ -835,9 +840,9 @@ class Header:
         self.keys.add(key)
 
     def __str__(self):
-        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        items = {i: j for i, j in self.__dict__.items() if i != "keys"}
         msg = pprint.pformat(items)
-        return "Hole Header -object:\n  {}".format(msg)
+        return f"Hole Header -object:\n  {msg}"
 
     def __repr__(self):
         return self.__str__()
@@ -845,24 +850,24 @@ class Header:
     def __getitem__(self, attr):
         if attr in self.keys:
             return getattr(self, attr)
-        else:
-            raise TypeError("Attribute not found: {}".format(attr))
+        msg = f"Attribute not found: {attr}"
+        raise TypeError(msg)
 
 
 class InlineComment:
     """Class to inline comments."""
 
     def __init__(self):
-        self.data = list()
+        self.data = []
 
     def add(self, key, values):
         """Add inline comments to object."""
         self.data.append((key, values))
 
     def __str__(self):
-        items = {i: j for i, j in self.__dict__.items() if i not in {"keys"}}
+        items = {i: j for i, j in self.__dict__.items() if i != "keys"}
         msg = pprint.pformat(items)
-        return "Hole InlineComment -object:\n  {}".format(msg)
+        return f"Hole InlineComment -object:\n  {msg}"
 
     def __repr__(self):
         return self.__str__()
@@ -875,16 +880,15 @@ class Survey:
     """Class to survey information."""
 
     def __init__(self):
-        self.data = list()
+        self.data = []
 
     def add(self, values):
         """Add survey information to object."""
         self.data.append(values)
 
     def __str__(self):
-
         msg = pprint.pformat(self.__dict__)
-        return "Hole Survey -object:\n  {}".format(msg)
+        return f"Hole Survey -object:\n  {msg}"
 
     def __repr__(self):
         return self.__str__()
