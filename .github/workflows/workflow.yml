@@ -46,15 +46,12 @@ jobs:
       - name: Install dev dependencies
         run: |
           python -m pip install --no-cache-dir -r requirements-dev.txt
-      - name: Run black
+      - name: Run ruff format
         run: |
-          python -m black -l 100 --check pyinfraformat/
-      - name: Run pydocstyle
+          python -m ruff format --check pyinfraformat/
+      - name: Run ruff lint
         run: |
-          python -m pydocstyle --add-ignore=D105 --convention=numpy pyinfraformat/
-      - name: Run pylint
-        run: |
-          python -m pylint pyinfraformat/
+          python -m ruff check pyinfraformat 
       - name: Run tests
         run: |
           mkdir testing_folder
