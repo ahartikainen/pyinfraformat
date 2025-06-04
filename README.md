@@ -68,7 +68,7 @@ import pandas as pd
 bounds = [6672242-2000 ,  385795-2000, 6672242 +2000,  385795+2000]
 gtk_holes = pif.from_gtk_wfs(bounds, "TM35FIN", maxholes=25_000)
 laboratory_tests = gtk_holes.filter_holes(hole_type=["NO", "NE"], start="1990-01-01")
-df = labratory_tests.get_dataframe()
+df = laboratory_tests.get_dataframe()
 df['data_Soil type'] = df['data_Soil type'].astype("string")
 clay_samples = df[df['data_Soil type'].str.endswith("Sa", na=False)].reset_index()
 clay_samples['data_Laboratory w'] = pd.to_numeric(clay_samples['data_Laboratory w'])
