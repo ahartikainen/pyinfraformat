@@ -47,6 +47,8 @@ def coord_str_recognize(input_string):
     except pyproj.exceptions.CRSError as error:
         error_string = error.args[0]
         if "several objects matching this name" not in error_string:
+            if "unrecognized format / unknown name" in error_string:
+                return pyproj.CRS.from_user_input("ETRS " + input_string)
             raise
         error_string = error_string[error_string.rfind(": ") + 2 : -1]
         projections = error_string.split(",")
