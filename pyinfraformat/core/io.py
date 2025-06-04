@@ -125,7 +125,7 @@ def from_gtk_wfs(
         raise ValueError(msg)
     collected_illegals = []
 
-    url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"
+    url = "https://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"
     wfs = WebFeatureService(url, version="2.0.0")
 
     x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:4326")
