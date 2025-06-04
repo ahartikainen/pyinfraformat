@@ -1,6 +1,5 @@
-# pylint: disable=try-except-raise
 """Input and output methods."""
-import io
+
 import json
 import logging
 import os
@@ -15,7 +14,8 @@ import requests
 from owslib.wfs import WebFeatureService
 from tqdm.auto import tqdm
 
-from ..exceptions import PathNotFoundError
+from pyinfraformat.exceptions import PathNotFoundError
+
 from .coord_utils import project_points
 from .core import Hole, Holes
 from .utils import identifiers, is_nan, is_number
@@ -23,16 +23,16 @@ from .utils import identifiers, is_nan, is_number
 logger = logging.getLogger("pyinfraformat")
 logger.propagate = False
 
-__all__ = ["from_infraformat", "from_gtk_wfs"]
+__all__ = ["from_gtk_wfs", "from_infraformat", "to_infraformat"]
 
 TIMEOUT = 36_000
 
 
-# pylint: disable=redefined-argument-from-local
 def from_infraformat(
     path=None, encoding="auto", extension=None, errors="ignore_lines", save_ignored=False
 ):
-    """Read inframodel file(s).
+    """
+    Read inframodel file(s).
 
     Paramaters
     ----------
@@ -54,6 +54,7 @@ def from_infraformat(
     Returns
     -------
     Holes -object
+
     """
     if path is None or not path:
         return Holes()
@@ -67,12 +68,13 @@ def from_infraformat(
                 filelist = glob(os.path.join(path, "*"))
             else:
                 if not extension.startswith("."):
-                    extension = ".{}".format(extension)
-                filelist = glob(os.path.join(path, "*{}".format(extension)))
+                    extension = f".{extension}"
+                filelist = glob(os.path.join(path, f"*{extension}"))
         else:
             filelist = glob(path)
             if not filelist:
-                raise PathNotFoundError("{}".format(path))
+                msg = f"{path}"
+                raise PathNotFoundError(msg)
     else:
         filelist = [path]
 
@@ -87,7 +89,8 @@ def from_infraformat(
 def from_gtk_wfs(
     bbox, coord_system, errors="ignore_lines", save_ignored=False, maxholes=1000, progress_bar=False
 ):
-    """Get holes from GTK WFS.
+    """
+    Get holes from GTK WFS.
 
     Paramaters
     ----------
@@ -115,14 +118,14 @@ def from_gtk_wfs(
     --------
     bbox = (60, 24, 61, 25)
     holes = from_gtk_wfs(bbox, coord_system="EPSG:4326")
+
     """
-    # pylint: disable=invalid-name
     if errors not in {"ignore_lines", "ignore_holes", "raise", "force"}:
         msg = "Argument errors must be 'ignore_lines', 'ignore_holes', 'raise' or 'force'."
         raise ValueError(msg)
     collected_illegals = []
 
-    url = "http://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"  # pylint: disable=line-too-long
+    url = "https://gtkdata.gtk.fi/arcgis/services/Rajapinnat/GTK_Pohjatutkimukset_WFS/MapServer/WFSServer?"
     wfs = WebFeatureService(url, version="2.0.0")
 
     x1, y1 = project_points(bbox[0], bbox[1], coord_system, "EPSG:4326")
@@ -150,7 +153,6 @@ def from_gtk_wfs(
         pbar = tqdm(total=min([holes_found, maxholes]))
 
     def parse_line(line):
-
         if ("properties" in line) and ("ALKUPERAINEN_DATA" in line["properties"]):
             hole_str = line["properties"]["ALKUPERAINEN_DATA"].replace("\\r", "\n").splitlines()
             if errors == "ignore_holes":
@@ -180,17 +182,18 @@ def from_gtk_wfs(
                     msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
                     logger.warning(msg)
             if errors == "raise" and illegal_rows:
-                raise ValueError("Illegal/Il-defined hole detected!")
+                msg = "Illegal/Il-defined hole detected!"
+                raise ValueError(msg)
         else:
             hole = Hole()
-        hole.add_header("OM", {"Owner": line.get("properties", dict()).get("OMISTAJA", "-")})
+        hole.add_header("OM", {"Owner": line.get("properties", {}).get("OMISTAJA", "-")})
 
         x, y = line["geometry"]["coordinates"]
         x, y = round(float(y), 10), round(float(x), 10)
         if not hasattr(hole.header, "XY"):
             file_xy = {"X": None, "Y": None}
             hole.add_header("XY", file_xy)
-        hole.header.XY["X"], hole.header.XY["Y"] = x, y  # pylint: disable=E1101
+        hole.header.XY["X"], hole.header.XY["Y"] = x, y
         file_fo = {"Format version": "?", "Software": "GTK_WFS"}
         hole.add_fileheader("FO", file_fo)
         file_kj = {
@@ -240,7 +243,7 @@ def from_gtk_wfs(
                 try:
                     hole = parse_line(line)
                 except KeyError as error:
-                    msg = "Wfs hole parse failed, line {}. Missing {}".format(i, error)
+                    msg = f"Wfs hole parse failed, line {i}. Missing {error}"
                     logger.warning(msg)
                 if hole:
                     holes.append(hole)
@@ -250,7 +253,7 @@ def from_gtk_wfs(
                 if len(holes) >= maxholes:
                     break
         else:
-            msg = f"No features returned at page {startindex//page_size}."
+            msg = f"No features returned at page {startindex // page_size}."
             logger.warning(msg)
             break
         startindex += page_size
@@ -258,7 +261,7 @@ def from_gtk_wfs(
         pbar.close()
     if collected_illegals and save_ignored:
         if isinstance(save_ignored, str):
-            with open(save_ignored, "a") as f:
+            with open(save_ignored, "a", encoding="utf-8") as f:
                 if errors == "ignore_holes":
                     write_fileheader(holes, f, fo=None, kj=None)
                 f.write("\n".join(collected_illegals))
@@ -270,7 +273,8 @@ def from_gtk_wfs(
 
 
 def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
-    """Export data to infraformat.
+    """
+    Export data to infraformat.
 
     Parameters
     ----------
@@ -293,6 +297,7 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
     write_mode : str
         By default create a new file.
         If "wa" appends to current file and it is recommended to set fo and kj to False.
+
     """
     with _open(path, mode=write_mode) as f:
         write_fileheader(data, f, fo=fo, kj=kj)
@@ -302,7 +307,8 @@ def to_infraformat(data, path, comments=True, fo=None, kj=None, write_mode="w"):
 
 
 def write_fileheader(data, f, fo=None, kj=None):
-    """Write fileheader format out.
+    """
+    Write fileheader format out.
 
     Parameters
     ----------
@@ -312,9 +318,10 @@ def write_fileheader(data, f, fo=None, kj=None):
         Dictionary for fileformat, software and software version.
     kj : dict, optional
         Dictionary for Coordinate system and Height reference.
+
     """
     if fo is None:
-        from ..__init__ import __version__
+        from pyinfraformat.__init__ import __version__
 
         fo = {
             "Format version": "2.5",
@@ -338,7 +345,7 @@ def write_fileheader(data, f, fo=None, kj=None):
 
     for key, subdict in {"FO": fo, "KJ": kj}.items():
         line_string = [key]
-        for _, value in subdict.items():
+        for value in subdict.values():
             if value is False:
                 continue
             line_string.append(str(value))
@@ -348,12 +355,14 @@ def write_fileheader(data, f, fo=None, kj=None):
 
 
 def write_header(header, f):
-    """Write header format out.
+    """
+    Write header format out.
 
     Parameters
     ----------
     header : Header object
     f : fileobject
+
     """
     header_keys = list(identifiers()[1].keys())
     for key in header_keys:
@@ -371,9 +380,9 @@ def write_header(header, f):
             f.write(line)
 
 
-# pylint: disable=protected-access
 def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spacer_start=None):
-    """Write data out.
+    """
+    Write data out.
 
     Parameters
     ----------
@@ -385,6 +394,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
         str used as a spacer in the body part. Defaults to 4 spaces.
     body_spacer_start : str
         str used as a spacer in the start of the body part. Defaults to 4 spaces.
+
     """
     if body_spacer is None:
         body_spacer = " " * 4
@@ -407,7 +417,7 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
                 labs.append(lab_line)
             elif key != "linenumber":
                 items.append(str(value))
-        line_string = body_spacer_start + "{}".format(body_spacer).join(items)
+        line_string = body_spacer_start + f"{body_spacer}".join(items)
         for lab_line in sorted(labs):
             line_string += "\n" + lab_line
         if int(line_dict["linenumber"]) not in body_text:
@@ -481,12 +491,13 @@ def _open(path, *args, **kwargs):
         finally:
             pass
     else:
-        with io.open(path, *args, **kwargs) as f:
+        with open(path, *args, **kwargs) as f:
             yield f
 
 
 def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
-    """Read input data.
+    """
+    Read input data.
 
     Paramaters
     ----------
@@ -574,7 +585,8 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                     msg = f"Line {linenumber}: {line_highlighted} # {error_txt}"
                     logger.warning(msg)
             if illegal_rows and errors == "raise":
-                raise ValueError("Illegal/Il-defined hole detected!")
+                msg = "Illegal/Il-defined hole detected!"
+                raise ValueError(msg)
 
             # Add fileheaders to hole objects
             if fileheaders:
@@ -618,7 +630,8 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
                 logger.warning(msg)
 
         if errors == "raise":
-            raise ValueError("File has to end on -1 row.")
+            msg = "File has to end on -1 row."
+            raise ValueError(msg)
         if fileheaders and hole:
             for key, value in fileheaders.items():
                 hole.add_fileheader(key, value)
@@ -630,7 +643,7 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
 
     if collected_illegals and save_ignored:
         if isinstance(save_ignored, str):
-            with open(save_ignored, "a") as f:
+            with open(save_ignored, "a", encoding="utf-8") as f:
                 if errors == "ignore_holes":
                     write_fileheader(holes, f, fo=None, kj=None)
                 f.write("\n".join(collected_illegals))
@@ -643,7 +656,8 @@ def read(path, encoding="auto", errors="ignore_lines", save_ignored=False):
 
 
 def split_with_whitespace(string, maxsplit=None):
-    """Split string with whitespaces, maxsplit defines maximum non white-space items.
+    """
+    Split string with whitespaces, maxsplit defines maximum non white-space items.
 
     >>> split_with_whitespace("   This is an example", maxsplit=2)
     ['', '   ', 'This', ' ', 'is an example']
@@ -663,16 +677,18 @@ def split_with_whitespace(string, maxsplit=None):
             last_item.append(item)
         else:
             return_string.append(item)
-    return return_string + ["".join(last_item)]
+    return [*return_string, "".join(last_item)]
 
 
 def highlight_item(string, indexes=None, marker="**", maxsplit=None):
-    """Hightlight string items with by split_with_whitespace indexes.
+    """
+    Hightlight string items with by split_with_whitespace indexes.
 
     Examples
     --------
     >>> highlight_item("   Yeah this is an example", [2,6], marker="**")
     '     **Yeah**   this   **is**   an   example'
+
     """
     if isinstance(indexes, int):
         indexes = [indexes]
@@ -690,7 +706,8 @@ def highlight_item(string, indexes=None, marker="**", maxsplit=None):
 
 
 def dictify_line(line, head=None, restrict_fields=True, force=False):
-    """Parse line into dict as infraformat line.
+    """
+    Parse line into dict as infraformat line.
 
     Returns
     -------
@@ -698,6 +715,7 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
         line values parsed to dict
     line_errors : list
         (error_string, 'split_with_whitespace' index)
+
     """
     if head is None:
         head = line.split()[0].strip()
@@ -724,7 +742,8 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
             else:
                 names, dtypes, strict = survey_dict["P"]
     else:
-        raise ValueError(f"Head '{head}' not recognized")
+        msg = f"Head '{head}' not recognized"
+        raise ValueError(msg)
 
     maxsplit = len(dtypes)
     if head.upper() == line.split()[0].strip().upper():
@@ -771,7 +790,8 @@ def dictify_line(line, head=None, restrict_fields=True, force=False):
 
 
 def strip_header(line, head=None, restrict_fields=True, force=False):
-    """Strip header line, returns (hole, error_dict).
+    """
+    Strip header line, returns (hole, error_dict).
 
     Examples
     --------
@@ -779,6 +799,7 @@ def strip_header(line, head=None, restrict_fields=True, force=False):
     >>> errors
     {'error': "1. Could not convert 'Y' value 'NOT_COORD' to 'custom_float'.",
      'line_highlighted': 'XY 6674772.0 **NOT_COORD** 15.0 01011999 1'}
+
     """
     if head is None:
         head = line.split()[0].strip()
@@ -799,12 +820,14 @@ def strip_header(line, head=None, restrict_fields=True, force=False):
 
 
 def strip_inline(line, head=None, restrict_fields=True, force=False):
-    """Strip inline line, returns (hole, error_dict).
+    """
+    Strip inline line, returns (hole, error_dict).
 
     Examples
     --------
     >>> strip_inline("LB w 12 kg/m3")
     ({'Laboratory w': '12'}, {})
+
     """
     if head is None:
         head = line.split()[0].strip()
@@ -833,12 +856,14 @@ def strip_inline(line, head=None, restrict_fields=True, force=False):
 
 
 def strip_survey(line, survey_type, restrict_fields=True, force=False):
-    """Strip survey line as survey_type, returns (hole, error_dict).
+    """
+    Strip survey line as survey_type, returns (hole, error_dict).
 
     Examples
     --------
     >>> strip_survey("     1.50   42  Ka", "PO")
     ({'Depth (m)': 1.5, 'Time (s)': 42, 'Soil type': 'Ka'}, {})
+
     """
     *_, survey_identifiers = identifiers()
     if survey_type not in survey_identifiers:
@@ -863,7 +888,8 @@ def strip_survey(line, survey_type, restrict_fields=True, force=False):
 
 
 def parse_hole(str_list, force=False):
-    """Parse inframodel lines to hole objects.
+    """
+    Parse inframodel lines to hole objects.
 
     Paramaters
     ----------
@@ -873,7 +899,7 @@ def parse_hole(str_list, force=False):
         Whetere to force illegal values as str. Ex. illegal dates, floats, int
         will be represented as str. Else omitted. Both cases gathered as errors.
 
-    Return
+    Return:
     ------
     Hole -object
     errors : list
@@ -882,6 +908,7 @@ def parse_hole(str_list, force=False):
                 "line_highlighted" : "**rivit tietoa ja silee jossa ei järkeä**" },
             {"linenumber" : 13, "error" : "Value must be float!, Date must be format ddmmyyy!",
             "line_highlighted" : "XY **x_koordinaatti** 999 **12345678** piste22" }
+
     """
     str_list = list(str_list)
     errors = []
@@ -898,7 +925,7 @@ def parse_hole(str_list, force=False):
         head = head.upper()
 
         if survey_type is None and hasattr(hole.header, "TT"):
-            survey_type = getattr(hole.header, "TT").get("Survey abbreviation", None)
+            survey_type = hole.header.TT.get("Survey abbreviation", None)
             if survey_type:
                 survey_type = survey_type.upper()
 
@@ -930,7 +957,7 @@ def parse_hole(str_list, force=False):
                         errors.append(error_dict)
                 else:
                     hole.add_inline(head, inline)
-            elif (is_number(head) and survey_type) or survey_type in ("LB",):
+            elif (is_number(head) and survey_type) or survey_type == "LB":
                 survey, error_dict = strip_survey(line, survey_type, force=force)
                 if error_dict:
                     error_dict["linenumber"] = linenumber

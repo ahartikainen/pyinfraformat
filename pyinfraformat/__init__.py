@@ -1,10 +1,18 @@
-# pylint: disable=wildcard-import
 """pyinfraformat, Python library for Finnish infraformat files."""
+
 import logging
 
-from .core import *
-from .exceptions import *
-from .plots import *
+from .core import (
+    Holes,
+    from_gtk_wfs,
+    from_infraformat,
+    identifiers,
+    print_info,
+    project_holes,
+    to_infraformat,
+)
+from .exceptions import FileExtensionMissingError, PathNotFoundError
+from .plots import plot_hole, plot_map
 
 logger = logging.getLogger("pyinfraformat")
 
@@ -29,4 +37,16 @@ def log_to_file(filename):
 
 
 __version__ = "23.1.2"
-__all__ = ["Holes", "from_infraformat", "to_infraformat", "print_info"]
+__all__ = [
+    "FileExtensionMissingError",
+    "Holes",
+    "PathNotFoundError",
+    "from_gtk_wfs",
+    "from_infraformat",
+    "identifiers",
+    "plot_hole",
+    "plot_map",
+    "print_info",
+    "project_holes",
+    "to_infraformat",
+]

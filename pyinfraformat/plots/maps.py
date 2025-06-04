@@ -8,16 +8,18 @@ import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
 from tqdm.auto import tqdm
 
-from ..core import Holes
-from ..core.coord_utils import coord_str_recognize, project_points
-from ..core.utils import ABBREVIATIONS
+from pyinfraformat.core import Holes
+from pyinfraformat.core.coord_utils import coord_str_recognize, project_points
+from pyinfraformat.core.utils import ABBREVIATIONS
+
 from .holes import plot_hole
 
 __all__ = ["plot_map"]
 
 
 def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
-    """Plot a leaflet map from holes with popup hole plots.
+    """
+    Plot a leaflet map from holes with popup hole plots.
 
     Parameters
     ----------
@@ -32,11 +34,13 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
     Returns
     -------
     map_fig : folium map object
+
     """
     holes_filtered = []
     first_system = False
     if len(holes) == 0:
-        raise ValueError("Can't plot empty holes -object.")
+        msg = "Can't plot empty holes -object."
+        raise ValueError(msg)
     for hole in holes:
         if hasattr(hole, "header") and hasattr(hole.header, "XY"):
             if "X" in hole.header.XY and "Y" in hole.header.XY:
@@ -49,9 +53,9 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
                     raise ValueError(msg)
                 if not first_system:
                     first_system = coord_system
-                else:
-                    if not first_system == coord_system:
-                        raise ValueError("Coordinate system is not uniform in holes -object")
+                elif first_system != coord_system:
+                    msg = "Coordinate system is not uniform in holes -object"
+                    raise ValueError(msg)
     holes_filtered = Holes(holes_filtered)
 
     x_all, y_all = [], []
@@ -71,11 +75,10 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
         tiles=None,
     )
     folium.TileLayer("OpenStreetMap", maxNativeZoom=19, maxZoom=max_zoom).add_to(map_fig)
-    folium.TileLayer("Stamen Terrain", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     folium.TileLayer("CartoDB positron", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     esri_url = (
         "https://server.arcgisonline.com/ArcGIS/rest/services/"
-        + "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        "World_Imagery/MapServer/tile/{z}/{y}/{x}"
     )
     folium.TileLayer(
         tiles=esri_url,
@@ -137,9 +140,12 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
 
     cluster = MarkerCluster(
         control=False,
-        options=dict(
-            animate=True, maxClusterRadius=15, showCoverageOnHover=False, disableClusteringAtZoom=20
-        ),
+        options={
+            "animate": True,
+            "maxClusterRadius": 15,
+            "showCoverageOnHover": False,
+            "disableClusteringAtZoom": 20,
+        },
     ).add_to(map_fig)
     map_fig.add_child(cluster)
     hole_clusters = {}
@@ -161,11 +167,11 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
     ]
     colors = cycle(colors)
     clust_icon_kwargs = {}
-    for color, key in zip(colors, holes_filtered.value_counts().keys()):
+    for color, key in zip(colors, holes_filtered.value_counts().keys(), strict=False):
         hole_clusters[key] = folium.plugins.FeatureGroupSubGroup(
             cluster, name=ABBREVIATIONS.get(key, "Unrecognize abbreviation"), show=True
         )
-        clust_icon_kwargs[key] = dict(color=color, icon="")
+        clust_icon_kwargs[key] = {"color": color, "icon": ""}
         map_fig.add_child(hole_clusters[key])
 
     if progress_bar:
@@ -234,19 +240,18 @@ def get_icon(abbreviation, clust_icon_kwargs, default=False):
     # print(path/icon_path, path)
     # print(abbreviation)
     try:
-        with open(path / icon_path, "r") as f:
+        with open(path / icon_path, encoding="utf-8") as f:
             svg_str = f.read()
     except FileNotFoundError:
         return folium.Icon(**clust_icon_kwargs[abbreviation])
     height = float(
-        [line for line in svg_str.split() if line.startswith("height")][0]
+        next(line for line in svg_str.split() if line.startswith("height"))
         .split("=")[-1]
         .replace('"', "")
     )
     width = float(
-        [line for line in svg_str.split() if line.startswith("width")][0]
+        next(line for line in svg_str.split() if line.startswith("width"))
         .split("=")[-1]
         .replace('"', "")
     )
-    icon = folium.DivIcon(html=svg_str, icon_anchor=(width / 2, height / 2))
-    return icon
+    return folium.DivIcon(html=svg_str, icon_anchor=(width / 2, height / 2))
