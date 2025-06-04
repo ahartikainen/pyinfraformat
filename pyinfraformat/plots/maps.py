@@ -75,7 +75,6 @@ def plot_map(holes, render_holes=True, progress_bar=True, popup_size=(3, 3)):
         tiles=None,
     )
     folium.TileLayer("OpenStreetMap", maxNativeZoom=19, maxZoom=max_zoom).add_to(map_fig)
-    folium.TileLayer("Stamen Terrain", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     folium.TileLayer("CartoDB positron", maxNativeZoom=18, maxZoom=max_zoom).add_to(map_fig)
     esri_url = (
         "https://server.arcgisonline.com/ArcGIS/rest/services/"
