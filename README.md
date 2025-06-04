@@ -26,13 +26,14 @@ To install inplace for development work, use `-e` command.
     python -m pip install -e .
 
 ## Quickstart
-Basic usage
+#### Basic usage
 ```python
 import pyinfraformat as pif
 pif.set_logger_level(50) # Suppress non-critical warnings, recommended for large files
 holes = pif.from_infraformat("*.tek")
 holes = holes.project("TM35FIN")
 bounds = holes.bounds
+holes.to_infraformat("holes_tm35fin.tek")
 
 bounds = [6672242-200 ,  385795-200, 6672242 +200,  385795+200]
 gtk_holes = pif.from_gtk_wfs(bounds, "TM35Fin")
@@ -61,7 +62,7 @@ hole_figure # View hole in jupyter
 
 ![image](https://github.com/user-attachments/assets/33b9c797-b084-44b2-88c8-dadd15fc540f)
 
-Plot histograms from labratory tests
+#### Plot histograms from labratory tests
 ```python
 import pandas as pd
 bounds = [6672242-2000 ,  385795-2000, 6672242 +2000,  385795+2000]
