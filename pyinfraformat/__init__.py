@@ -36,7 +36,7 @@ def log_to_file(filename):
     logger.handlers = [file_handler]
 
 
-__version__ = "23.1.2"
+__version__ = "25.7.10"
 __all__ = [
     "FileExtensionMissingError",
     "Holes",
