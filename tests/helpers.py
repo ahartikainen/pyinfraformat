@@ -9,5 +9,5 @@ def ping_gtk():
         bbox = (60.2, 24.8, 60.215, 24.83)
         holes = from_gtk_wfs(bbox, "EPSG:4326")
         result = not Holes(holes[:3]).get_dataframe().empty
-    except HTTPError:
+    except (HTTPError, ValueError):
         return True
