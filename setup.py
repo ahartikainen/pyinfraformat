@@ -1,32 +1,33 @@
 """Python setup information."""
 
-import codecs
 import os
 import re
+from pathlib import Path
 
 from setuptools import find_packages, setup
 
-PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
-REQUIREMENTS_FILE = os.path.join(PROJECT_ROOT, "requirements.txt")
-README_FILE = os.path.join(PROJECT_ROOT, "README.md")
-VERSION_FILE = os.path.join(PROJECT_ROOT, "pyinfraformat", "__init__.py")
+PROJECT_ROOT = Path(os.path.realpath(__file__)).parent
+REQUIREMENTS_FILE = PROJECT_ROOT / "requirements.txt"
+README_FILE = PROJECT_ROOT / "README.md"
+VERSION_FILE = PROJECT_ROOT / "pyinfraformat" / "__init__.py"
 
 
 def get_requirements():
     """Read contents from requirements.txt."""
-    with codecs.open(REQUIREMENTS_FILE) as buff:
+    with open(REQUIREMENTS_FILE, encoding="utf-8") as buff:
         return buff.read().splitlines()
 
 
 def get_long_description():
     """Read contents from README.md."""
-    with codecs.open(README_FILE, "rt") as buff:
+    with open(README_FILE, encoding="utf-8") as buff:
         return buff.read()
 
 
 def get_version():
     """Read version info from __init__.py."""
-    lines = open(VERSION_FILE).readlines()
+    with open(VERSION_FILE, encoding="utf-8") as buff:
+        lines = buff.readlines()
     version_regex = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in lines:
         version_search = re.search(version_regex, line, re.MULTILINE)

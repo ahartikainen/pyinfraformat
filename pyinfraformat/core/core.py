@@ -612,10 +612,6 @@ class Hole:
         """Add survey information to object."""
         self.survey.add(survey)
 
-    def _add_illegal(self, illegal):
-        """Add illegal lines to object."""
-        self._illegal.add(illegal)
-
     def plot(self, output="figure", figsize=(4, 4)):
         """
         Plot a diagram of a sounding with matplotlib.
@@ -660,17 +656,13 @@ class Hole:
         """Get fileheader as a dict."""
         return self.inline_comment.data
 
-    def get_illegals_list(self):
-        """Get fileheader as a dict."""
-        return self._illegal.data
-
     def get_dict(self):
         """Get survey data, hole header, fileheader, comments and illegals as list of dicts."""
         d_header = self.get_header_dict()
         data_list = self.get_data_list()
         d_fileheader = self.get_fileheader_dict()
         comment_list = self.get_comments_list()
-        illegals_list = self.get_illegals_list()
+        illegals_list = self.illegals
         return {
             "header": d_header,
             "fileheader": d_fileheader,

@@ -457,7 +457,11 @@ def write_body(hole, f, comments=True, illegal=False, body_spacer=None, body_spa
 
     # Gather illegal lines
     if illegal:
-        for linenumber, line_string in hole._illegal.data:
+        illegals_dict = {
+            item["linenumber"]: item["line_highlighted"] + "  # " + item["error"]
+            for item in hole.illegals
+        }
+        for linenumber, line_string in illegals_dict.items():
             if int(linenumber) not in body_text:
                 body_text[int(line_dict["linenumber"])] = line_string
             else:
