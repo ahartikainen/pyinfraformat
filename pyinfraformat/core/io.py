@@ -12,7 +12,7 @@ from pathlib import Path
 import chardet
 import requests
 from owslib.wfs import WebFeatureService
-from tqdm.auto import tqdm
+from tqdm.autonotebook import tqdm
 
 from pyinfraformat.exceptions import PathNotFoundError
 
