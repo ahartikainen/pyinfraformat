@@ -6,7 +6,7 @@ from pathlib import Path
 import folium
 import numpy as np
 from folium.plugins import MarkerCluster, MeasureControl, MousePosition
-from tqdm.auto import tqdm
+from tqdm.autonotebook import tqdm
 
 from pyinfraformat.core import Holes
 from pyinfraformat.core.coord_utils import coord_str_recognize, project_points
