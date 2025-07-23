@@ -101,7 +101,7 @@ ignore = [
   "PLC0206",
   "UP031",
   "INP001",
-  "SIM108",
+  "SIM108"
 ]
 extend-select = []
 preview = true
