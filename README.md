@@ -77,3 +77,16 @@ fig.set_title("Clay samples water content, %")
 fig
 ```
 ![image](https://github.com/user-attachments/assets/e3e6030b-ccfc-4c59-9929-40a7f9900fa4)
+
+
+## For users
+
+This project was developed as a personal leisure project in the pre-LLM era, with no commercial intentions. It is released under the Apache License 2.0 and is free to use for theses, study projects, research, and other purposes.
+
+And we truly mean it: use it, fork it or copy parts of it into your own project. We hope you will build on it rather than write an Infraformat reader from scratch.
+
+Contributions are also very welcome. Please feel free to open an issue, submit a pull request, or suggest improvements. As with most personal projects, there are likely plenty of issues to fix. Or new features and example use cases to add.
+
+If you use this project, we would be delighted to hear from you and learn how it has supported your work. Or what didn't work. The original authors can be contacted via LinkedIn.
+
+We hope this package inspires you to explore coding, geotechnics and statistical methods. And to further develop automation and statistical analysis in the geotechnical field.
